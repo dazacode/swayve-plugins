@@ -6,6 +6,7 @@ import 'availability.dart';
 import 'image_ref.dart';
 import 'media_id.dart';
 import 'refs.dart';
+import 'track.dart';
 
 /// A release grouping tracks, normalized across every provider.
 ///
@@ -24,6 +25,7 @@ final class SwayveAlbum {
     this.trackCount,
     this.artwork,
     this.availability = SwayveAvailability.none,
+    this.tracks = const [],
     this.extra = const {},
   });
 
@@ -51,6 +53,27 @@ final class SwayveAlbum {
   /// playing it.
   final SwayveAvailability availability;
 
+  /// The release's own track listing, in the order the release presents it.
+  ///
+  /// Empty from a *listing* — `SwayveCatalogProvider.albums` returns shelves of
+  /// covers and fetching every one of their tracks to draw a grid would be
+  /// dozens of round trips nobody asked for. Populated by a *lookup*
+  /// (`SwayveCatalogProvider.album`), which is the call a host makes when
+  /// somebody opens one.
+  ///
+  /// This is what stops a host from having to reconstruct a release out of
+  /// whatever tracks it happens to be holding. A host that guesses gets both
+  /// halves wrong at once: songs it has never fetched are silently missing, and
+  /// the ones it does have group by whatever artist each was credited to, so a
+  /// record with a guest on two songs becomes three records. Neither is
+  /// recoverable downstream, because by then the release the provider knew
+  /// about is gone.
+  ///
+  /// [trackCount] is not derived from this and may exceed it: a provider can
+  /// know a release has twelve songs while returning fewer, and the difference
+  /// is worth showing rather than hiding.
+  final List<SwayveTrack> tracks;
+
   /// Provider-specific data the host never interprets. Must be
   /// JSON-encodable.
   final Map<String, Object?> extra;
@@ -67,6 +90,7 @@ final class SwayveAlbum {
     int? trackCount,
     SwayveImageRef? artwork,
     SwayveAvailability? availability,
+    List<SwayveTrack>? tracks,
     Map<String, Object?>? extra,
   }) =>
       SwayveAlbum(
@@ -77,6 +101,7 @@ final class SwayveAlbum {
         trackCount: trackCount ?? this.trackCount,
         artwork: artwork ?? this.artwork,
         availability: availability ?? this.availability,
+        tracks: tracks ?? this.tracks,
         extra: extra ?? this.extra,
       );
 
@@ -89,6 +114,9 @@ final class SwayveAlbum {
         'trackCount': trackCount,
         'artwork': artwork?.toJson(),
         'availability': availability.toJson(),
+        'tracks': tracks.isEmpty
+            ? null
+            : tracks.map((track) => track.toJson()).toList(),
         'extra': extra.isEmpty ? null : extra,
       });
 
@@ -105,6 +133,7 @@ final class SwayveAlbum {
       availability: reader.has('availability')
           ? reader.object('availability', SwayveAvailability.fromJson)
           : SwayveAvailability.none,
+      tracks: reader.objectList('tracks', SwayveTrack.fromJson),
       extra: reader.extra('extra'),
     );
   }
@@ -122,6 +151,7 @@ final class SwayveAlbum {
       trackCount == other.trackCount &&
       artwork == other.artwork &&
       availability == other.availability &&
+      deepEquals(tracks, other.tracks) &&
       deepEquals(extra, other.extra);
 
   @override
@@ -133,6 +163,7 @@ final class SwayveAlbum {
         trackCount,
         artwork,
         availability,
+        deepHash(tracks),
         deepHash(extra),
       );
 }
