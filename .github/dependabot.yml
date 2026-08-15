@@ -32,6 +32,7 @@ updates:
     directories:
       - "/"                             # swayve_plugin_tools (root tool package)
       - "/packages/swayve_plugin_sdk"   # published SDK — keep dependency-free
+      - "/packages/swayve_plugin_registry"  # the first-party compiled catalogue
       - "/plugins/example"
       - "/plugins/youtube_music"
     schedule:

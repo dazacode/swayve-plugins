@@ -57,6 +57,9 @@ plugins/**/pubspec.lock
 *.swo
 *~
 
+# Claude Code harness state — local to whoever's machine ran it.
+.claude/
+
 # OS cruft
 .DS_Store
 .DS_Store?

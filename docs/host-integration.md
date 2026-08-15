@@ -71,9 +71,15 @@ The host must additionally:
   mixin; the host must use it rather than reimplement the rule, so that
   `FakeSwayvePluginContext` and the host cannot drift apart.
 
-Registration for `runtime: compiled` plugins happens at app build time via each
-plugin's `SwayvePluginFactory`. The host must not special-case which factories
-exist.
+Registration for `runtime: compiled` plugins happens at app build time via
+each plugin's `SwayvePluginFactory`. The host must not special-case which
+factories exist, and it must not depend on individual first-party plugin
+packages directly — that does not scale past one plugin. Depend on
+`package:swayve_plugin_registry` instead, and resolve a verified bundle's
+manifest id against `firstPartyCompiledPlugins` from it. See
+[platforms.md § How a `compiled` plugin actually gets activated](platforms.md#how-a-compiled-plugin-actually-gets-activated)
+for the full mechanism, including how a private fork adds a plugin the
+first-party registry does not carry.
 
 ---
 

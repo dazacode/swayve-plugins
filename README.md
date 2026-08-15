@@ -65,7 +65,8 @@ swayve-plugins/
 ├── schema/
 │   └── swayve-plugin.schema.json # JSON Schema (draft 2020-12) for plugin.json
 ├── packages/
-│   └── swayve_plugin_sdk/        # the public SDK — pure Dart, zero runtime deps
+│   ├── swayve_plugin_sdk/        # the public SDK — pure Dart, zero runtime deps
+│   └── swayve_plugin_registry/   # which first-party compiled plugins a host can activate
 ├── plugins/
 │   ├── example/                  # teaching-grade reference plugin
 │   └── youtube_music/            # YouTube Music reference plugin
@@ -140,6 +141,25 @@ dependencies:
       path: packages/swayve_plugin_sdk
       ref: main
 ```
+
+### Getting a `compiled` plugin into a host app
+
+Depending on the SDK is what lets your plugin *compile*. It is not what makes
+it *run* — a `compiled` plugin's code has to be linked into a specific host
+binary (that's what makes it iOS-safe; see
+[docs/platforms.md](docs/platforms.md)), and that linking is a separate,
+explicit step, never automatic discovery.
+
+For a first-party plugin, that step is one dependency and one map entry in
+[`packages/swayve_plugin_registry`](packages/swayve_plugin_registry) — not a
+new dependency in every host app that wants it. A host depends on
+`swayve_plugin_registry` once, permanently, no matter how many first-party
+plugins exist; it reads `firstPartyCompiledPlugins[manifestId]` to find the
+factory for a verified bundle. See that package's README for the two-line
+process, and
+[docs/platforms.md § How a `compiled` plugin actually gets activated](docs/platforms.md#how-a-compiled-plugin-actually-gets-activated)
+for how a community or self-hosted build composes its own additions in
+without forking anything.
 
 ## Capabilities
 

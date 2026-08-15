@@ -151,6 +151,57 @@ because provider interfaces are Dart. If you are unsure, you want `compiled`.
 
 ---
 
+## How a `compiled` plugin actually gets activated
+
+Choosing `compiled` says your plugin's code has to be linked into a host binary
+at build time. It does not by itself say *which* binaries link it in — that is
+a separate, deliberately manual step, and it is worth being precise about it so
+"my plugin is compiled" and "my plugin runs" are not confused.
+
+**First-party plugins** (this repository) are activated through
+`packages/swayve_plugin_registry` — a small pure-Dart package that depends on
+every first-party compiled plugin and re-exports one flat map,
+`firstPartyCompiledPlugins: Map<String, SwayvePluginFactory>`, keyed by
+manifest id. A host app depends on exactly two things from this platform,
+**permanently**, no matter how large the first-party catalogue grows:
+`swayve_plugin_sdk` (the interfaces) and `swayve_plugin_registry` (what's
+compiled in). Adding `youtube_music` to the registry did not, and a future
+`jiosaavn` will not, require touching any host app's `pubspec.yaml` or its
+plugin-loading code. See `packages/swayve_plugin_registry/README.md` for the
+two-line process of adding a first-party plugin to the map.
+
+A host resolves a verified bundle by looking its manifest id up in
+`firstPartyCompiledPlugins`. **An id with no entry is not a validation
+failure** — the bundle may be perfectly well-formed — it means this specific
+build was not compiled against that plugin, and the host must report that
+plainly ("this build of Swayve does not include a compiled implementation of
+&lt;name&gt;") rather than treat it as a broken bundle.
+
+**Community `compiled` plugins** cannot be added to the first-party registry —
+that map is a trust boundary, not a discovery mechanism, and nothing can
+safely download and run arbitrary code on iOS regardless. A community plugin
+reaches a device by one of two routes, and both are deliberate, not
+workarounds:
+
+1. **Get it merged as first-party.** Once accepted through the PR process in
+   [CONTRIBUTING.md](../CONTRIBUTING.md#pull-request-process), it is added to
+   `swayve_plugin_registry` like any other, and every host app gains it for
+   free on its next dependency bump.
+2. **A specific app builder wires it in directly.** Nothing stops a host from
+   depending on a plugin package on its own and merging it into the registry
+   at the call site — `firstPartyCompiledPlugins` is a plain `const Map`,
+   so `{...firstPartyCompiledPlugins, myPluginId: myFactory}` composes it with
+   local additions without forking the registry package. This is the honest
+   escape hatch for a private fork or an enterprise deployment; it is not a
+   general distribution channel, because it still requires that specific
+   builder to rebuild and ship.
+
+There is deliberately no third option where a plugin registers itself at
+runtime without appearing in either place — that would be exactly the
+dynamic-code-loading model §7/this document rules out on iOS.
+
+---
+
 ## See also
 
 - [packaging.md](packaging.md) — the `.swayveplugin` format and why encryption is not the model
