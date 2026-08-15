@@ -1,0 +1,323 @@
+# swayve-plugins
+
+[![validate](https://github.com/dazacode/swayve-plugins/actions/workflows/validate.yml/badge.svg?branch=main)](https://github.com/dazacode/swayve-plugins/actions/workflows/validate.yml)
+[![test](https://github.com/dazacode/swayve-plugins/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/dazacode/swayve-plugins/actions/workflows/test.yml)
+
+The plugin SDK, manifest schema, tooling and reference plugins for **Swayve**.
+
+A Swayve plugin teaches Swayve about a music source it did not previously know
+about. It answers questions — "what matches this search?", "what is on this
+album?", "how do I play this track?" — and Swayve renders the answers using the
+same UI it uses for everything else. The plugin supplies **data**; the host
+supplies **experience**.
+
+Swayve Core works with zero plugins installed. Nothing in this repository is
+required for the Swayve client to build or run. You can delete this repository
+and the client still compiles.
+
+---
+
+## What a plugin is
+
+A plugin is a Dart package that declares a manifest (`plugin.json`), implements
+one or more **provider interfaces** from `package:swayve_plugin_sdk`, and talks
+to its own external service directly from the user's device.
+
+```dart
+final class MySearchProvider implements SwayveSearchProvider {
+  MySearchProvider(this._http);
+  final SwayveHttpClient _http;
+
+  @override
+  Future<SwayveSearchResult> search(
+    SwayveSearchQuery query, {
+    SwayveCancellationToken? cancel,
+  }) async {
+    final response = await _http.get(
+      Uri.https('api.example.com', '/search', {'q': query.text}),
+      cancel: cancel,
+    );
+    return SwayveSearchResult(tracks: _decodeTracks(response.bodyAsJson));
+  }
+}
+```
+
+The host never learns that this provider is "the Example plugin". It asks the
+registry for everything implementing `SwayveSearchProvider` and merges the
+results.
+
+## What a plugin is **not**
+
+| Not a… | Why |
+|---|---|
+| **Theme engine** | Plugins cannot change Swayve's colours, typography, spacing or layout. There is no styling surface, by design. |
+| **Way to redesign the app** | Plugins return models, not widgets. There is no Flutter widget injection in v1, and the SDK has no Flutter dependency at all. |
+| **Proxy service** | Swayve runs no per-plugin backend. Every request a plugin makes leaves the user's own device, under the user's own IP and credentials. |
+| **Way to ship arbitrary code to iOS** | Swayve cannot download and execute arbitrary Dart or native code on iOS. `runtime: bundled` carries declarative data only, and the validator hard-errors on `bundled` + `ios`. See [docs/platforms.md](docs/platforms.md). |
+| **Background agent** | Background execution is not a grantable permission in v1. A plugin runs when the host calls it, and only then. |
+| **Route into the user's library** | A plugin cannot read the user's music files, Swayve account credentials, other plugins' storage, or arbitrary filesystem paths. See [docs/permissions.md](docs/permissions.md). |
+
+## Repository layout
+
+```
+swayve-plugins/
+├── docs/                         # the specification you are reading a summary of
+├── schema/
+│   └── swayve-plugin.schema.json # JSON Schema (draft 2020-12) for plugin.json
+├── packages/
+│   └── swayve_plugin_sdk/        # the public SDK — pure Dart, zero runtime deps
+├── plugins/
+│   ├── example/                  # teaching-grade reference plugin
+│   └── youtube_music/            # YouTube Music reference plugin
+├── tools/                        # validate_plugin · package_plugin · verify_package
+├── lib/                          # implementation behind tools/
+└── test/                         # tool tests and fixtures
+```
+
+There is **no pub workspace**. Each `pubspec.yaml` resolves independently — run
+`dart pub get` in the directory you are working in. The root `pubspec.yaml` is
+the `swayve_plugin_tools` package and owns `lib/`, `tools/` and `test/`.
+
+## Your first plugin in 60 seconds
+
+There is no scaffolding generator. Copying `plugins/example` is the supported
+path, and it is deliberately small enough to read end to end.
+
+```bash
+git clone https://github.com/dazacode/swayve-plugins.git
+cd swayve-plugins
+dart pub get                                   # tooling deps, at the repo root
+
+cp -r plugins/example plugins/my_plugin        # 1. copy the reference plugin
+cd plugins/my_plugin && dart pub get && cd ../..
+```
+
+Then edit three things in `plugins/my_plugin/plugin.json`:
+
+```jsonc
+{
+  "id": "dev.yourname.swayve.my_plugin",  // reverse-DNS, ≥3 segments
+  "entrypoint": "my_plugin",              // MUST equal the directory name
+  "name": "My Plugin"
+}
+```
+
+and validate:
+
+```bash
+dart run tools/validate_plugin.dart plugins/my_plugin
+(cd plugins/my_plugin && dart test)
+```
+
+Then rename the entrypoint function in `lib/` and update `examplePluginId`.
+`entrypoint` matching the directory name is rule 7 of the manifest validator and
+is an **error**, not a warning — it is the single most common first failure. Note
+that `entrypoint` names the directory and the Dart library, **not** the factory
+function: `plugins/youtube_music` declares `"entrypoint": "youtube_music"` and
+exports `createYouTubeMusicPlugin()`, because `youtube_music()` would violate
+`non_constant_identifier_names`.
+
+The full field reference is in [docs/plugin-manifest.md](docs/plugin-manifest.md);
+the edit → validate → run loop is in [docs/development.md](docs/development.md).
+
+A plugin **inside this repository** depends on the SDK by relative path, which
+resolves identically on every checkout because both ends move together:
+
+```yaml
+dependencies:
+  swayve_plugin_sdk:
+    path: ../../packages/swayve_plugin_sdk
+```
+
+A plugin in **its own repository** uses a git dependency instead — never a path
+that reaches across repositories:
+
+```yaml
+dependencies:
+  swayve_plugin_sdk:
+    git:
+      url: https://github.com/dazacode/swayve-plugins.git
+      path: packages/swayve_plugin_sdk
+      ref: main
+```
+
+## Capabilities
+
+A capability is a *question the plugin can answer*. Each maps 1:1 to one
+provider interface — never one large interface.
+
+| Capability | Provider interface | Host uses it for |
+|---|---|---|
+| `search` | `SwayveSearchProvider` | Merging results into the Explore search screen |
+| `catalog` | `SwayveCatalogProvider` | Browsing albums, artists and tracks from the source |
+| `streaming` | `SwayveStreamProvider` | Resolving a track to something playable |
+| `metadata` | `SwayveMetadataProvider` | Enriching a track the host already has |
+| `lyrics` | `SwayveLyricsProvider` | Showing plain or time-synced lyrics |
+| `scrobbling` | `SwayveScrobbleProvider` | Reporting now-playing and completed plays |
+| `authentication` | `SwayveAuthProvider` | Signing the user in to the plugin's service |
+| `webview` | *(none — host facility, via `SwayveWebViewController`)* | Auth flows and embedded playback surfaces |
+| `artwork` | `SwayveArtworkProvider` | Fetching cover images at a requested size |
+| `playlist_read` | `SwayvePlaylistProvider` | **No host consumer yet** — the client has no playlist type |
+
+Full signatures and host semantics: [docs/capabilities.md](docs/capabilities.md).
+
+## Permissions
+
+A permission is a *facility the plugin may touch*. Capabilities and permissions
+are separate on purpose: what you can answer is not what you may reach for.
+
+| Permission | Grants | Does not grant |
+|---|---|---|
+| `network` | Outbound HTTP(S) through `SwayveHttpClient`, restricted to `network.hosts` | Raw sockets, arbitrary hosts, listening |
+| `webview` | Host may render a plugin-requested web view | Injecting script into the host UI |
+| `external_auth` | Host-mediated auth flow + the plugin's own credential slot | Swayve account credentials |
+| `local_plugin_storage` | Read/write in the plugin's own isolated key/value namespace | Any other plugin's namespace, or the filesystem |
+| `clipboard` | **Write** to the system clipboard | Reading the clipboard, ever |
+
+The validator relates the two vocabularies with two rules of very different
+strength:
+
+- **Error** — `webview` requires the `webview` permission, and `authentication`
+  requires `external_auth`. In both cases the capability and the permission
+  describe the same act, so one without the other describes a plugin that
+  cannot do what it says.
+- **Info** — the other eight capabilities *usually* reach the network, so
+  declaring one without `network` is a note, never a failure. Whether a plugin
+  opens a connection is not decidable from a manifest: `plugins/example`
+  declares `search` and `catalog`, serves a catalogue compiled into itself, and
+  honestly declares **zero permissions**. Real enforcement is at runtime, where
+  the answer is knowable — `context.http` throws
+  `SwayvePermissionDeniedException` without the permission, in your own tests.
+
+Over-declaring is the direction that costs a user trust, so *that* is a warning
+`--strict` promotes. `local_plugin_storage` and `clipboard` are host facilities
+no capability could imply, so declaring them never warns.
+
+Not grantable in v1 at all: the user's music files, Swayve account credentials,
+other plugins' storage, arbitrary filesystem paths, device secrets, background
+execution. Details: [docs/permissions.md](docs/permissions.md).
+
+## Tooling
+
+Three commands. Run them from the repository root after `dart pub get`.
+
+### `validate_plugin`
+
+```bash
+dart run tools/validate_plugin.dart plugins/youtube_music
+```
+
+```
+plugins/youtube_music
+  ERROR   capabilities: 'webview' requires permission 'webview'   (plugin.json:15)
+  WARNING network: permission declared but no network.hosts listed
+  INFO    version 0.1.0 is pre-1.0; the plugin API surface is unstable
+2 problems (1 error, 1 warning)
+```
+
+Info notes are not problems and are left out of the count. `--all` validates
+every directory under `plugins/`; `--plugins-root <dir>` changes what it scans.
+
+### `package_plugin`
+
+```bash
+dart run tools/package_plugin.dart plugins/youtube_music --out dist
+```
+
+Validates first and refuses to package anything that fails. Emits a
+deterministic `dist/youtube_music-0.1.0.swayveplugin` alongside
+`dist/youtube_music-0.1.0.sha256`. Pass `--key path/to/ed25519.key` to produce a
+signed `signature.json` inside the archive.
+
+### `verify_package`
+
+```bash
+dart run tools/verify_package.dart dist/youtube_music-0.1.0.swayveplugin
+```
+
+Checks the archive the way a host must before unpacking it: extraction safety
+first, then integrity, then signature. Add `--pubkey <file|base64>` to verify
+against a key you decided to trust, `--require-signature` to fail an unsigned
+bundle rather than note it, and `--dest <dir>` to test path containment against
+the directory you will actually unpack into.
+
+All three accept `--json` (machine-readable report with stable diagnostic codes
+such as `capability_requires_permission` and `entry_escapes_root`), `--quiet`,
+`--strict` (warnings become errors; this is what CI uses) and `--help`.
+
+| Exit code | Meaning |
+|---|---|
+| `0` | OK |
+| `1` | Validation or verification failed |
+| `2` | Bad usage |
+| `3` | Internal error |
+
+## Reference plugins
+
+| Plugin | ID | Capabilities | Permissions | Status |
+|---|---|---|---|---|
+| `plugins/example` | `app.swayve.plugins.example` | `search`, `catalog` | **none** | Teaching reference at `0.1.0`. Serves a hand-written catalogue compiled into itself — no network, no storage, no credentials, **and no playback at all** (`media.streamable: false`). Read this first. |
+| `plugins/youtube_music` | `app.swayve.plugins.youtube_music` | `search`, `catalog`, `streaming`, `webview`, `artwork` | `network`, `webview` | Reference integration at `0.1.0`. Playback resolves to the official embedded player, never an extracted stream URL. **Fixture-verified, not live-validated** — see below. |
+
+Both are `runtime: compiled`: their source lives in this repository and is
+compiled into Swayve builds through the SDK interfaces only. Neither is
+downloaded at runtime.
+
+`plugins/example` is the more instructive of the two, and its point is what it
+*declines* to claim: a plugin may contribute catalogue data while holding no
+permissions and asserting no right to play anything. Its test suite runs the
+whole lifecycle against a context that grants nothing.
+
+`plugins/youtube_music` is complete and its suite is green, but be precise about
+what that means. Every parser, error mapping, timeout, cancellation path and
+allow-list check is pinned by committed fixtures — and **no request in this
+repository has ever been sent to YouTube Music.** The request composition, the
+InnerTube client version, the search filter tokens, the feed browse ids and the
+continuation format are all plausible and unproven. Its README says so at
+length; read that section before relying on it.
+
+## Status
+
+This is the **foundation**, not a finished product.
+
+- The SDK, schema, validator, packager and verifier are the deliverable here.
+- **The Swayve client does not yet have a plugin system.** There is no loader,
+  no registry and no extension point in the client today.
+  [docs/host-integration.md](docs/host-integration.md) is the specification of
+  the work the client must still do, written against a survey of the real
+  client code.
+- `bundled` runtime carries declarative data only, and no host loads a bundle
+  today on any platform.
+- Ed25519 signing is **live**, not stubbed — `package_plugin --key` really signs
+  and `verify_package --pubkey` really verifies. What does not exist is anything
+  that tells you *which* key to trust: no key server, no trust store, no
+  revocation, and no plugin registry. See
+  [docs/publishing.md](docs/publishing.md).
+
+## Documentation
+
+| Document | Read it when |
+|---|---|
+| [architecture.md](docs/architecture.md) | You want to know where the host ends and the plugin begins |
+| [plugin-manifest.md](docs/plugin-manifest.md) | You are writing or debugging `plugin.json` |
+| [permissions.md](docs/permissions.md) | You are deciding what to declare, or reviewing what someone else declared |
+| [capabilities.md](docs/capabilities.md) | You are implementing a provider interface |
+| [packaging.md](docs/packaging.md) | You care about `.swayveplugin`, integrity or signatures |
+| [platforms.md](docs/platforms.md) | You are wondering why iOS says no |
+| [development.md](docs/development.md) | You want the edit → validate → run loop |
+| [testing.md](docs/testing.md) | You are writing tests without a host |
+| [publishing.md](docs/publishing.md) | You are cutting a release |
+| [versioning.md](docs/versioning.md) | You are changing a version number, any of the four |
+| [host-integration.md](docs/host-integration.md) | You are implementing the host side in the Swayve client |
+
+## Contributing
+
+Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a plugin PR. Compiling is
+not sufficient for acceptance.
+
+Security reports go through the private channel in [SECURITY.md](SECURITY.md),
+never a public issue.
+
+## License
+
+Apache-2.0. Copyright 2026 Swayve. See [LICENSE](LICENSE) and [NOTICE](NOTICE).

@@ -1,0 +1,292 @@
+name: release
+
+# Publish a plugin bundle when a per-plugin tag is pushed, e.g.
+#   youtube_music-v0.1.0
+# The tag is the only trigger: nothing is ever published from a branch.
+on:
+  push:
+    tags:
+      - "*-v*.*.*"
+
+# Never cancel a release mid-flight; queue instead.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+# Read-only by default. The single job below widens exactly one scope.
+permissions:
+  contents: read
+
+env:
+  DART_SDK_VERSION: "3.13.0"
+
+jobs:
+  release:
+    name: package and publish
+    runs-on: ubuntu-latest
+    # `contents: write` is required to create the release and upload assets.
+    # Every scope not listed here is dropped to `none` for this job.
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      # ---------------------------------------------------------------------
+      # 1. Parse the tag and refuse to go further unless the manifest agrees.
+      #    A tag/manifest version mismatch must NEVER publish.
+      # ---------------------------------------------------------------------
+      - name: Parse tag and verify it matches the plugin manifest
+        id: tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME}"
+          echo "tag: $TAG"
+
+          # <entrypoint>-v<semver>. Plugin directory names are the plugin's
+          # entrypoint: ^[a-z][a-z0-9_]*$ (no hyphens), so the split is exact.
+          pattern='^([a-z][a-z0-9_]*)-v([0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?)$'
+          if [[ ! "$TAG" =~ $pattern ]]; then
+            echo "::error::Tag '$TAG' is not of the form <plugin>-v<semver>, e.g. youtube_music-v0.1.0"
+            exit 1
+          fi
+          PLUGIN="${BASH_REMATCH[1]}"
+          VERSION="${BASH_REMATCH[2]}"
+          DIR="plugins/${PLUGIN}"
+          MANIFEST="${DIR}/plugin.json"
+
+          if [ ! -d "$DIR" ]; then
+            echo "::error::Tag '$TAG' names plugin '$PLUGIN' but $DIR does not exist."
+            exit 1
+          fi
+          if [ ! -f "$MANIFEST" ]; then
+            echo "::error::Tag '$TAG' names plugin '$PLUGIN' but $MANIFEST does not exist."
+            exit 1
+          fi
+
+          MANIFEST_VERSION="$(jq -r '.version // empty' "$MANIFEST")"
+          if [ -z "$MANIFEST_VERSION" ]; then
+            echo "::error::$MANIFEST has no \"version\" field."
+            exit 1
+          fi
+          if [ "$MANIFEST_VERSION" != "$VERSION" ]; then
+            echo "::error::Version mismatch — tag says '$VERSION' but $MANIFEST says '$MANIFEST_VERSION'. Refusing to publish."
+            exit 1
+          fi
+
+          MANIFEST_ID="$(jq -r '.id // empty' "$MANIFEST")"
+          echo "plugin=$PLUGIN"           >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION"         >> "$GITHUB_OUTPUT"
+          echo "dir=$DIR"                 >> "$GITHUB_OUTPUT"
+          echo "manifest=$MANIFEST"       >> "$GITHUB_OUTPUT"
+          echo "plugin_id=$MANIFEST_ID"   >> "$GITHUB_OUTPUT"
+          echo "bundle=dist/${PLUGIN}-${VERSION}.swayveplugin" >> "$GITHUB_OUTPUT"
+          echo "checksum=dist/${PLUGIN}-${VERSION}.sha256"     >> "$GITHUB_OUTPUT"
+          {
+            echo "### Releasing \`$MANIFEST_ID\` $VERSION"
+            echo ""
+            echo "Tag \`$TAG\` matches \`$MANIFEST\`."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Decide whether the Flutter toolchain is needed
+        id: toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          any_flutter=false
+          while IFS= read -r pubspec; do
+            if grep -Eq '^[[:space:]]+sdk:[[:space:]]*flutter[[:space:]]*$' "$pubspec" \
+               || grep -Eq '^flutter:[[:space:]]*$' "$pubspec"; then
+              any_flutter=true
+            fi
+          done < <(find . -maxdepth 3 -name pubspec.yaml \
+                     -not -path './.dart_tool/*' \
+                     -not -path '*/build/*' \
+                     -not -path '*/.git/*' | sort)
+          echo "any_flutter=$any_flutter" >> "$GITHUB_OUTPUT"
+
+      # Flutter first, pinned Dart second: the later toolchain wins on PATH, so
+      # `dart` is always the pinned SDK (packaging determinism) while `flutter`
+      # stays available for any Flutter package's tests.
+      - name: Set up Flutter
+        if: steps.toolchain.outputs.any_flutter == 'true'
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Set up Dart
+        uses: dart-lang/setup-dart@v1
+        with:
+          sdk: ${{ env.DART_SDK_VERSION }}
+
+      - name: dart pub get (repo root — swayve_plugin_tools)
+        run: dart pub get
+
+      # ---------------------------------------------------------------------
+      # 2. Validate and test. Nothing below this line runs if either fails.
+      # ---------------------------------------------------------------------
+      - name: Validate the plugin being released (strict)
+        run: dart run tools/validate_plugin.dart ${{ steps.tag.outputs.dir }} --strict
+
+      - name: Validate every plugin (strict)
+        run: dart run tools/validate_plugin.dart --all --strict
+
+      - name: Run every package's tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          failed=0
+          while IFS= read -r pubspec; do
+            dir="$(dirname "$pubspec")"
+            dir="${dir#./}"
+            [ -z "$dir" ] && dir="."
+            [ -d "$dir/test" ] || continue
+
+            runner="dart"
+            if grep -Eq '^[[:space:]]+sdk:[[:space:]]*flutter[[:space:]]*$' "$pubspec" \
+               || grep -Eq '^flutter:[[:space:]]*$' "$pubspec"; then
+              runner="flutter"
+            fi
+
+            echo "::group::tests — $dir ($runner)"
+            (
+              cd "$dir"
+              if [ "$runner" = "flutter" ]; then
+                flutter pub get && flutter test
+              else
+                dart pub get && dart test
+              fi
+            ) || failed=1
+            echo "::endgroup::"
+          done < <(find . -maxdepth 3 -name pubspec.yaml \
+                     -not -path './.dart_tool/*' \
+                     -not -path '*/build/*' \
+                     -not -path '*/.git/*' | sort)
+
+          if [ "$failed" -ne 0 ]; then
+            echo "::error::Tests failed — refusing to publish."
+            exit 1
+          fi
+
+      # ---------------------------------------------------------------------
+      # 3. Package.
+      # ---------------------------------------------------------------------
+      - name: Package the plugin
+        run: dart run tools/package_plugin.dart ${{ steps.tag.outputs.dir }} --out dist
+
+      # ---------------------------------------------------------------------
+      # 4. Verify the produced bundle before it is allowed anywhere near a
+      #    release: extraction safety, integrity.json, manifest agreement.
+      # ---------------------------------------------------------------------
+      - name: Verify the bundle
+        run: dart run tools/verify_package.dart ${{ steps.tag.outputs.bundle }}
+
+      # ---------------------------------------------------------------------
+      # 5. Checksum. package_plugin.dart already emits <name>-<version>.sha256;
+      #    this recomputes it independently, cross-checks it if present, and
+      #    writes it if the tool did not.
+      # ---------------------------------------------------------------------
+      - name: Generate and cross-check the SHA-256 checksum
+        id: checksum
+        shell: bash
+        run: |
+          set -euo pipefail
+          BUNDLE="${{ steps.tag.outputs.bundle }}"
+          SUM="${{ steps.tag.outputs.checksum }}"
+
+          if [ ! -f "$BUNDLE" ]; then
+            echo "::error::Expected bundle $BUNDLE was not produced."
+            exit 1
+          fi
+
+          HEX="$(sha256sum "$BUNDLE" | awk '{print $1}')"
+
+          if [ -f "$SUM" ]; then
+            if ! grep -qi -- "$HEX" "$SUM"; then
+              echo "::error::$SUM does not contain the recomputed digest $HEX."
+              echo "--- $SUM ---"; cat "$SUM"
+              exit 1
+            fi
+            echo "Checksum file already produced by package_plugin.dart and agrees."
+          else
+            printf '%s  %s\n' "$HEX" "$(basename "$BUNDLE")" > "$SUM"
+            echo "Wrote $SUM"
+          fi
+
+          # The bundle's own canonical digest (see docs/packaging.md §8).
+          INTERNAL="$(unzip -p "$BUNDLE" integrity.json 2>/dev/null | jq -r '.digest // empty' || true)"
+
+          echo "sha256=$HEX"          >> "$GITHUB_OUTPUT"
+          echo "digest=$INTERNAL"     >> "$GITHUB_OUTPUT"
+          {
+            echo ""
+            echo "| artifact | value |"
+            echo "| --- | --- |"
+            echo "| file sha256 | \`$HEX\` |"
+            echo "| bundle digest | \`${INTERNAL:-n/a}\` |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Compose release notes
+        id: notes
+        shell: bash
+        run: |
+          set -euo pipefail
+          PLUGIN="${{ steps.tag.outputs.plugin }}"
+          VERSION="${{ steps.tag.outputs.version }}"
+          BUNDLE_NAME="$(basename "${{ steps.tag.outputs.bundle }}")"
+          SUM_NAME="$(basename "${{ steps.tag.outputs.checksum }}")"
+          PLUGIN_ID="${{ steps.tag.outputs.plugin_id }}"
+          HEX="${{ steps.checksum.outputs.sha256 }}"
+          DIGEST="${{ steps.checksum.outputs.digest }}"
+
+          cat > release-notes.md <<EOF
+          ## ${PLUGIN} ${VERSION}
+
+          Plugin id: \`${PLUGIN_ID}\`
+          Built from \`${GITHUB_SHA}\` by [\`${GITHUB_WORKFLOW}\`](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}).
+          Validated with \`--strict\` (warnings treated as errors) and verified with \`tools/verify_package.dart\` before publishing.
+
+          ### Artifacts
+
+          | file | sha256 |
+          | --- | --- |
+          | \`${BUNDLE_NAME}\` | \`${HEX}\` |
+
+          Canonical bundle digest (\`integrity.json\` → \`digest\`): \`${DIGEST:-see integrity.json}\`
+
+          ### Verify before you install
+
+          \`\`\`bash
+          # 1. The download matches the checksum published with it.
+          sha256sum -c ${SUM_NAME}
+
+          # 2. The bundle's internal integrity and manifest are intact.
+          #    (from a checkout of dazacode/swayve-plugins)
+          dart pub get
+          dart run tools/verify_package.dart ${BUNDLE_NAME}
+          \`\`\`
+
+          The digest above is computed over the bundle's contents, not over the
+          archive, so it is stable across re-downloads: packaging the same source
+          twice produces a byte-identical bundle.
+          EOF
+
+          echo "--- release-notes.md ---"
+          cat release-notes.md
+
+      # ---------------------------------------------------------------------
+      # 6. Publish.
+      # ---------------------------------------------------------------------
+      - name: Create the GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ steps.tag.outputs.plugin }} ${{ steps.tag.outputs.version }}
+          tag_name: ${{ github.ref_name }}
+          body_path: release-notes.md
+          draft: false
+          prerelease: ${{ contains(steps.tag.outputs.version, '-') }}
+          fail_on_unmatched_files: true
+          files: |
+            ${{ steps.tag.outputs.bundle }}
+            ${{ steps.tag.outputs.checksum }}

@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "id": "com.example.plugins.no_licenses",
+  "name": "No Licenses",
+  "description": "Valid manifest, but licenses/ is empty so it cannot be packaged.",
+  "version": "1.0.0",
+  "author": { "name": "Example Co" },
+  "license": "Apache-2.0",
+  "swayvePluginApi": 1,
+  "minimumSwayveVersion": "0.1.0",
+  "runtime": "compiled",
+  "platforms": ["android"],
+  "capabilities": ["search"],
+  "permissions": ["network"],
+  "entrypoint": "no_licenses",
+  "network": { "hosts": ["api.example.com"] }
+}

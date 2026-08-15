@@ -1,0 +1,186 @@
+name: Plugin proposal
+description: Propose a new plugin, or a new capability/permission an existing plugin needs.
+title: "[plugin]: "
+labels: ["plugin-proposal", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Propose a plugin **before** building it. Capabilities and permissions are
+        a closed, versioned vocabulary and the host must stay completely
+        provider-agnostic, so the design conversation has to happen first.
+
+        Read `docs/capabilities.md`, `docs/permissions.md` and `CONTRIBUTING.md`
+        before filling this in.
+
+  - type: input
+    id: plugin_id
+    attributes:
+      label: Proposed plugin id
+      description: >-
+        Reverse-DNS, at least three segments, lowercase
+        (`^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*){2,}$`). Only Swayve-authored
+        plugins may use the `app.swayve.plugins.` namespace.
+      placeholder: com.example.plugins.my_service
+    validations:
+      required: true
+
+  - type: input
+    id: entrypoint
+    attributes:
+      label: Entrypoint / directory name
+      description: >-
+        The last id segment, `^[a-z][a-z0-9_]*$`. It must equal the directory
+        name under `plugins/`.
+      placeholder: my_service
+    validations:
+      required: true
+
+  - type: input
+    id: service
+    attributes:
+      label: External service
+      description: The service this plugin talks to, and a link to its API or docs.
+      placeholder: Example Music — https://developer.example.com/docs
+    validations:
+      required: true
+
+  - type: textarea
+    id: purpose
+    attributes:
+      label: What it does for the user
+      description: One paragraph. What can a Swayve user do that they could not before?
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: capabilities
+    attributes:
+      label: Capabilities it needs
+      description: >-
+        Each capability maps 1:1 to a provider interface. Tick only what you will
+        actually implement.
+      options:
+        - label: "`search`"
+        - label: "`catalog`"
+        - label: "`streaming`"
+        - label: "`metadata`"
+        - label: "`lyrics`"
+        - label: "`scrobbling`"
+        - label: "`authentication`"
+        - label: "`webview`"
+        - label: "`artwork`"
+        - label: "`playlist_read`"
+
+  - type: textarea
+    id: capabilities_why
+    attributes:
+      label: Why each capability is needed
+      description: One line per ticked capability, naming the user-facing feature it enables.
+      placeholder: |
+        search — lets Explore return this service's tracks alongside local ones
+        streaming — resolves a playable URL so the host can play a result
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: permissions
+    attributes:
+      label: Permissions it needs
+      description: >-
+        Declaring a permission no capability implies is over-permissioning and
+        the validator will warn (and CI will fail on it).
+      options:
+        - label: "`network`"
+        - label: "`webview`"
+        - label: "`external_auth`"
+        - label: "`local_plugin_storage`"
+        - label: "`clipboard`"
+
+  - type: textarea
+    id: permissions_why
+    attributes:
+      label: Why each permission is needed
+      description: >-
+        Justify each one in terms of the capability that requires it. "Because
+        the API needs it" is not a justification — say which call, to which host,
+        for what.
+    validations:
+      required: true
+
+  - type: textarea
+    id: network_hosts
+    attributes:
+      label: Outbound hosts
+      description: >-
+        The exact hostnames this plugin will contact, as they will appear in
+        `network.hosts`. Wildcards like `*.example.com` are allowed but must be
+        justified.
+      render: text
+      placeholder: |
+        api.example.com
+        *.cdn.example.com
+    validations:
+      required: false
+
+  - type: textarea
+    id: auth
+    attributes:
+      label: How authentication works
+      description: >-
+        Anonymous, API key, OAuth, or a host-presented web view? Where does the
+        credential live (it must be the host credential store, never plugin
+        storage), what does the user see, and what happens when it expires or is
+        revoked? If the plugin needs no auth, say "none" and why.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: runtime
+    attributes:
+      label: Runtime
+      description: >-
+        `compiled` ships with the app; `bundled` is a declarative
+        `.swayveplugin` archive and is rejected on iOS. See docs/platforms.md.
+      options:
+        - compiled
+        - bundled
+    validations:
+      required: true
+
+  - type: dropdown
+    id: platforms
+    attributes:
+      label: Target platforms
+      multiple: true
+      options:
+        - android
+        - ios
+        - windows
+        - macos
+        - linux
+    validations:
+      required: true
+
+  - type: textarea
+    id: legal
+    attributes:
+      label: Terms of service and licensing
+      description: >-
+        Does the service's ToS permit this access? What licence will the plugin
+        ship under (SPDX id), and does it need third-party notices in
+        `licenses/`?
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: confirmations
+    attributes:
+      label: Before submitting
+      options:
+        - label: This plugin needs no host-side, plugin-specific branching — everything it does goes through existing SDK provider interfaces.
+          required: true
+        - label: I have read docs/capabilities.md and docs/permissions.md and used only the existing vocabulary (or explained below why a new term is unavoidable).
+          required: true
+        - label: I intend to implement and maintain this plugin, including its tests.
+          required: true

@@ -1,0 +1,118 @@
+name: Bug report
+description: Something in a plugin, the SDK or the tooling behaves incorrectly.
+title: "[bug]: "
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug.
+
+        **Do not include tokens, cookies, account credentials or any other
+        secret** in this issue — logs from a plugin can contain them. Redact
+        before pasting. If the problem is a security vulnerability, do not file
+        it here: follow `SECURITY.md` instead.
+
+  - type: input
+    id: plugin_id
+    attributes:
+      label: Plugin id
+      description: The `id` field from the plugin's `plugin.json`.
+      placeholder: app.swayve.plugins.youtube_music
+    validations:
+      required: true
+
+  - type: input
+    id: plugin_version
+    attributes:
+      label: Plugin version
+      description: The `version` field from `plugin.json`, or the release tag you installed.
+      placeholder: 0.1.0
+    validations:
+      required: true
+
+  - type: input
+    id: swayve_version
+    attributes:
+      label: Swayve version
+      description: The Swayve client version this happened on (Settings → About).
+      placeholder: 1.1.0+2
+    validations:
+      required: true
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      description: Where the problem happens. Pick every platform you reproduced it on.
+      multiple: true
+      options:
+        - android
+        - ios
+        - windows
+        - macos
+        - linux
+        - "not platform specific"
+    validations:
+      required: true
+
+  - type: input
+    id: os_version
+    attributes:
+      label: OS version
+      description: e.g. Android 15, iOS 26.1, Windows 11 26200.
+      placeholder: Windows 11 26200
+    validations:
+      required: false
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Exact steps, in order. A report we cannot reproduce cannot be fixed.
+      placeholder: |
+        1. Open Explore
+        2. Search for "…"
+        3. Tap the first result
+        4. …
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected to happen
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: What actually happened
+      description: Include the exact error text or the "Temporarily unavailable" state if you saw one.
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or validator output
+      description: >-
+        Output of `dart run tools/validate_plugin.dart plugins/<name>` or any
+        relevant client log. Redact secrets first. This is rendered as a code
+        block, no backticks needed.
+      render: text
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: confirmations
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched existing issues and this is not a duplicate.
+          required: true
+        - label: I have redacted all tokens, credentials and personal data.
+          required: true
+        - label: This is a bug, not a security vulnerability (those go through SECURITY.md).
+          required: true

@@ -1,0 +1,159 @@
+# Runtimes and platforms
+
+This is the document to read before you design a plugin, because it decides what
+your plugin is allowed to *be*.
+
+Two manifest fields interact here:
+
+```json
+"runtime": "compiled",
+"platforms": ["android", "ios", "windows"]
+```
+
+and one combination is rejected outright.
+
+---
+
+## `compiled` vs `bundled`
+
+| | `compiled` | `bundled` |
+|---|---|---|
+| What it is | Dart code compiled into a Swayve build at app build time | A `.swayveplugin` archive the host loads at runtime |
+| Where the source lives | In this repository | Anywhere; published as a GitHub Release asset |
+| How it reaches a user | Inside the app they installed | Downloaded after the app is installed |
+| Can execute Dart | Yes — it *is* app code, subject to review and the SDK interfaces | **No.** v1 carries declarative data only |
+| Android / Windows / macOS / Linux | allowed | allowed |
+| iOS | allowed | **rejected — hard error** |
+| Update cadence | App release | Independent of the app |
+
+The trade is exactly what it looks like: `compiled` gives you real behaviour at
+the cost of shipping with the app; `bundled` gives you independent updates at
+the cost of not being able to run code.
+
+Both reference plugins in this repository — `example` and `youtube_music` — are
+`runtime: compiled`. Their source lives here and is compiled into Swayve
+dev and test builds **through the SDK interfaces only**, never through a
+client-side special case for their ids.
+
+## Platform matrix
+
+| Platform | `compiled` | `bundled` | Notes |
+|---|---|---|---|
+| `android` | ✅ | ✅ (declarative only) | |
+| `ios` | ✅ | ❌ **validator error** | See below. Non-negotiable. |
+| `windows` | ✅ | ✅ (declarative only) | |
+| `macos` | ✅ | ✅ (declarative only) | |
+| `linux` | ✅ | ✅ (declarative only) | |
+
+`platforms` must be non-empty and is a claim about where the plugin has actually
+been exercised, not a wish list. `youtube_music` lists
+`["android", "ios", "windows"]` because those are the platforms it has been run
+on; adding `linux` because it "should work" is how a plugin ends up broken for
+the one user who tried it.
+
+At load time the host checks that `platforms` contains the running platform, and
+that the plugin's `runtime` is supported there. Failing either is a
+compatibility rejection with a user-readable reason —
+*"YouTube Music is not available on this device."* — not a crash. See
+[versioning.md](versioning.md#the-compatibility-check-order).
+
+Note that no host loads `bundled` archives today, on any platform: the Swayve
+client has no plugin loader yet at all. `bundled` is a specified format with a
+validator, a packager and a verifier behind it, and no runtime consumer. See
+[host-integration.md](host-integration.md).
+
+---
+
+## The iOS restriction
+
+**Swayve cannot download and execute arbitrary compiled Dart or native code on
+iOS.**
+
+That is the whole rule. It is not a configuration option, not a limitation of
+the current implementation, and not something a future version will lift. Apple
+does not permit an app to download and run executable code that was not part of
+the reviewed binary, and Dart's iOS toolchain compiles ahead of time for exactly
+that reason — there is no JIT to feed and no dynamic library to load. Both the
+policy and the runtime point the same way.
+
+So:
+
+- **`runtime: bundled` in v1 carries declarative data only.** A manifest,
+  assets, settings descriptors, host-interpreted configuration. It carries **no
+  executable Dart**. This is true on every platform, not only iOS — a format
+  that can execute code somewhere and not elsewhere would be a format nobody
+  could reason about.
+- **The validator hard-errors on `bundled` + `ios`:**
+
+  ```
+    ERROR   platforms: runtime 'bundled' cannot be listed for 'ios'; a runtime-loaded bundle is not permitted on that platform, so the plugin must be 'compiled' or drop 'ios'   (plugin.json:14)
+  ```
+
+  Diagnostic code `bundled_runtime_not_allowed_on_ios`. There is no override
+  flag, no `--allow-unsafe`, and no environment variable. Packaging refuses;
+  loading would refuse too.
+- **The route to iOS is `compiled`.** If your plugin needs to run code on
+  iPhone, its source belongs in this repository, reviewed, and compiled into the
+  app. That is not a workaround — it is the supported path, and it is what
+  `youtube_music` does.
+
+### Why the error and not a warning
+
+A warning would be a lie of convenience. A `bundled` plugin declaring `ios`
+describes an artefact that cannot exist: either it contains code, in which case
+iOS will never run it, or it contains no code, in which case declaring `ios`
+promises a user a plugin that will do nothing. Failing at validation time costs
+the developer thirty seconds. Failing at install time costs a user their trust
+in the app.
+
+### What "declarative data only" means in practice
+
+v1's `bundled` payload is data the *host* interprets. The host's interpreter is
+fixed code, shipped in the reviewed app binary; the bundle chooses among
+behaviours the host already has. That distinction — choosing among reviewed
+behaviours versus supplying new ones — is what keeps it on the right side of the
+line, and it is the same distinction that makes a JSON config file acceptable
+where a downloaded `.so` is not.
+
+When `bundled` grows real behaviour, it will grow as a **host-interpreted
+declarative format** — a richer vocabulary the host already knows how to
+execute. It will never become arbitrary code. Anything that would require
+shipping new logic to the device is a `compiled` plugin, by definition.
+
+### What this rules out, honestly
+
+Worth saying plainly so nobody designs against it:
+
+- No third-party plugin marketplace with runtime installation on iOS.
+- No hot-fixing a plugin's parsing logic on iOS without an app release.
+- No "just download the newer version of the plugin" support answer on iOS.
+- No plugin that is genuinely independent of the Swayve release cycle on iOS.
+
+Android, Windows, macOS and Linux could technically allow more. v1 does not take
+that path, because a plugin that behaves differently by platform is a plugin
+nobody can support, and an ecosystem split along an OS boundary is worse than a
+smaller one that is the same everywhere.
+
+---
+
+## Choosing a runtime
+
+| If your plugin… | Use |
+|---|---|
+| Talks to an API, parses responses, resolves playback | `compiled` |
+| Implements any provider interface at all | `compiled` |
+| Needs to work on iOS | `compiled` |
+| Is configuration, assets, or a description of something the host already knows how to do | `bundled` |
+| Must update independently of Swayve releases, and does not need to run code | `bundled` |
+
+In practice, every plugin that implements a provider interface is `compiled`,
+because provider interfaces are Dart. If you are unsure, you want `compiled`.
+
+---
+
+## See also
+
+- [packaging.md](packaging.md) — the `.swayveplugin` format and why encryption is not the model
+- [plugin-manifest.md](plugin-manifest.md#4-bundled--ios--error) — the validator rule
+- [publishing.md](publishing.md) — how a `bundled` archive is distributed
+- [host-integration.md](host-integration.md) — what a host must implement to load anything at all

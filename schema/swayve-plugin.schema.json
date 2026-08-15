@@ -1,0 +1,357 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://swayve.app/schema/swayve-plugin.schema.json",
+  "title": "Swayve plugin manifest",
+  "description": "Structure of a Swayve plugin's plugin.json. schemaVersion 1. This file is the published contract; cross-field rules that a JSON Schema cannot express live in swayve_plugin_tools and are documented in schema/README.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "id",
+    "name",
+    "description",
+    "version",
+    "author",
+    "license",
+    "swayvePluginApi",
+    "minimumSwayveVersion",
+    "runtime",
+    "platforms",
+    "capabilities",
+    "permissions",
+    "entrypoint"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "description": "Manifest schema version. Always 1 in v1.",
+      "type": "integer",
+      "const": 1,
+      "minimum": 1
+    },
+    "id": {
+      "description": "Globally unique reverse-DNS plugin id, at least three segments.",
+      "$ref": "#/$defs/pluginId"
+    },
+    "name": {
+      "description": "Human readable plugin name. No emoji.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "description": {
+      "description": "One paragraph describing what the plugin adds to Swayve.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 280
+    },
+    "version": {
+      "description": "Plugin version, strict SemVer 2.0.0.",
+      "$ref": "#/$defs/semver"
+    },
+    "author": {
+      "description": "Who publishes this plugin.",
+      "$ref": "#/$defs/author"
+    },
+    "license": {
+      "description": "SPDX licence identifier, for example Apache-2.0.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9.+-]*$"
+    },
+    "swayvePluginApi": {
+      "description": "SDK major API level this plugin targets. v1 plugins declare 1.",
+      "type": "integer",
+      "minimum": 1
+    },
+    "minimumSwayveVersion": {
+      "description": "Lowest Swayve client version this plugin runs on.",
+      "$ref": "#/$defs/semver"
+    },
+    "runtime": {
+      "description": "How the plugin reaches the device.",
+      "$ref": "#/$defs/runtime"
+    },
+    "platforms": {
+      "description": "Platforms the plugin supports.",
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/platform" }
+    },
+    "capabilities": {
+      "description": "Provider interfaces the plugin implements.",
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/capability" }
+    },
+    "permissions": {
+      "description": "Host facilities the plugin is allowed to touch. May be empty.",
+      "type": "array",
+      "minItems": 0,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/permission" }
+    },
+    "entrypoint": {
+      "description": "Dart library / registration symbol the host resolves. Also the plugin's directory name.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9_]*$"
+    },
+    "homepage": {
+      "description": "Public page describing the plugin.",
+      "$ref": "#/$defs/httpUrl"
+    },
+    "repository": {
+      "description": "Source repository for the plugin.",
+      "$ref": "#/$defs/httpUrl"
+    },
+    "icon": {
+      "description": "Relative path to the plugin icon, inside assets/, png or svg.",
+      "$ref": "#/$defs/assetPath"
+    },
+    "media": {
+      "description": "What the plugin claims it can do with media. Three independent facts.",
+      "$ref": "#/$defs/media"
+    },
+    "settings": {
+      "description": "Settings the host renders on the plugin's behalf.",
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 32,
+      "items": { "$ref": "#/$defs/settingDescriptor" }
+    },
+    "network": {
+      "description": "Outbound network the plugin declares up front.",
+      "$ref": "#/$defs/network"
+    },
+    "timeouts": {
+      "description": "Plugin-requested timeout budget. The host still applies its own hard limits.",
+      "$ref": "#/$defs/timeouts"
+    },
+    "keywords": {
+      "description": "Lowercase discovery keywords.",
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 10,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/keyword" }
+    }
+  },
+  "$defs": {
+    "semver": {
+      "$comment": "Strict SemVer 2.0.0, the regex published at semver.org.",
+      "type": "string",
+      "minLength": 5,
+      "maxLength": 128,
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$"
+    },
+    "pluginId": {
+      "$comment": "Reverse-DNS, three or more lowercase segments.",
+      "type": "string",
+      "minLength": 5,
+      "maxLength": 128,
+      "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*){2,}$"
+    },
+    "httpUrl": {
+      "type": "string",
+      "format": "uri",
+      "minLength": 8,
+      "maxLength": 512,
+      "pattern": "^https?://[^\\s]+$"
+    },
+    "email": {
+      "type": "string",
+      "format": "email",
+      "minLength": 3,
+      "maxLength": 254,
+      "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"
+    },
+    "assetPath": {
+      "$comment": "Relative, inside assets/, no traversal, no drive letter, no backslash.",
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 256,
+      "pattern": "^assets/(?:[A-Za-z0-9_-]+/)*[A-Za-z0-9_-]+\\.(?:png|svg)$"
+    },
+    "hostPattern": {
+      "$comment": "A hostname, optionally with a single leading *. wildcard label.",
+      "type": "string",
+      "minLength": 4,
+      "maxLength": 253,
+      "pattern": "^(\\*\\.)?[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$"
+    },
+    "keyword": {
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 32,
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "settingId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 48,
+      "pattern": "^[a-z][a-z0-9_]*$"
+    },
+    "capability": {
+      "description": "Closed capability vocabulary. Each entry maps to exactly one provider interface.",
+      "type": "string",
+      "enum": [
+        "search",
+        "catalog",
+        "streaming",
+        "metadata",
+        "lyrics",
+        "scrobbling",
+        "authentication",
+        "webview",
+        "artwork",
+        "playlist_read"
+      ]
+    },
+    "permission": {
+      "description": "Closed permission vocabulary. Anything not listed is not grantable in v1.",
+      "type": "string",
+      "enum": [
+        "network",
+        "webview",
+        "external_auth",
+        "local_plugin_storage",
+        "clipboard"
+      ]
+    },
+    "platform": {
+      "type": "string",
+      "enum": ["android", "ios", "windows", "macos", "linux"]
+    },
+    "runtime": {
+      "description": "compiled ships inside a Swayve build; bundled is a .swayveplugin loaded at runtime and is not permitted on iOS.",
+      "type": "string",
+      "enum": ["compiled", "bundled"]
+    },
+    "settingType": {
+      "type": "string",
+      "enum": ["string", "bool", "int", "select", "secret"]
+    },
+    "author": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "description": "Publishing person or organisation.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "url": { "$ref": "#/$defs/httpUrl" },
+        "email": { "$ref": "#/$defs/email" }
+      }
+    },
+    "media": {
+      "$comment": "Streamable, downloadable and offline-cacheable are three independent facts. Never derive one from another.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [],
+      "properties": {
+        "streamable": { "type": "boolean", "default": false },
+        "downloadable": { "type": "boolean", "default": false },
+        "offlineCache": { "type": "boolean", "default": false }
+      }
+    },
+    "network": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["hosts"],
+      "properties": {
+        "hosts": {
+          "description": "Outbound hostnames the plugin may reach through the host HTTP client.",
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 64,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/hostPattern" }
+        }
+      }
+    },
+    "timeouts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [],
+      "properties": {
+        "requestMs": {
+          "description": "Budget for a single outbound request.",
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 30000
+        },
+        "operationMs": {
+          "description": "Budget for a whole provider operation.",
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 60000
+        }
+      }
+    },
+    "settingOption": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "label"],
+      "properties": {
+        "value": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "label": { "type": "string", "minLength": 1, "maxLength": 48 }
+      }
+    },
+    "settingDescriptor": {
+      "description": "One host-rendered setting. The plugin never renders its own settings page.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "label"],
+      "properties": {
+        "id": { "$ref": "#/$defs/settingId" },
+        "type": { "$ref": "#/$defs/settingType" },
+        "label": { "type": "string", "minLength": 1, "maxLength": 48 },
+        "description": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "default": {
+          "description": "Must match the declared type.",
+          "type": ["string", "boolean", "integer"]
+        },
+        "required": { "type": "boolean", "default": false },
+        "options": {
+          "description": "Required for type select, forbidden otherwise.",
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 64,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/settingOption" }
+        },
+        "min": { "type": "integer" },
+        "max": { "type": "integer" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": ["type"],
+            "properties": { "type": { "const": "select" } }
+          },
+          "then": { "required": ["options"] },
+          "else": { "not": { "required": ["options"] } }
+        },
+        {
+          "if": {
+            "required": ["type"],
+            "properties": { "type": { "const": "int" } }
+          },
+          "else": {
+            "allOf": [
+              { "not": { "required": ["min"] } },
+              { "not": { "required": ["max"] } }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

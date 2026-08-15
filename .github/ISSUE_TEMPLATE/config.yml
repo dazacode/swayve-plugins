@@ -1,0 +1,19 @@
+# Every issue must go through a form: a bug we cannot reproduce and a plugin
+# proposal without its permission justification both cost more than they give.
+blank_issues_enabled: false
+contact_links:
+  - name: Questions, ideas and design discussion
+    url: https://github.com/dazacode/swayve-plugins/discussions
+    about: >-
+      Not sure it is a bug, or want to talk through a design before proposing a
+      plugin? Start a discussion.
+  - name: Plugin development docs
+    url: https://github.com/dazacode/swayve-plugins/blob/main/docs/development.md
+    about: >-
+      How to build, validate, package and test a Swayve plugin. Read this before
+      filing a "how do I…" issue.
+  - name: Report a security vulnerability
+    url: https://github.com/dazacode/swayve-plugins/blob/main/SECURITY.md
+    about: >-
+      Never file a vulnerability as a public issue. SECURITY.md explains how to
+      report one privately.

@@ -1,0 +1,138 @@
+name: test
+
+# Run every package's test suite. Packages are discovered from disk, not from a
+# hardcoded list, because this repo is a set of independent packages (no pub
+# workspace) that grows every time a plugin is added.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: test-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+env:
+  DART_SDK_VERSION: "3.13.0"
+
+jobs:
+  discover:
+    name: discover testable packages
+    runs-on: ubuntu-latest
+    outputs:
+      test_packages: ${{ steps.find.outputs.test_packages }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Find packages that have a test/ directory
+        id: find
+        shell: bash
+        run: |
+          set -euo pipefail
+          entries=""
+
+          while IFS= read -r pubspec; do
+            dir="$(dirname "$pubspec")"
+            dir="${dir#./}"
+            [ -z "$dir" ] && dir="."
+
+            # Only packages with tests take a matrix leg.
+            [ -d "$dir/test" ] || continue
+
+            name="$(sed -n 's/^name:[[:space:]]*\([A-Za-z0-9_]*\).*$/\1/p' "$pubspec" | head -n 1)"
+            [ -z "$name" ] && name="$(basename "$dir")"
+
+            # Flutter is needed only when the package depends on the Flutter SDK
+            # ("sdk: flutter") or declares a top-level "flutter:" block.
+            # plugins/youtube_music may; the SDK and plugins/example must not.
+            runner="dart"
+            if grep -Eq '^[[:space:]]+sdk:[[:space:]]*flutter[[:space:]]*$' "$pubspec" \
+               || grep -Eq '^flutter:[[:space:]]*$' "$pubspec"; then
+              runner="flutter"
+            fi
+
+            entry="$(jq -cn \
+              --arg dir "$dir" \
+              --arg name "$name" \
+              --arg runner "$runner" \
+              '{dir: $dir, name: $name, runner: $runner}')"
+            entries="${entries}${entry}"$'\n'
+          done < <(find . -maxdepth 3 -name pubspec.yaml \
+                     -not -path './.dart_tool/*' \
+                     -not -path '*/build/*' \
+                     -not -path '*/.git/*' | sort)
+
+          test_packages="$(printf '%s' "$entries" | jq -sc '.')"
+          echo "test_packages=$test_packages" >> "$GITHUB_OUTPUT"
+          echo "Testable packages:"
+          printf '%s' "$entries" | jq -r '"  \(.dir)  (\(.name), runner=\(.runner))"'
+
+  test:
+    name: test ${{ matrix.package.name }} (ubuntu)
+    needs: discover
+    if: needs.discover.outputs.test_packages != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package: ${{ fromJson(needs.discover.outputs.test_packages) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Dart
+        if: matrix.package.runner == 'dart'
+        uses: dart-lang/setup-dart@v1
+        with:
+          sdk: ${{ env.DART_SDK_VERSION }}
+
+      # Only one toolchain is installed per leg: the Flutter SDK bundles its own
+      # Dart, and having both on PATH is how version skew sneaks in.
+      - name: Set up Flutter
+        if: matrix.package.runner == 'flutter'
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: pub get
+        working-directory: ${{ matrix.package.dir }}
+        run: |
+          if [ "${{ matrix.package.runner }}" = "flutter" ]; then
+            flutter pub get
+          else
+            dart pub get
+          fi
+
+      - name: run tests
+        working-directory: ${{ matrix.package.dir }}
+        run: |
+          if [ "${{ matrix.package.runner }}" = "flutter" ]; then
+            flutter test
+          else
+            dart test
+          fi
+
+  # ---------------------------------------------------------------------------
+  # The maintainer develops on Windows and the packaging code touches paths,
+  # path separators and line endings. A determinism or path bug in
+  # swayve_plugin_tools would hide on Linux and only show up here, so the root
+  # tool package is tested on Windows as well as Linux.
+  # ---------------------------------------------------------------------------
+  test-tools-windows:
+    name: test swayve_plugin_tools (windows)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: ${{ env.DART_SDK_VERSION }}
+
+      - name: dart pub get
+        run: dart pub get
+
+      - name: dart test
+        run: dart test

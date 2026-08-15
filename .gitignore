@@ -1,0 +1,75 @@
+# ---------------------------------------------------------------------------
+# swayve-plugins — multi-package Dart repository (NOT a pub workspace).
+# Each package resolves independently, so build output appears in every
+# package directory, not just at the root.
+# ---------------------------------------------------------------------------
+
+# Dart / pub build output (root and every nested package)
+.dart_tool/
+.packages
+.pub/
+.pub-cache/
+build/
+doc/api/
+coverage/
+*.dart.js
+*.js_
+*.js.deps
+*.js.map
+
+# Packaging output. `dart run tools/package_plugin.dart --out dist` writes the
+# .swayveplugin bundle and its .sha256 here; releases attach those artifacts
+# from CI, so the directory is never committed.
+dist/
+
+# ---------------------------------------------------------------------------
+# pubspec.lock policy
+#
+# The repo root package (swayve_plugin_tools) is an *application*: CI runs it
+# (validate/package/verify) and the bundles it produces must be byte-identical
+# across machines and across time. A committed lockfile is what makes that
+# reproducible, so `/pubspec.lock` is deliberately NOT ignored — commit it.
+#
+# Everything under packages/ and plugins/ is a *library* consumed against a
+# range of dependency versions. Committing their lockfiles would pin CI to one
+# resolution and hide breakage that real consumers would hit, so they are
+# ignored below.
+# ---------------------------------------------------------------------------
+packages/**/pubspec.lock
+plugins/**/pubspec.lock
+
+# Flutter (plugins/youtube_music may be a Flutter package)
+.flutter-plugins
+.flutter-plugins-dependencies
+.metadata
+**/ios/Flutter/.last_build_id
+**/android/.gradle/
+
+# IDEs / editors
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+*.code-workspace
+.history/
+*.swp
+*.swo
+*~
+
+# OS cruft
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# Local secrets. A real ed25519 signing key must never be committed
+# (see SECURITY.md). Scoped to the repo root only, so deliberate test key
+# fixtures under test/ are still committable.
+/*.key
+/*.pem
+/*.p12

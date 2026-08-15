@@ -1,0 +1,31 @@
+# Repo-wide lint baseline for swayve-plugins.
+#
+# Every package in this repository points at this file, either directly
+# (`include: package:lints/recommended.yaml` is pulled in transitively) or with
+# a relative include such as `include: ../../analysis_options.yaml`.
+#
+# Keep this file importable: it must not reference packages that are unavailable
+# to a package that includes it. `package:lints` is the only such reference and
+# every package here already depends on it.
+#
+# `public_member_api_docs` is deliberately NOT enabled here. The contract scopes
+# that rule to the SDK only, so `packages/swayve_plugin_sdk` turns it on in its
+# own `analysis_options.yaml` on top of this baseline.
+include: package:lints/recommended.yaml
+
+analyzer:
+  # Test fixtures are miniature packages with their own pubspec.yaml. They exist
+  # to be read as data, not to be analysed as part of whatever package owns
+  # them.
+  exclude:
+    - test/fixtures/**
+  errors:
+    todo: ignore
+
+linter:
+  rules:
+    - always_declare_return_types
+    - avoid_print
+    - prefer_final_locals
+    - require_trailing_commas
+    - unawaited_futures

@@ -1,0 +1,18 @@
+# Lint baseline for package:swayve_plugin_sdk.
+#
+# The SDK is a public, third-party-facing API surface, so it is stricter than
+# the rest of the repository: every public member must be documented and no
+# implicit casts are tolerated in code that parses network-shaped data.
+include: package:lints/recommended.yaml
+
+analyzer:
+  language:
+    strict-casts: true
+
+linter:
+  rules:
+    - always_declare_return_types
+    - prefer_final_locals
+    - public_member_api_docs
+    - require_trailing_commas
+    - unawaited_futures

@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "id": "com.example.plugins.demo_source",
+  "name": "Demo Source",
+  "description": "A minimal, deliberately boring plugin used to exercise the tooling.",
+  "version": "1.0.0",
+  "author": { "name": "Example Co", "url": "https://example.com" },
+  "license": "Apache-2.0",
+  "homepage": "https://example.com/demo-source",
+  "repository": "https://example.com/demo-source.git",
+  "swayvePluginApi": 1,
+  "minimumSwayveVersion": "0.1.0",
+  "runtime": "compiled",
+  "platforms": ["android", "ios", "windows"],
+  "capabilities": ["search", "catalog"],
+  "permissions": ["network"],
+  "entrypoint": "demo_source",
+  "media": { "streamable": true, "downloadable": false, "offlineCache": false },
+  "network": { "hosts": ["api.example.com", "*.cdn.example.com"] },
+  "timeouts": { "requestMs": 10000, "operationMs": 20000 },
+  "settings": [
+    {
+      "id": "region",
+      "type": "select",
+      "label": "Region",
+      "default": "US",
+      "options": [
+        { "value": "US", "label": "United States" },
+        { "value": "GB", "label": "United Kingdom" }
+      ]
+    }
+  ],
+  "keywords": ["demo", "testing"],
+  "icon": "assets/icon.svg"
+}

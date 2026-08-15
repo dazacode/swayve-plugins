@@ -1,0 +1,7 @@
+name: offline_catalogue
+description: Fixture plugin that serves purely local data.
+version: 1.0.0
+publish_to: none
+
+environment:
+  sdk: ^3.6.0

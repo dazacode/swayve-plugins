@@ -1,0 +1,28 @@
+swayve-plugins
+Copyright 2026 Swayve
+
+This product includes software developed at Swayve
+(https://github.com/dazacode/swayve-plugins).
+
+Licensed under the Apache License, Version 2.0. A copy of the License is
+distributed with this repository in the file LICENSE.
+
+---
+
+Third-party notices
+
+The `swayve_plugin_sdk` package has no runtime dependencies other than
+`package:meta` (BSD-3-Clause, © the Dart project authors). Its development
+dependencies (`package:test`, `package:lints`) are not redistributed as part of
+any plugin bundle.
+
+Plugins distributed from this repository each carry their own `licenses/`
+directory containing the plugin's license and the notices of any third-party
+material it bundles. A `.swayveplugin` archive is required to contain a
+non-empty `licenses/` directory; see docs/packaging.md.
+
+The names of the third-party music services that reference plugins interoperate
+with are the trademarks of their respective owners. Swayve is not affiliated
+with, endorsed by, or sponsored by any of them, and no such trademark is
+licensed by this file or by the Apache License, Version 2.0 (see Section 6 of
+the License).

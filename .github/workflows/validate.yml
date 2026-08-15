@@ -1,0 +1,226 @@
+name: validate
+
+# Gate every change: the plugin manifests must validate strictly (warnings are
+# errors in CI), every plugin.json must satisfy the published JSON Schema, and
+# every package must be formatted and analysis-clean.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Superseded runs on the same ref are pointless; cancel them.
+concurrency:
+  group: validate-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+env:
+  # Pinned so a Dart point release can never silently change formatter output.
+  DART_SDK_VERSION: "3.13.0"
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Discover every package in the repo. This repo is NOT a pub workspace: each
+  # pubspec.yaml resolves independently, so everything downstream is driven by
+  # what is actually on disk rather than a hardcoded list that rots.
+  # ---------------------------------------------------------------------------
+  discover:
+    name: discover packages
+    runs-on: ubuntu-latest
+    outputs:
+      packages: ${{ steps.find.outputs.packages }}
+      needs_flutter: ${{ steps.find.outputs.needs_flutter }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Find Dart/Flutter packages
+        id: find
+        shell: bash
+        run: |
+          set -euo pipefail
+          entries=""
+          needs_flutter=false
+
+          while IFS= read -r pubspec; do
+            dir="$(dirname "$pubspec")"
+            dir="${dir#./}"
+            [ -z "$dir" ] && dir="."
+
+            name="$(sed -n 's/^name:[[:space:]]*\([A-Za-z0-9_]*\).*$/\1/p' "$pubspec" | head -n 1)"
+            [ -z "$name" ] && name="$(basename "$dir")"
+
+            # A package needs the Flutter toolchain if it depends on the Flutter
+            # SDK ("sdk: flutter" under dependencies) or carries a top-level
+            # "flutter:" configuration block. Pure Dart packages have neither.
+            runner="dart"
+            if grep -Eq '^[[:space:]]+sdk:[[:space:]]*flutter[[:space:]]*$' "$pubspec" \
+               || grep -Eq '^flutter:[[:space:]]*$' "$pubspec"; then
+              runner="flutter"
+              needs_flutter=true
+            fi
+
+            has_test=false
+            if [ -d "$dir/test" ]; then has_test=true; fi
+
+            entry="$(jq -cn \
+              --arg dir "$dir" \
+              --arg name "$name" \
+              --arg runner "$runner" \
+              --argjson has_test "$has_test" \
+              '{dir: $dir, name: $name, runner: $runner, has_test: $has_test}')"
+            entries="${entries}${entry}"$'\n'
+          done < <(find . -maxdepth 3 -name pubspec.yaml \
+                     -not -path './.dart_tool/*' \
+                     -not -path '*/build/*' \
+                     -not -path '*/.git/*' | sort)
+
+          packages="$(printf '%s' "$entries" | jq -sc '.')"
+          echo "packages=$packages" >> "$GITHUB_OUTPUT"
+          echo "needs_flutter=$needs_flutter" >> "$GITHUB_OUTPUT"
+          echo "Discovered packages:"
+          printf '%s' "$entries" | jq -r '"  \(.dir)  (\(.name), runner=\(.runner), test=\(.has_test))"'
+
+  # ---------------------------------------------------------------------------
+  # The manifest gate: our own validator in --strict mode, plus an independent
+  # JSON Schema check so a bug in the validator cannot let a bad manifest pass.
+  # ---------------------------------------------------------------------------
+  validate:
+    name: validate plugin manifests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: ${{ env.DART_SDK_VERSION }}
+
+      - name: dart pub get (repo root — swayve_plugin_tools)
+        run: dart pub get
+
+      - name: Validate all plugins (strict — warnings are errors)
+        run: dart run tools/validate_plugin.dart --all --strict
+
+      - name: Produce machine-readable validation report
+        if: always()
+        shell: bash
+        run: |
+          set -uo pipefail
+          # Runs even when the gate above failed, so the uploaded report always
+          # describes the run that was actually gated.
+          dart run tools/validate_plugin.dart --all --strict --json \
+            > validation-report.json || true
+          echo "--- validation-report.json ---"
+          cat validation-report.json || true
+
+      - name: Upload validation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: validation-report
+          path: validation-report.json
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Validate every plugin.json against the published JSON Schema
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          manifests=(plugins/*/plugin.json)
+          if [ ${#manifests[@]} -eq 0 ]; then
+            echo "No plugin manifests found under plugins/ — nothing to check."
+            exit 0
+          fi
+          # An independent draft 2020-12 checker, deliberately NOT our own
+          # validator: a bug in tools/validate_plugin.dart must not be able to
+          # wave a malformed manifest through. Installed into a venv because the
+          # runner's system Python is externally managed (PEP 668).
+          python3 -m venv "$RUNNER_TEMP/schema-venv"
+          "$RUNNER_TEMP/schema-venv/bin/pip" install --quiet --disable-pip-version-check check-jsonschema
+          for manifest in "${manifests[@]}"; do
+            echo "Checking $manifest against schema/swayve-plugin.schema.json"
+            "$RUNNER_TEMP/schema-venv/bin/check-jsonschema" \
+              --schemafile schema/swayve-plugin.schema.json \
+              "$manifest"
+          done
+
+  # ---------------------------------------------------------------------------
+  # Formatting and static analysis, one matrix leg per package so a failure
+  # names the package that caused it.
+  # ---------------------------------------------------------------------------
+  analyze:
+    name: analyze (${{ matrix.package.name }})
+    needs: discover
+    if: needs.discover.outputs.packages != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package: ${{ fromJson(needs.discover.outputs.packages) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Dart
+        if: matrix.package.runner == 'dart'
+        uses: dart-lang/setup-dart@v1
+        with:
+          sdk: ${{ env.DART_SDK_VERSION }}
+
+      # The Flutter SDK ships its own Dart; installing both would put two `dart`
+      # binaries on PATH, so only one of these two steps ever runs.
+      - name: Set up Flutter
+        if: matrix.package.runner == 'flutter'
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: pub get
+        working-directory: ${{ matrix.package.dir }}
+        run: |
+          if [ "${{ matrix.package.runner }}" = "flutter" ]; then
+            flutter pub get
+          else
+            dart pub get
+          fi
+
+      - name: dart format --set-exit-if-changed
+        working-directory: ${{ matrix.package.dir }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # At the repo root, restrict to this package's own directories: the
+          # nested packages/ and plugins/ packages are separate analysis
+          # contexts and are covered by their own matrix legs.
+          targets="."
+          if [ "${{ matrix.package.dir }}" = "." ]; then
+            targets=""
+            for d in lib bin tools test; do
+              [ -d "$d" ] && targets="$targets $d"
+            done
+            [ -z "$targets" ] && targets="."
+          fi
+          echo "formatting targets:$targets"
+          dart format --output=none --set-exit-if-changed $targets
+
+      - name: analyze --fatal-infos
+        working-directory: ${{ matrix.package.dir }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          targets="."
+          if [ "${{ matrix.package.dir }}" = "." ]; then
+            targets=""
+            for d in lib bin tools test; do
+              [ -d "$d" ] && targets="$targets $d"
+            done
+            [ -z "$targets" ] && targets="."
+          fi
+          echo "analysis targets:$targets"
+          if [ "${{ matrix.package.runner }}" = "flutter" ]; then
+            flutter analyze --fatal-infos $targets
+          else
+            dart analyze --fatal-infos $targets
+          fi

@@ -1,0 +1,7 @@
+name: no_licenses
+description: Fixture plugin whose licenses/ directory is empty.
+version: 1.0.0
+publish_to: none
+
+environment:
+  sdk: ^3.6.0

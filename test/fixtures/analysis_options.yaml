@@ -1,0 +1,10 @@
+# Fixtures are miniature packages that exist to be read as data. They have
+# their own pubspec.yaml but no resolved dependencies, so they must not inherit
+# the repo baseline: `package:lints/recommended.yaml` is not resolvable from
+# here and every tool that walks these files would warn about it.
+#
+# Nothing here is analysed as part of swayve_plugin_tools either; the root
+# analysis_options.yaml excludes test/fixtures/**.
+analyzer:
+  errors:
+    todo: ignore

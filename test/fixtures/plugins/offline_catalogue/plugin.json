@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "id": "com.example.plugins.offline_catalogue",
+  "name": "Offline Catalogue",
+  "description": "Serves a catalogue that ships inside the plugin. It opens no connection and asks for no permissions.",
+  "version": "1.0.0",
+  "author": { "name": "Example Co" },
+  "license": "Apache-2.0",
+  "swayvePluginApi": 1,
+  "minimumSwayveVersion": "0.1.0",
+  "runtime": "compiled",
+  "platforms": ["android", "ios", "windows", "macos", "linux"],
+  "capabilities": ["search", "catalog"],
+  "permissions": [],
+  "entrypoint": "offline_catalogue"
+}
