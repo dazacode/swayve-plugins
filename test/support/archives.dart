@@ -49,15 +49,15 @@ Uint8List forgeArchive(List<ForgedEntry> entries) {
       ..name = entry.name
       ..mode = entry.mode
       ..isFile = true
-      ..compress = entry.compress;
+      ..compression =
+          entry.compress ? CompressionType.deflate : CompressionType.none;
     archive.addFile(file);
   }
   return Uint8List.fromList(
     ZipEncoder().encode(
-          archive,
-          level: 0,
-          modified: DateTime.utc(1980),
-        ) ??
-        const <int>[],
+      archive,
+      level: 0,
+      modified: DateTime.utc(1980),
+    ),
   );
 }

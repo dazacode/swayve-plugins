@@ -382,13 +382,13 @@ Uint8List encodeDeterministicZip(List<BundleMember> members) {
     )
       ..mode = kFixedEntryMode
       ..isFile = true
-      ..compress = true;
+      ..compression = CompressionType.deflate;
     archive.addFile(file);
   }
-  final List<int>? encoded = ZipEncoder().encode(
+  final List<int> encoded = ZipEncoder().encode(
     archive,
     level: kFixedCompressionLevel,
     modified: kFixedBundleTimestamp,
   );
-  return Uint8List.fromList(encoded ?? const <int>[]);
+  return Uint8List.fromList(encoded);
 }
