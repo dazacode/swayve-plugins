@@ -236,6 +236,7 @@ final class SwayvePlayableSource {
     this.expiresIn,
     this.availability = SwayveAvailability.streamOnly,
     this.mimeType,
+    this.duration,
   });
 
   /// A single progressive media URL the host's player can fetch directly.
@@ -245,6 +246,7 @@ final class SwayvePlayableSource {
     Duration? expiresIn,
     SwayveAvailability availability = SwayveAvailability.streamOnly,
     String? mimeType,
+    Duration? duration,
   }) : this._(
           kind: SwayvePlayableKind.directUrl,
           uri: uri,
@@ -252,6 +254,7 @@ final class SwayvePlayableSource {
           expiresIn: expiresIn,
           availability: availability,
           mimeType: mimeType,
+          duration: duration,
         );
 
   /// An HLS manifest URL.
@@ -261,6 +264,7 @@ final class SwayvePlayableSource {
     Duration? expiresIn,
     SwayveAvailability availability = SwayveAvailability.streamOnly,
     String? mimeType,
+    Duration? duration,
   }) : this._(
           kind: SwayvePlayableKind.hlsUrl,
           uri: uri,
@@ -268,6 +272,7 @@ final class SwayvePlayableSource {
           expiresIn: expiresIn,
           availability: availability,
           mimeType: mimeType,
+          duration: duration,
         );
 
   /// A DASH manifest URL.
@@ -277,6 +282,7 @@ final class SwayvePlayableSource {
     Duration? expiresIn,
     SwayveAvailability availability = SwayveAvailability.streamOnly,
     String? mimeType,
+    Duration? duration,
   }) : this._(
           kind: SwayvePlayableKind.dashUrl,
           uri: uri,
@@ -284,6 +290,7 @@ final class SwayvePlayableSource {
           expiresIn: expiresIn,
           availability: availability,
           mimeType: mimeType,
+          duration: duration,
         );
 
   /// A file the plugin has already placed on this device.
@@ -295,11 +302,13 @@ final class SwayvePlayableSource {
     Uri uri, {
     SwayveAvailability availability = const SwayveAvailability(onDevice: true),
     String? mimeType,
+    Duration? duration,
   }) : this._(
           kind: SwayvePlayableKind.localFile,
           uri: uri,
           availability: availability,
           mimeType: mimeType,
+          duration: duration,
         );
 
   /// Playback inside a host-rendered web surface.
@@ -350,6 +359,31 @@ final class SwayvePlayableSource {
   /// Helps the host pick a decoder without sniffing the stream.
   final String? mimeType;
 
+  /// How long this source runs, when the provider knows exactly.
+  ///
+  /// ## Why a source states a length when the track already carried one
+  ///
+  /// Because they are answers to different questions, and only this one is
+  /// about the audio that is going to play.
+  ///
+  /// `SwayveTrack.duration` describes the *recording* as the catalogue lists
+  /// it, and a provider often reads it off a line of display text. The source
+  /// is a particular rendition of that recording, and the two disagree more
+  /// often than is comfortable: the same song listed at 3:16 can resolve to an
+  /// upload that runs 3:07.
+  ///
+  /// A host with no better answer has to fall back on asking its own engine
+  /// once the media loads, and that is a worse answer than it looks. For a
+  /// local file it is exact and immediate; for something arriving over a
+  /// network it is a figure that can be provisional while the stream buffers,
+  /// and a host that writes the first one it hears into its library has
+  /// recorded a guess as a fact. A provider that already knows the number —
+  /// and one that resolved a URL usually does, because the same response
+  /// carried both — can end that entirely.
+  ///
+  /// Null claims nothing, and a host must go on doing whatever it did before.
+  final Duration? duration;
+
   /// Whether this source is a web embed rather than a media URL.
   bool get isWebEmbed => kind == SwayvePlayableKind.webEmbed;
 
@@ -361,6 +395,7 @@ final class SwayvePlayableSource {
     Duration? expiresIn,
     SwayveAvailability? availability,
     String? mimeType,
+    Duration? duration,
   }) =>
       SwayvePlayableSource._(
         kind: kind,
@@ -370,6 +405,7 @@ final class SwayvePlayableSource {
         expiresIn: expiresIn ?? this.expiresIn,
         availability: availability ?? this.availability,
         mimeType: mimeType ?? this.mimeType,
+        duration: duration ?? this.duration,
       );
 
   /// The wire form. Null and empty fields are omitted.
@@ -381,6 +417,7 @@ final class SwayvePlayableSource {
         'expiresInMs': durationToJson(expiresIn),
         'availability': availability.toJson(),
         'mimeType': mimeType,
+        'durationMs': durationToJson(duration),
       });
 
   /// Parses the wire form produced by [toJson].
@@ -414,6 +451,7 @@ final class SwayvePlayableSource {
     }
     final headers = reader.stringMap('headers');
     final mimeType = reader.stringOrNull('mimeType');
+    final duration = reader.durationOrNull('durationMs');
     return switch (kind) {
       SwayvePlayableKind.directUrl => SwayvePlayableSource.directUrl(
           uri,
@@ -421,6 +459,7 @@ final class SwayvePlayableSource {
           expiresIn: expiresIn,
           availability: availability,
           mimeType: mimeType,
+          duration: duration,
         ),
       SwayvePlayableKind.hlsUrl => SwayvePlayableSource.hls(
           uri,
@@ -428,6 +467,7 @@ final class SwayvePlayableSource {
           expiresIn: expiresIn,
           availability: availability,
           mimeType: mimeType,
+          duration: duration,
         ),
       SwayvePlayableKind.dashUrl => SwayvePlayableSource.dash(
           uri,
@@ -435,11 +475,13 @@ final class SwayvePlayableSource {
           expiresIn: expiresIn,
           availability: availability,
           mimeType: mimeType,
+          duration: duration,
         ),
       SwayvePlayableKind.localFile => SwayvePlayableSource.localFile(
           uri,
           availability: availability,
           mimeType: mimeType,
+          duration: duration,
         ),
       SwayvePlayableKind.webEmbed =>
         malformed('SwayvePlayableSource: unreachable web_embed branch.'),
@@ -459,7 +501,8 @@ final class SwayvePlayableSource {
       deepEquals(headers, other.headers) &&
       expiresIn == other.expiresIn &&
       availability == other.availability &&
-      mimeType == other.mimeType;
+      mimeType == other.mimeType &&
+      duration == other.duration;
 
   @override
   int get hashCode => Object.hash(
@@ -470,5 +513,6 @@ final class SwayvePlayableSource {
         expiresIn,
         availability,
         mimeType,
+        duration,
       );
 }
