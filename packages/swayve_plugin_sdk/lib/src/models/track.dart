@@ -1,5 +1,6 @@
 import 'package:meta/meta.dart';
 
+import '../enums.dart';
 import '../internal/equality.dart';
 import '../internal/json.dart';
 import 'availability.dart';
@@ -33,6 +34,7 @@ final class SwayveTrack {
     this.artwork,
     this.explicit = false,
     this.availability = SwayveAvailability.none,
+    this.kind = SwayveTrackKind.song,
     this.extra = const {},
   });
 
@@ -73,6 +75,14 @@ final class SwayveTrack {
   /// What may be done with this track. See principle 6.
   final SwayveAvailability availability;
 
+  /// What this recording is, when the provider draws that distinction.
+  ///
+  /// Defaults to [SwayveTrackKind.song], which claims nothing beyond "a
+  /// recording" — see the enum. A host may use it to separate a service's
+  /// licensed catalogue from its uploads; a host that ignores it gets one
+  /// correct list.
+  final SwayveTrackKind kind;
+
   /// Provider-specific data the host never interprets.
   ///
   /// It is carried along and handed back to the plugin unchanged, so a plugin
@@ -102,6 +112,7 @@ final class SwayveTrack {
     SwayveImageRef? artwork,
     bool? explicit,
     SwayveAvailability? availability,
+    SwayveTrackKind? kind,
     Map<String, Object?>? extra,
   }) =>
       SwayveTrack(
@@ -116,6 +127,7 @@ final class SwayveTrack {
         artwork: artwork ?? this.artwork,
         explicit: explicit ?? this.explicit,
         availability: availability ?? this.availability,
+        kind: kind ?? this.kind,
         extra: extra ?? this.extra,
       );
 
@@ -132,6 +144,7 @@ final class SwayveTrack {
         'artwork': artwork?.toJson(),
         'explicit': explicit,
         'availability': availability.toJson(),
+        'kind': kind.wireName,
         'extra': extra.isEmpty ? null : extra,
       });
 
@@ -152,6 +165,13 @@ final class SwayveTrack {
       availability: reader.has('availability')
           ? reader.object('availability', SwayveAvailability.fromJson)
           : SwayveAvailability.none,
+      // An unreadable or absent kind reads as `song`. A provider that predates
+      // the field, and one built against a later SDK that names something this
+      // host has never heard of, are the same case: the recording is still a
+      // recording, and losing it over a label it happens to carry would be the
+      // worse answer.
+      kind: SwayveTrackKind.fromWire(json['kind'] as String? ?? '') ??
+          SwayveTrackKind.song,
       extra: reader.extra('extra'),
     );
   }
@@ -173,6 +193,7 @@ final class SwayveTrack {
       artwork == other.artwork &&
       explicit == other.explicit &&
       availability == other.availability &&
+      kind == other.kind &&
       deepEquals(extra, other.extra);
 
   @override
@@ -188,6 +209,7 @@ final class SwayveTrack {
         artwork,
         explicit,
         availability,
+        kind,
         deepHash(extra),
       );
 }

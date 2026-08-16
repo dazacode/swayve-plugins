@@ -143,6 +143,37 @@ void main() {
       expect(parsed.artists, isEmpty);
       expect(parsed.availability, SwayveAvailability.none);
       expect(parsed.explicit, isFalse);
+      expect(
+        parsed.kind,
+        SwayveTrackKind.song,
+        reason: 'The default claims nothing beyond "a recording" — it is not '
+            'a promise that a release exists behind it.',
+      );
+    });
+
+    test('SwayveTrack carries its kind across the wire', () {
+      const upload = SwayveTrack(
+        id: trackId,
+        title: 'Nightdrive (unreleased demo)',
+        kind: SwayveTrackKind.video,
+      );
+      final parsed = SwayveTrack.fromJson(roundTripJson(upload.toJson()));
+      expect(parsed.kind, SwayveTrackKind.video);
+      expect(parsed, upload);
+    });
+
+    test('a track from an older or newer provider still parses', () {
+      // A provider that predates the field, and one built against a later SDK
+      // naming a kind this host has never heard of, are the same case: the
+      // recording is still a recording, and refusing to parse it would lose
+      // the music over a label.
+      for (final Object? wire in <Object?>[null, 'podcast_chapter']) {
+        final json = <String, Object?>{
+          ...const SwayveTrack(id: trackId, title: 'Untitled').toJson(),
+          'kind': wire,
+        };
+        expect(SwayveTrack.fromJson(json).kind, SwayveTrackKind.song);
+      }
     });
 
     test('SwayveAlbum', () {

@@ -188,6 +188,55 @@ enum SwayveArtworkSize {
   }
 }
 
+/// What a recording is, as the provider that published it understands it.
+///
+/// Not a kind of *entity* — everything here is still a `SwayveTrack`, still
+/// playable, still likeable, still queueable. It is a note about where the
+/// recording came from, and it exists because for several services that
+/// difference is real and the host cannot infer it.
+///
+/// The case it was added for: a music service usually has two catalogues behind
+/// one search box. One holds licensed releases, with an album, a sleeve and a
+/// credit behind every row. The other holds whatever people uploaded — and that
+/// is where the unreleased track, the remix, the demo, the live rip and the
+/// edit live, very often as the only copy in existence. A host that cannot tell
+/// them apart must either mix them into one list, which buries a known release
+/// under nine covers of it, or drop the second catalogue, which is the same as
+/// telling somebody a song they can hear right now does not exist.
+///
+/// A provider that does not draw this distinction leaves it at [song], which is
+/// what the default means: *a recording, nothing further claimed*. It is not a
+/// promise that a release exists behind it.
+enum SwayveTrackKind {
+  /// A recording from the provider's own music catalogue.
+  ///
+  /// The default, and the honest answer whenever a provider has only one
+  /// catalogue or cannot tell which one a row came from.
+  song,
+
+  /// A video upload, published outside the music catalogue.
+  ///
+  /// Expect no album, no release year, and artwork that is a frame rather than
+  /// a sleeve. Expect the audio to be worth having anyway.
+  video;
+
+  /// The wire spelling of this kind.
+  String get wireName => name;
+
+  /// The kind named [wire], or `null` if unknown.
+  ///
+  /// An unknown spelling is a provider built against a later SDK than this
+  /// host. Callers read it as [song] rather than as an error: a recording whose
+  /// provenance cannot be read is still a recording, and refusing to parse the
+  /// track would lose the music over a label.
+  static SwayveTrackKind? fromWire(String wire) {
+    for (final value in SwayveTrackKind.values) {
+      if (value.wireName == wire) return value;
+    }
+    return null;
+  }
+}
+
 /// A kind of entity a search may ask for.
 enum SwayveSearchKind {
   /// Individual tracks.
