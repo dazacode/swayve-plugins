@@ -21,6 +21,7 @@ final class SwayveWebEmbed {
     required this.uri,
     this.controls = const {},
     this.userAgent,
+    this.document,
   });
 
   /// Which kind of web surface this needs.
@@ -40,18 +41,54 @@ final class SwayveWebEmbed {
   /// upstream service requires a specific one.
   final String? userAgent;
 
+  /// A page to load *instead of navigating to* [uri], with [uri] as its base.
+  ///
+  /// This is what makes [controls] mean anything. Without it a host can render
+  /// a service's player and nothing else: it has the page on screen, it knows
+  /// from [controls] that the page could in principle be paused, and it has no
+  /// way whatsoever to pause it — because the incantation is the service's own
+  /// JavaScript, and a host that knew it would be a host with hardcoded
+  /// knowledge of one plugin, which principle 2 forbids.
+  ///
+  /// A document moves that knowledge to the only place it belongs. The plugin
+  /// writes a small page that loads its service's player and exposes it through
+  /// the vocabulary in [SwayveEmbedBridge]; the host loads the page, speaks that
+  /// vocabulary, and never learns whose player is behind it. Every service with
+  /// an embeddable player and a scripting API can be adapted this way, and the
+  /// adapter is a dozen lines.
+  ///
+  /// Null is the ordinary case and keeps the old behaviour exactly: the host
+  /// navigates to [uri] and the page brings its own controls. A plugin that
+  /// cannot script its player should leave this null rather than ship a
+  /// document that half-works — [controls] should then be empty, and the host
+  /// will draw the page's own chrome instead of its own transport.
+  ///
+  /// The host loads this with [uri] as the base address, so relative URLs and
+  /// the page's origin resolve as though it had been served from there. That
+  /// matters: a player API script will refuse to run from `about:blank`.
+  final String? document;
+
+  /// Whether this embed can be driven by the host rather than only displayed.
+  ///
+  /// Both halves are required and neither implies the other: a [document] with
+  /// no [controls] declares nothing drivable, and controls without a document
+  /// is a promise with no way to keep it.
+  bool get isDrivable => document != null && controls.isNotEmpty;
+
   /// Returns a copy with the given fields replaced.
   SwayveWebEmbed copyWith({
     SwayveWebEmbedKind? kind,
     Uri? uri,
     Set<SwayveEmbedControl>? controls,
     String? userAgent,
+    String? document,
   }) =>
       SwayveWebEmbed(
         kind: kind ?? this.kind,
         uri: uri ?? this.uri,
         controls: controls ?? this.controls,
         userAgent: userAgent ?? this.userAgent,
+        document: document ?? this.document,
       );
 
   /// The wire form. Null fields are omitted.
@@ -60,6 +97,7 @@ final class SwayveWebEmbed {
         'uri': uri.toString(),
         'controls': controls.map((control) => control.wireName).toList(),
         'userAgent': userAgent,
+        'document': document,
       });
 
   /// Parses the wire form produced by [toJson].
@@ -70,6 +108,7 @@ final class SwayveWebEmbed {
       uri: reader.uri('uri'),
       controls: reader.enumSet('controls', SwayveEmbedControl.fromWire),
       userAgent: reader.stringOrNull('userAgent'),
+      document: reader.stringOrNull('document'),
     );
   }
 
@@ -82,10 +121,12 @@ final class SwayveWebEmbed {
       kind == other.kind &&
       uri == other.uri &&
       deepEquals(controls, other.controls) &&
-      userAgent == other.userAgent;
+      userAgent == other.userAgent &&
+      document == other.document;
 
   @override
-  int get hashCode => Object.hash(kind, uri, deepHash(controls), userAgent);
+  int get hashCode =>
+      Object.hash(kind, uri, deepHash(controls), userAgent, document);
 }
 
 /// What the host would prefer, when the provider has a choice.

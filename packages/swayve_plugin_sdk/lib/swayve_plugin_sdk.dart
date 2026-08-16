@@ -31,6 +31,7 @@ library;
 export 'src/cancellation.dart';
 export 'src/constants.dart';
 export 'src/context.dart';
+export 'src/embed_bridge.dart';
 export 'src/enums.dart';
 export 'src/exceptions.dart';
 export 'src/host/http.dart';
