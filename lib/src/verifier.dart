@@ -84,16 +84,25 @@ final class BundleVerifier {
       );
       return Report(target, sink.diagnostics);
     }
+    if (decoder.directory.filePosition < 0) {
+      // No end-of-central-directory record was found: this isn't a zip at
+      // all, not merely an empty one. archive 4.x stopped throwing for this
+      // case, so it has to be detected explicitly.
+      sink.error(
+        DiagnosticCodes.archiveUnreadable,
+        'not a readable .swayveplugin archive: no end of central directory record found',
+      );
+      return Report(target, sink.diagnostics);
+    }
 
     final List<_RawEntry> entries = <_RawEntry>[
       for (var i = 0; i < decoder.directory.fileHeaders.length; i++)
         _RawEntry(
           index: i,
           name: decoder.directory.fileHeaders[i].filename,
-          uncompressedSize:
-              decoder.directory.fileHeaders[i].uncompressedSize ?? 0,
+          uncompressedSize: decoder.directory.fileHeaders[i].uncompressedSize,
           externalAttributes:
-              decoder.directory.fileHeaders[i].externalFileAttributes ?? 0,
+              decoder.directory.fileHeaders[i].externalFileAttributes,
         ),
     ];
 
@@ -211,7 +220,7 @@ final class BundleVerifier {
       if (file == null) {
         continue;
       }
-      final Object? content = file.content;
+      final Object content = file.content;
       final List<int> bytes = content is List<int> ? content : const <int>[];
       if (bytes.length > kMaxEntrySizeBytes) {
         sink.error(

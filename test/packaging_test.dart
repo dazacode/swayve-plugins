@@ -56,7 +56,7 @@ void main() {
         expect(header.lastModifiedFileDate, 0x0021, reason: '1980-01-01');
         expect(header.lastModifiedFileTime, 0, reason: '00:00:00');
         expect(
-          (header.externalFileAttributes ?? 0) >> 16,
+          header.externalFileAttributes >> 16,
           kFixedEntryMode,
           reason: 'no ownership or execute bits travel',
         );
