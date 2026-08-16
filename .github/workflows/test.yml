@@ -25,7 +25,7 @@ jobs:
     outputs:
       test_packages: ${{ steps.find.outputs.test_packages }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Find packages that have a test/ directory
         id: find
@@ -80,7 +80,7 @@ jobs:
       matrix:
         package: ${{ fromJson(needs.discover.outputs.test_packages) }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up Dart
         if: matrix.package.runner == 'dart'
@@ -125,7 +125,7 @@ jobs:
     name: test swayve_plugin_tools (windows)
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: dart-lang/setup-dart@v1
         with:
