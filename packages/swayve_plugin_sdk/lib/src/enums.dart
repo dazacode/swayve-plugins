@@ -41,7 +41,19 @@ enum SwayveCapability {
   /// Read-only playlist browsing. Requires a `SwayvePlaylistProvider`.
   ///
   /// Its wire name is `playlist_read`.
-  playlistRead;
+  playlistRead,
+
+  /// An artist's own public activity on the provider's service — what they
+  /// liked, what they reposted. Requires a `SwayveArtistActivityProvider`.
+  ///
+  /// Unlike every capability above it, most providers have nothing here: this
+  /// is a fact about a specific service's social features, not something every
+  /// catalogue can be expected to answer. A provider declares it only when it
+  /// genuinely has this concept — the vocabulary is generic so any provider
+  /// that grows one can say so, not a promise that all of them will.
+  ///
+  /// Its wire name is `artist_activity`.
+  artistActivity;
 
   /// The manifest spelling of this capability.
   ///
@@ -59,6 +71,7 @@ enum SwayveCapability {
         SwayveCapability.webview => 'webview',
         SwayveCapability.artwork => 'artwork',
         SwayveCapability.playlistRead => 'playlist_read',
+        SwayveCapability.artistActivity => 'artist_activity',
       };
 
   /// The capability named [wire], or `null` if the name is not in the v1

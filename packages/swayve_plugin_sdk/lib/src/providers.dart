@@ -169,6 +169,30 @@ abstract interface class SwayvePlaylistProvider {
   });
 }
 
+/// An artist's own public activity on the provider's service. Capability:
+/// `artistActivity`.
+///
+/// Both methods take the *artist's* media id, not a track's or a playlist's —
+/// this describes what somebody did, not a release they published. Most
+/// providers have no concept of this at all and register nothing; a provider
+/// that does register one is declaring that a specific artist's likes and
+/// reposts are public and worth surfacing next to their catalogue.
+abstract interface class SwayveArtistActivityProvider {
+  /// Returns a page of tracks [artistId] has liked, most recent first.
+  Future<SwayvePage<SwayveTrack>> likedTracks(
+    SwayveMediaId artistId,
+    SwayveBrowseRequest request, {
+    SwayveCancellationToken? cancel,
+  });
+
+  /// Returns a page of tracks [artistId] has reposted, most recent first.
+  Future<SwayvePage<SwayveTrack>> repostedTracks(
+    SwayveMediaId artistId,
+    SwayveBrowseRequest request, {
+    SwayveCancellationToken? cancel,
+  });
+}
+
 /// A user-facing sign-in flow. Capability: `authentication`, permission
 /// `external_auth`.
 ///

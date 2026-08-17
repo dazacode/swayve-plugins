@@ -12,6 +12,14 @@ whole.
 
 ## [Unreleased]
 
+### Added
+
+- **`artist_activity` capability** — an eleventh entry in the closed capability
+  vocabulary, and `SwayveArtistActivityProvider` in `swayve_plugin_sdk`, for a
+  plugin to expose an artist's own public activity on the provider's service
+  (their liked and reposted tracks). Bumps `schemaVersion` to 2; existing
+  `schemaVersion: 1` manifests keep validating unchanged.
+
 ## [0.1.0] — 2026-08-15
 
 Initial foundation: the plugin contract, the SDK that expresses it, the tooling

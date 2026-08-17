@@ -109,6 +109,8 @@ final class FakeSwayvePluginContext
       <SwayveArtworkProvider>[];
   final List<SwayvePlaylistProvider> _playlistProviders =
       <SwayvePlaylistProvider>[];
+  final List<SwayveArtistActivityProvider> _artistActivityProviders =
+      <SwayveArtistActivityProvider>[];
   final List<SwayveAuthProvider> _authProviders = <SwayveAuthProvider>[];
 
   /// The search providers registered so far.
@@ -143,6 +145,10 @@ final class FakeSwayvePluginContext
   List<SwayvePlaylistProvider> get playlistProviders =>
       List.unmodifiable(_playlistProviders);
 
+  /// The artist-activity providers registered so far.
+  List<SwayveArtistActivityProvider> get artistActivityProviders =>
+      List.unmodifiable(_artistActivityProviders);
+
   /// The auth providers registered so far.
   List<SwayveAuthProvider> get authProviders =>
       List.unmodifiable(_authProviders);
@@ -160,6 +166,8 @@ final class FakeSwayvePluginContext
         if (_scrobbleProviders.isNotEmpty) SwayveCapability.scrobbling,
         if (_artworkProviders.isNotEmpty) SwayveCapability.artwork,
         if (_playlistProviders.isNotEmpty) SwayveCapability.playlistRead,
+        if (_artistActivityProviders.isNotEmpty)
+          SwayveCapability.artistActivity,
         if (_authProviders.isNotEmpty) SwayveCapability.authentication,
       };
 
@@ -224,6 +232,12 @@ final class FakeSwayvePluginContext
   @override
   void registerPlaylistProvider(SwayvePlaylistProvider provider) =>
       _playlistProviders.add(provider);
+
+  @override
+  void registerArtistActivityProvider(
+    SwayveArtistActivityProvider provider,
+  ) =>
+      _artistActivityProviders.add(provider);
 
   @override
   void registerAuthProvider(SwayveAuthProvider provider) =>

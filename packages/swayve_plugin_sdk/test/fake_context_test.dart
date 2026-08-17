@@ -52,6 +52,25 @@ final class _OverReachingPlugin implements SwayvePlugin {
   Future<void> dispose() async {}
 }
 
+final class _EchoArtistActivityProvider
+    implements SwayveArtistActivityProvider {
+  @override
+  Future<SwayvePage<SwayveTrack>> likedTracks(
+    SwayveMediaId artistId,
+    SwayveBrowseRequest request, {
+    SwayveCancellationToken? cancel,
+  }) async =>
+      const SwayvePage(items: []);
+
+  @override
+  Future<SwayvePage<SwayveTrack>> repostedTracks(
+    SwayveMediaId artistId,
+    SwayveBrowseRequest request, {
+    SwayveCancellationToken? cancel,
+  }) async =>
+      const SwayvePage(items: []);
+}
+
 final class _EchoSearchProvider implements SwayveSearchProvider {
   _EchoSearchProvider(this._http);
 
@@ -206,6 +225,19 @@ void main() {
       await plugin.dispose();
       expect(plugin.disposed, isTrue);
       await context.close();
+    });
+
+    test('an artist-activity provider is recorded and mapped back', () {
+      final context = FakeSwayvePluginContext();
+      final provider = _EchoArtistActivityProvider();
+
+      context.registerArtistActivityProvider(provider);
+
+      expect(context.artistActivityProviders, [provider]);
+      expect(
+        context.registeredCapabilities,
+        contains(SwayveCapability.artistActivity),
+      );
     });
 
     test('a registered provider runs against the scripted network', () async {

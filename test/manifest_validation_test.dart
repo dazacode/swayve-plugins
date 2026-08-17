@@ -361,12 +361,30 @@ void main() {
 
     test('a future schemaVersion is rejected the same way', () {
       final Map<String, Object?> manifest = cleanManifest()
-        ..['schemaVersion'] = 2;
+        ..['schemaVersion'] = 3;
       final Diagnostic d = diagnosticFor(
         validate(manifest),
         DiagnosticCodes.unsupportedSchemaVersion,
       );
       expect(d.message, contains('requires a newer version of Swayve'));
+    });
+
+    test('schemaVersion 1 with no artist_activity capability still validates',
+        () {
+      // cleanManifest() is already schemaVersion: 1 with capabilities:
+      // ['search']. The artist_activity capability widened the vocabulary in
+      // schemaVersion 2, but a plugin written before that addition must keep
+      // validating exactly as it did in v1.
+      final Report report = validate(cleanManifest());
+      expect(report.diagnostics, isEmpty, reason: codesOf(report).toString());
+    });
+
+    test('schemaVersion 2 with the artist_activity capability validates', () {
+      final Map<String, Object?> manifest = cleanManifest()
+        ..['schemaVersion'] = 2
+        ..['capabilities'] = <String>['search', 'artist_activity'];
+      final Report report = validate(manifest);
+      expect(report.diagnostics, isEmpty, reason: codesOf(report).toString());
     });
   });
 

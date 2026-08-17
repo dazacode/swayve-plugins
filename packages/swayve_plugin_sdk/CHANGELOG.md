@@ -6,6 +6,20 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this package follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 While the version is `0.x` the API is unstable: a minor bump may break you.
 
+## Unreleased
+
+Manifest schema version 2. Purely additive over v1 — a v1 manifest still
+validates unchanged.
+
+### Added
+
+- `SwayveCapability.artistActivity` and `SwayveArtistActivityProvider` — an
+  artist's own public activity on the provider's service (what they liked,
+  what they reposted). A tenth provider interface, for services with a social
+  layer the generic catalogue capabilities don't cover.
+- `SwayvePluginContext.registerArtistActivityProvider`, and
+  `FakeSwayvePluginContext.artistActivityProviders` for testing it.
+
 ## 0.1.0
 
 Initial release. Plugin API level 1, manifest schema version 1.

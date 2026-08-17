@@ -79,6 +79,9 @@ abstract interface class SwayvePluginContext {
   /// Registers the plugin's `playlist_read` implementation.
   void registerPlaylistProvider(SwayvePlaylistProvider provider);
 
+  /// Registers the plugin's `artist_activity` implementation.
+  void registerArtistActivityProvider(SwayveArtistActivityProvider provider);
+
   /// Registers the plugin's `authentication` implementation.
   void registerAuthProvider(SwayveAuthProvider provider);
 }

@@ -1,5 +1,10 @@
 /// The manifest schema version this build of the tools implements.
-const int kManifestSchemaVersion = 1;
+///
+/// A manifest declaring a newer `schemaVersion` is rejected — this build
+/// cannot know what it means. A manifest declaring an older one stays valid:
+/// the format only ever widens (a new capability, a new optional field), so
+/// this build reads a `schemaVersion: 1` manifest exactly as a v1 build would.
+const int kManifestSchemaVersion = 2;
 
 /// The SDK major API level this build of the tools implements.
 const int kSwayvePluginApiVersion = 1;
@@ -25,6 +30,7 @@ const List<String> kCapabilities = <String>[
   'webview',
   'artwork',
   'playlist_read',
+  'artist_activity',
 ];
 
 /// The closed permission vocabulary, in schema order.
@@ -85,6 +91,7 @@ const Set<String> kNetworkExpectingCapabilities = <String>{
   'scrobbling',
   'artwork',
   'playlist_read',
+  'artist_activity',
 };
 
 /// The permissions that [capabilities] justify holding.

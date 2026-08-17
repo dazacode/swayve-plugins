@@ -9,10 +9,13 @@ const int kSwayvePluginApiVersion = 1;
 
 /// The manifest schema version this SDK understands.
 ///
-/// A `plugin.json` whose `schemaVersion` is not this value is rejected before
-/// any other validation runs: the host cannot safely interpret a manifest
-/// whose shape it does not know.
-const int kSwayveManifestSchemaVersion = 1;
+/// A `plugin.json` whose `schemaVersion` is greater than this value is
+/// rejected before any other validation runs: the host cannot safely
+/// interpret a manifest whose shape it does not know. A manifest declaring an
+/// older `schemaVersion` stays valid — the format only ever widens (a new
+/// capability, a new optional field), so a build that understands version 2
+/// still reads a version 1 manifest correctly.
+const int kSwayveManifestSchemaVersion = 2;
 
 /// The URI scheme used by [SwayveMediaId.uri].
 ///

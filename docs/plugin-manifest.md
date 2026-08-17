@@ -33,7 +33,7 @@ dart run tools/validate_plugin.dart ../Daza-Swayve-plugins/my_plugin
 
 | Field | Type | Rule |
 |---|---|---|
-| `schemaVersion` | integer | Must be `1` in v1. Not the plugin's version — see [versioning.md](versioning.md). |
+| `schemaVersion` | integer | `2` as of the `artist_activity` capability; `1` still validates. Rejected only if newer than the build understands. Not the plugin's version — see [versioning.md](versioning.md). |
 | `id` | string | Reverse-DNS. Regex `^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*){2,}$` — at least three segments, lowercase, digits and `_` allowed but not as the first character of a segment. Max 128 characters. |
 | `name` | string | 1–64 characters, human readable, no emoji. This is what the user sees in Explore and in settings. |
 | `description` | string | 1–280 characters. One sentence describing what the plugin adds, not who wrote it. |

@@ -27,6 +27,7 @@ void main() {
           'webview',
           'artwork',
           'playlist_read',
+          'artist_activity',
         ],
       );
     });
@@ -38,6 +39,15 @@ void main() {
         SwayveCapability.playlistRead,
       );
       expect(SwayveCapability.fromWire('playlistRead'), isNull);
+    });
+
+    test('artistActivity is snake_case on the wire, camelCase in Dart', () {
+      expect(SwayveCapability.artistActivity.wireName, 'artist_activity');
+      expect(
+        SwayveCapability.fromWire('artist_activity'),
+        SwayveCapability.artistActivity,
+      );
+      expect(SwayveCapability.fromWire('artistActivity'), isNull);
     });
 
     test('unknown names return null rather than throwing', () {
@@ -159,9 +169,9 @@ void main() {
     });
   });
 
-  test('the API level constants are 1 in v1', () {
+  test('the API level constants', () {
     expect(kSwayvePluginApiVersion, 1);
-    expect(kSwayveManifestSchemaVersion, 1);
+    expect(kSwayveManifestSchemaVersion, 2);
     expect(kSwayveMediaIdScheme, 'swayve');
   });
 

@@ -64,7 +64,7 @@ abstract final class DiagnosticCodes {
   static const String fieldEmoji = 'field_emoji';
 
   // --- compatibility --------------------------------------------------------
-  /// `schemaVersion` is not the version this build understands.
+  /// `schemaVersion` is higher than this build understands.
   static const String unsupportedSchemaVersion = 'unsupported_schema_version';
 
   /// `swayvePluginApi` is higher than this build's API level.

@@ -7,7 +7,7 @@
 |---|---|
 | `$id` | `https://swayve.app/schema/swayve-plugin.schema.json` |
 | Draft | `https://json-schema.org/draft/2020-12/schema` |
-| `schemaVersion` | `1` |
+| `schemaVersion` | `2` (`1` also validates) |
 
 Point an editor at it to get completion and inline errors while writing a
 manifest:
@@ -96,8 +96,9 @@ other describes a plugin that cannot do what it says it does, so it is an error:
 | `webview` | `webview` |
 | `authentication` | `external_auth` |
 
-The remaining eight — `search` `catalog` `streaming` `metadata` `lyrics`
-`scrobbling` `artwork` `playlist_read` — *usually* reach an external service,
+The remaining nine — `search` `catalog` `streaming` `metadata` `lyrics`
+`scrobbling` `artwork` `playlist_read` `artist_activity` — *usually* reach an
+external service,
 but not always. A `search` provider can perfectly well serve a catalogue that
 ships inside the plugin. Whether a plugin opens a connection is not decidable
 from its manifest, so their absence of `network` is an **info note**
@@ -158,7 +159,11 @@ entry. Change one and the test will tell you to change the other.
 
 ## Changing the schema
 
-`schemaVersion` is `1` and stays `1` for the whole of v1.
+`schemaVersion` is `2`, having moved from `1` when the `artist_activity`
+capability was added. The check in `checkCompatibility()` only rejects a
+`schemaVersion` *newer* than the build understands — a `schemaVersion: 1`
+manifest keeps validating on a build that implements `2`, because the format
+has so far only ever widened.
 
 * Adding an **optional** field is a minor change: add it to the schema, to
   `lib/src/schema_spec.dart`, and to `docs/plugin-manifest.md`.
@@ -166,4 +171,5 @@ entry. Change one and the test will tell you to change the other.
   together with the SDK's provider interface, the validator's implication table,
   and the documentation. Never on its own.
 * Anything that would reject a manifest v1 accepts is a `schemaVersion` bump,
-  and the host must keep reading version 1 manifests.
+  and the host must keep reading version 1 manifests — see
+  `checkCompatibility()` in `lib/src/manifest_rules.dart`.

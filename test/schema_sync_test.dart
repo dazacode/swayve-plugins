@@ -171,7 +171,7 @@ void main() {
       'webview': 'webview',
       'authentication': 'external_auth',
     });
-    expect(kNetworkExpectingCapabilities, hasLength(8));
+    expect(kNetworkExpectingCapabilities, hasLength(9));
   });
 
   test(r'every $defs entry is reachable from the manifest', () {

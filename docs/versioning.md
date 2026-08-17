@@ -50,14 +50,24 @@ thing that makes the `.sha256` sidecar useless.
 
 ### `schemaVersion`
 
-Which manifest *format* the file uses. `1` in v1, and the schema requires
-exactly `1` — a manifest declaring `2` is rejected by a v1 host rather than
-optimistically parsed.
+Which manifest *format* the file uses. `2` as of the `artist_activity`
+capability; a manifest declaring `3` is rejected by a build that only
+understands up to `2`, rather than optimistically parsed.
 
 This is the first thing the host checks, because it determines whether the rest
-of the file can be interpreted at all. A future `schemaVersion: 2` means fields
-may have been renamed, removed or re-typed; a host that parsed it as if it were
-version 1 would not fail, it would misread.
+of the file can be interpreted at all. A future `schemaVersion: 3` might mean
+fields have been renamed, removed or re-typed; a host that parsed it as if it
+were an older version would not fail, it would misread.
+
+Unlike `swayvePluginApi`, this is not (yet) a strict ceiling check with nothing
+below it: a build that understands `schemaVersion: 2` also reads a
+`schemaVersion: 1` manifest correctly, because every bump so far has only
+widened the format (a new capability, a new optional field) rather than
+changing what the old fields mean. The check rejects a manifest only when its
+`schemaVersion` is *newer* than the build's — the same shape as the
+`swayvePluginApi` check just below. Nothing has been renamed, removed or
+re-typed yet; the day something is, that change drops support for the versions
+it broke, and this section starts saying so.
 
 ### `swayvePluginApi`
 
@@ -84,7 +94,7 @@ final class SwayveIncompatibleApiException extends SwayvePluginException {
 The validator has an equivalent, since a manifest can be checked before any code
 runs: `unsupported_plugin_api` (error) when `swayvePluginApi` is above the
 build's level, and `unsupported_schema_version` (error) when `schemaVersion` is
-not the one the build implements. Both are phrased in the voice the host must
+above the version the build implements. Both are phrased in the voice the host must
 use to a user — the plugin is fine, Swayve is behind.
 
 ### `minimumSwayveVersion`

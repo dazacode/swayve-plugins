@@ -44,18 +44,21 @@ final class ManifestRules {
   /// This is the manifest-side half of the host's compatibility check
   /// (CONTRACT section 10). It answers in the same voice the host must use to a
   /// user: the plugin is fine, Swayve is behind.
+  ///
+  /// Only a *newer* `schemaVersion` is rejected, the same shape as the
+  /// `swayvePluginApi` check below. The format only ever widens — a new
+  /// capability, a new optional field — so a build that understands version 2
+  /// reads a version 1 manifest exactly as a v1 build would. There is
+  /// deliberately no "no longer supported" branch: nothing has ever been
+  /// removed from the format, so there is nothing yet to age out.
   void checkCompatibility() {
     final int? schemaVersion = manifest.schemaVersion;
-    if (schemaVersion != null && schemaVersion != kManifestSchemaVersion) {
-      final bool newer = schemaVersion > kManifestSchemaVersion;
+    if (schemaVersion != null && schemaVersion > kManifestSchemaVersion) {
       sink.error(
         DiagnosticCodes.unsupportedSchemaVersion,
-        newer
-            ? 'schemaVersion: $schemaVersion is newer than this build '
-                'understands (schemaVersion $kManifestSchemaVersion); '
-                'this plugin requires a newer version of Swayve'
-            : 'schemaVersion: $schemaVersion is no longer supported; '
-                'schemaVersion $kManifestSchemaVersion is required',
+        'schemaVersion: $schemaVersion is newer than this build '
+        'understands (schemaVersion $kManifestSchemaVersion); '
+        'this plugin requires a newer version of Swayve',
         pointer: '/schemaVersion',
       );
     }

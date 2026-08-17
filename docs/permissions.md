@@ -160,8 +160,9 @@ cannot do the thing it says it does, so it is an **error**
 
 ### Advisory: capability expects network — INFO
 
-The other eight capabilities — `search`, `catalog`, `streaming`, `metadata`,
-`lyrics`, `scrobbling`, `artwork`, `playlist_read` — *usually* reach an external
+The other nine capabilities — `search`, `catalog`, `streaming`, `metadata`,
+`lyrics`, `scrobbling`, `artwork`, `playlist_read`, `artist_activity` —
+*usually* reach an external
 service. Declaring one without `network` produces an **info note**
 (`capability_expects_network`), never a warning and never an error, and
 `--strict` does not promote it.

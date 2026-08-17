@@ -22,9 +22,9 @@ defect: the host will report the plugin as unavailable rather than silently
 treating the capability as absent.
 
 Adding a capability to the vocabulary is a schema change and requires the docs,
-the SDK and the validator to move together. There are ten in v1.
+the SDK and the validator to move together. There are eleven in v1.
 
-## The ten at a glance
+## The eleven at a glance
 
 | Capability | Provider interface | Registration | Implies |
 |---|---|---|---|
@@ -36,6 +36,7 @@ the SDK and the validator to move together. There are ten in v1.
 | `scrobbling` | `SwayveScrobbleProvider` | `registerScrobbleProvider` | `network` |
 | `artwork` | `SwayveArtworkProvider` | `registerArtworkProvider` | `network` |
 | `playlist_read` | `SwayvePlaylistProvider` | `registerPlaylistProvider` | `network` |
+| `artist_activity` | `SwayveArtistActivityProvider` | `registerArtistActivityProvider` | `network` |
 | `authentication` | `SwayveAuthProvider` | `registerAuthProvider` | `external_auth` |
 | `webview` | *(none — host facility)* | — | `webview` |
 
@@ -387,6 +388,39 @@ the same status.
 
 Read-only by name and by design: there is no `playlist_write`, and creating or
 editing playlists in a third-party service is not on the v1 surface.
+
+---
+
+## `artist_activity`
+
+```dart
+abstract interface class SwayveArtistActivityProvider {
+  Future<SwayvePage<SwayveTrack>> likedTracks(
+      SwayveMediaId artistId, SwayveBrowseRequest request, {SwayveCancellationToken? cancel});
+  Future<SwayvePage<SwayveTrack>> repostedTracks(
+      SwayveMediaId artistId, SwayveBrowseRequest request, {SwayveCancellationToken? cancel});
+}
+```
+
+**What the host does with it.** It reads an artist's own public activity on
+the provider's service — what they liked, what they reposted — and lists it
+alongside the rest of what the host already knows about that artist.
+
+This capability is unlike every other one in the vocabulary: most providers
+have nothing to say here. It is not a fact about music, like search or
+streaming, but a fact about a specific service's social features. A provider
+declares it only when the underlying service genuinely exposes a public
+activity feed for an artist; the vocabulary being generic is not a promise
+that every catalogue provider will grow one.
+
+`likedTracks` and `repostedTracks` take the same shape as `playlistTracks` —
+an id, a browse request, a page back — because an artist's activity feed is,
+mechanically, just another paginated list of tracks. Keeping the shape
+identical means a host that already knows how to page through a playlist
+knows how to page through this too.
+
+Read-only, the same as `playlist_read`: there is no way for a plugin to like
+or repost on the user's behalf through this interface.
 
 ---
 
