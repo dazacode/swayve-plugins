@@ -6,7 +6,7 @@ not exist yet.
 > **This describes `release.yml` as it worked while plugins lived in this
 > repository.** The plugin catalogue has since moved to
 > [`Daza-Swayve-plugins`](https://github.com/dazacode/Daza-Swayve-plugins)
-> (private), so a `<plugin>-v<semver>` tag pushed here now has nothing under
+> so a `<plugin>-v<semver>` tag pushed here now has nothing under
 > `plugins/` to find and the workflow fails harmlessly with "directory does
 > not exist" rather than publishing anything. `Daza-Swayve-plugins` does not
 > yet have an equivalent tag-triggered release workflow of its own — for now,

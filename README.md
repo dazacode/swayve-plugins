@@ -9,7 +9,7 @@ tools; it does not itself contain any plugins.
 
 **Looking for the plugins?** They live in
 [`dazacode/Daza-Swayve-plugins`](https://github.com/dazacode/Daza-Swayve-plugins)
-(private) — the SDK's own teaching scaffold (`example`), and the first-party
+— the SDK's own teaching scaffold (`example`), and the first-party
 integrations (`youtube_music`, `soundcloud`). That repo depends on this one
 for the SDK and, in CI, for these tools; this repo has no dependency on it and
 never will — the platform doesn't need to know what plugins exist to work.
@@ -99,7 +99,7 @@ the supported path, and it is deliberately small enough to read end to end.
 
 ```bash
 git clone https://github.com/dazacode/swayve-plugins.git
-git clone https://github.com/dazacode/Daza-Swayve-plugins.git   # the plugins repo — private
+git clone https://github.com/dazacode/Daza-Swayve-plugins.git   # the plugins repo
 cd swayve-plugins
 dart pub get                                   # tooling deps, at the repo root
 
@@ -285,7 +285,7 @@ such as `capability_requires_permission` and `entry_escapes_root`), `--quiet`,
 
 Moved out to
 [`dazacode/Daza-Swayve-plugins`](https://github.com/dazacode/Daza-Swayve-plugins)
-(private) — this repository provides only the platform these plugins are
+— this repository provides only the platform these plugins are
 written against. At the time of the move, that repo held:
 
 | Plugin | ID | Capabilities | Permissions | Status |
