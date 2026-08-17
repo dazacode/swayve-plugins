@@ -11,6 +11,8 @@ environment:
 dependencies:
   swayve_plugin_sdk:
     path: ../swayve_plugin_sdk
+  soundcloud:
+    path: ../../plugins/soundcloud
   youtube_music:
     path: ../../plugins/youtube_music
 

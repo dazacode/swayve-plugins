@@ -28,6 +28,8 @@
 /// at a time.
 library;
 
+import 'package:soundcloud/soundcloud.dart'
+    show createSoundCloudPlugin, kSoundCloudPluginId;
 import 'package:swayve_plugin_sdk/swayve_plugin_sdk.dart';
 import 'package:youtube_music/youtube_music.dart'
     show createYouTubeMusicPlugin, kYouTubeMusicPluginId;
@@ -46,4 +48,5 @@ import 'package:youtube_music/youtube_music.dart'
 const Map<String, SwayvePluginFactory> firstPartyCompiledPlugins =
     <String, SwayvePluginFactory>{
   kYouTubeMusicPluginId: createYouTubeMusicPlugin,
+  kSoundCloudPluginId: createSoundCloudPlugin,
 };
