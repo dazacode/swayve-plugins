@@ -4,9 +4,14 @@ A `.swayveplugin` is a deterministic ZIP archive carrying a plugin, its assets,
 its licences, a hash manifest and an optional signature.
 
 ```bash
-dart run tools/package_plugin.dart plugins/youtube_music --out dist
+dart run tools/package_plugin.dart ../Daza-Swayve-plugins/youtube_music --out dist
 dart run tools/verify_package.dart dist/youtube_music-0.1.0.swayveplugin
 ```
+
+(`youtube_music` here — like every plugin path in this document — lives in
+[`Daza-Swayve-plugins`](https://github.com/dazacode/Daza-Swayve-plugins),
+not in this repository; the examples assume a checkout of it beside this
+one.)
 
 `package_plugin` validates before it packages and refuses to produce an archive
 from a manifest that fails. There is no `--force`.

@@ -3,7 +3,16 @@
 [![validate](https://github.com/dazacode/swayve-plugins/actions/workflows/validate.yml/badge.svg?branch=main)](https://github.com/dazacode/swayve-plugins/actions/workflows/validate.yml)
 [![test](https://github.com/dazacode/swayve-plugins/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/dazacode/swayve-plugins/actions/workflows/test.yml)
 
-The plugin SDK, manifest schema, tooling and reference plugins for **Swayve**.
+The plugin **platform** for **Swayve**: the SDK, the manifest schema, and the
+validation/packaging/verification tooling. This repository provides the
+tools; it does not itself contain any plugins.
+
+**Looking for the plugins?** They live in
+[`dazacode/Daza-Swayve-plugins`](https://github.com/dazacode/Daza-Swayve-plugins)
+(private) — the SDK's own teaching scaffold (`example`), and the first-party
+integrations (`youtube_music`, `soundcloud`). That repo depends on this one
+for the SDK and, in CI, for these tools; this repo has no dependency on it and
+never will — the platform doesn't need to know what plugins exist to work.
 
 A Swayve plugin teaches Swayve about a music source it did not previously know
 about. It answers questions — "what matches this search?", "what is on this
@@ -67,13 +76,16 @@ swayve-plugins/
 ├── packages/
 │   ├── swayve_plugin_sdk/        # the public SDK — pure Dart, zero runtime deps
 │   └── swayve_plugin_registry/   # which first-party compiled plugins a host can activate
-├── plugins/
-│   ├── example/                  # teaching-grade reference plugin
-│   └── youtube_music/            # YouTube Music reference plugin
 ├── tools/                        # validate_plugin · package_plugin · verify_package
 ├── lib/                          # implementation behind tools/
 └── test/                         # tool tests and fixtures
 ```
+
+No `plugins/` directory here — see the note at the top of this README. Every
+example below that names a plugin directory assumes you have a checkout of
+[`Daza-Swayve-plugins`](https://github.com/dazacode/Daza-Swayve-plugins)
+alongside this one, since that's where a real `plugin.json` to point these
+tools at actually lives.
 
 There is **no pub workspace**. Each `pubspec.yaml` resolves independently — run
 `dart pub get` in the directory you are working in. The root `pubspec.yaml` is
@@ -81,19 +93,21 @@ the `swayve_plugin_tools` package and owns `lib/`, `tools/` and `test/`.
 
 ## Your first plugin in 60 seconds
 
-There is no scaffolding generator. Copying `plugins/example` is the supported
-path, and it is deliberately small enough to read end to end.
+There is no scaffolding generator. Copying `example` from
+[`Daza-Swayve-plugins`](https://github.com/dazacode/Daza-Swayve-plugins) is
+the supported path, and it is deliberately small enough to read end to end.
 
 ```bash
 git clone https://github.com/dazacode/swayve-plugins.git
+git clone https://github.com/dazacode/Daza-Swayve-plugins.git   # the plugins repo — private
 cd swayve-plugins
 dart pub get                                   # tooling deps, at the repo root
 
-cp -r plugins/example plugins/my_plugin        # 1. copy the reference plugin
-cd plugins/my_plugin && dart pub get && cd ../..
+cp -r ../Daza-Swayve-plugins/example ../Daza-Swayve-plugins/my_plugin   # 1. copy the reference plugin
+cd ../Daza-Swayve-plugins/my_plugin && dart pub get && cd ../../swayve-plugins
 ```
 
-Then edit three things in `plugins/my_plugin/plugin.json`:
+Then edit three things in `my_plugin/plugin.json`:
 
 ```jsonc
 {
@@ -106,32 +120,24 @@ Then edit three things in `plugins/my_plugin/plugin.json`:
 and validate:
 
 ```bash
-dart run tools/validate_plugin.dart plugins/my_plugin
-(cd plugins/my_plugin && dart test)
+dart run tools/validate_plugin.dart ../Daza-Swayve-plugins/my_plugin
+(cd ../Daza-Swayve-plugins/my_plugin && dart test)
 ```
 
 Then rename the entrypoint function in `lib/` and update `examplePluginId`.
 `entrypoint` matching the directory name is rule 7 of the manifest validator and
 is an **error**, not a warning — it is the single most common first failure. Note
 that `entrypoint` names the directory and the Dart library, **not** the factory
-function: `plugins/youtube_music` declares `"entrypoint": "youtube_music"` and
+function: `youtube_music` declares `"entrypoint": "youtube_music"` and
 exports `createYouTubeMusicPlugin()`, because `youtube_music()` would violate
 `non_constant_identifier_names`.
 
 The full field reference is in [docs/plugin-manifest.md](docs/plugin-manifest.md);
 the edit → validate → run loop is in [docs/development.md](docs/development.md).
 
-A plugin **inside this repository** depends on the SDK by relative path, which
-resolves identically on every checkout because both ends move together:
-
-```yaml
-dependencies:
-  swayve_plugin_sdk:
-    path: ../../packages/swayve_plugin_sdk
-```
-
-A plugin in **its own repository** uses a git dependency instead — never a path
-that reaches across repositories:
+Every plugin depends on the SDK by a **pinned git dependency** — never a path
+that reaches across repositories, since no plugin repository can rely on
+sitting next to this one on disk:
 
 ```yaml
 dependencies:
@@ -139,7 +145,7 @@ dependencies:
     git:
       url: https://github.com/dazacode/swayve-plugins.git
       path: packages/swayve_plugin_sdk
-      ref: main
+      ref: <commit sha>       # pin a commit, not a floating branch
 ```
 
 ### Getting a `compiled` plugin into a host app
@@ -203,9 +209,10 @@ strength:
   cannot do what it says.
 - **Info** — the other eight capabilities *usually* reach the network, so
   declaring one without `network` is a note, never a failure. Whether a plugin
-  opens a connection is not decidable from a manifest: `plugins/example`
-  declares `search` and `catalog`, serves a catalogue compiled into itself, and
-  honestly declares **zero permissions**. Real enforcement is at runtime, where
+  opens a connection is not decidable from a manifest: `example` (in
+  `Daza-Swayve-plugins`) declares `search` and `catalog`, serves a catalogue
+  compiled into itself, and honestly declares **zero permissions**. Real
+  enforcement is at runtime, where
   the answer is knowable — `context.http` throws
   `SwayvePermissionDeniedException` without the permission, in your own tests.
 
@@ -224,11 +231,11 @@ Three commands. Run them from the repository root after `dart pub get`.
 ### `validate_plugin`
 
 ```bash
-dart run tools/validate_plugin.dart plugins/youtube_music
+dart run tools/validate_plugin.dart ../Daza-Swayve-plugins/youtube_music
 ```
 
 ```
-plugins/youtube_music
+../Daza-Swayve-plugins/youtube_music
   ERROR   capabilities: 'webview' requires permission 'webview'   (plugin.json:15)
   WARNING network: permission declared but no network.hosts listed
   INFO    version 0.1.0 is pre-1.0; the plugin API surface is unstable
@@ -236,12 +243,14 @@ plugins/youtube_music
 ```
 
 Info notes are not problems and are left out of the count. `--all` validates
-every directory under `plugins/`; `--plugins-root <dir>` changes what it scans.
+every directory under `--plugins-root <dir>` (defaults to `plugins`, which
+doesn't exist in this repo any more — point it at a `Daza-Swayve-plugins`
+checkout, e.g. `--all --plugins-root ../Daza-Swayve-plugins`).
 
 ### `package_plugin`
 
 ```bash
-dart run tools/package_plugin.dart plugins/youtube_music --out dist
+dart run tools/package_plugin.dart ../Daza-Swayve-plugins/youtube_music --out dist
 ```
 
 Validates first and refuses to package anything that fails. Emits a
@@ -272,29 +281,25 @@ such as `capability_requires_permission` and `entry_escapes_root`), `--quiet`,
 | `2` | Bad usage |
 | `3` | Internal error |
 
-## Reference plugins
+## The plugin catalogue
+
+Moved out to
+[`dazacode/Daza-Swayve-plugins`](https://github.com/dazacode/Daza-Swayve-plugins)
+(private) — this repository provides only the platform these plugins are
+written against. At the time of the move, that repo held:
 
 | Plugin | ID | Capabilities | Permissions | Status |
 |---|---|---|---|---|
-| `plugins/example` | `app.swayve.plugins.example` | `search`, `catalog` | **none** | Teaching reference at `0.1.0`. Serves a hand-written catalogue compiled into itself — no network, no storage, no credentials, **and no playback at all** (`media.streamable: false`). Read this first. |
-| `plugins/youtube_music` | `app.swayve.plugins.youtube_music` | `search`, `catalog`, `streaming`, `webview`, `artwork` | `network`, `webview` | Reference integration at `0.1.0`. Playback resolves to the official embedded player, never an extracted stream URL. **Fixture-verified, not live-validated** — see below. |
+| `example` | `app.swayve.plugins.example` | `search`, `catalog` | **none** | Teaching reference at `0.1.0`. Serves a hand-written catalogue compiled into itself — no network, no storage, no credentials, **and no playback at all** (`media.streamable: false`). Read this first. |
+| `youtube_music` | `app.swayve.plugins.youtube_music` | `search`, `catalog`, `streaming`, `webview`, `artwork` | `network`, `webview` | Reference integration at `0.1.0`. Playback resolves to the official embedded player, never an extracted stream URL. **Fixture-verified, not live-validated.** |
+| `soundcloud` | `app.swayve.plugins.soundcloud` | `search`, `catalog`, `streaming`, `artwork`, `playlist_read` | `network` | First-party integration at `0.1.0`, against SoundCloud's public unauthenticated API rather than an OAuth app registration (closed to new apps). **Fixture-verified, not live-validated.** |
 
-Both are `runtime: compiled`: their source lives in this repository and is
-compiled into Swayve builds through the SDK interfaces only. Neither is
-downloaded at runtime.
-
-`plugins/example` is the more instructive of the two, and its point is what it
-*declines* to claim: a plugin may contribute catalogue data while holding no
-permissions and asserting no right to play anything. Its test suite runs the
-whole lifecycle against a context that grants nothing.
-
-`plugins/youtube_music` is complete and its suite is green, but be precise about
-what that means. Every parser, error mapping, timeout, cancellation path and
-allow-list check is pinned by committed fixtures — and **no request in this
-repository has ever been sent to YouTube Music.** The request composition, the
-InnerTube client version, the search filter tokens, the feed browse ids and the
-continuation format are all plausible and unproven. Its README says so at
-length; read that section before relying on it.
+All three are `runtime: compiled`: their source is compiled into Swayve
+builds through the SDK interfaces only, via a pinned git dependency on
+`Daza-Swayve-plugins` in [`packages/swayve_plugin_registry`](packages/swayve_plugin_registry).
+None is downloaded at runtime. See that repo's own README for what makes
+`example` worth reading first, and the fixture-verified-vs-live-validated
+caveats each of the other two states about itself.
 
 ## Status
 

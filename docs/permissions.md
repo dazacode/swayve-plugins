@@ -6,6 +6,11 @@ are separate and both closed. See
 [architecture.md](architecture.md#capabilities-and-permissions-are-different-questions)
 for why.
 
+> Examples below reference `plugins/example` and `plugins/youtube_music` as
+> worked cases. Both now live in
+> [`Daza-Swayve-plugins`](https://github.com/dazacode/Daza-Swayve-plugins),
+> not in this repository — the reasoning still applies, only the path changed.
+
 Permissions are declared in the manifest:
 
 ```json

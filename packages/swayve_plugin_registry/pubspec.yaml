@@ -11,11 +11,34 @@ environment:
 dependencies:
   swayve_plugin_sdk:
     path: ../swayve_plugin_sdk
+  # The first-party plugin catalogue now lives in its own repository — see
+  # https://github.com/dazacode/Daza-Swayve-plugins (private) — so these are
+  # pinned git dependencies rather than path ones. Pinned by commit, same
+  # reasoning as swayve-client's own pin of this repo: a fresh checkout, CI
+  # included, always resolves the exact plugin code this registry was last
+  # verified against.
   soundcloud:
-    path: ../../plugins/soundcloud
+    git:
+      url: https://github.com/dazacode/Daza-Swayve-plugins.git
+      path: soundcloud
+      ref: 16a81bee1002f9f6d721c487b06a9c1e859b09e3
   youtube_music:
-    path: ../../plugins/youtube_music
+    git:
+      url: https://github.com/dazacode/Daza-Swayve-plugins.git
+      path: youtube_music
+      ref: 16a81bee1002f9f6d721c487b06a9c1e859b09e3
 
 dev_dependencies:
   lints: ^5.0.0
   test: ^1.25.0
+
+# youtube_music and soundcloud, fetched from Daza-Swayve-plugins, each declare
+# their own git dependency on swayve_plugin_sdk (they have no local path to
+# reach it by). Pub refuses to resolve the same package from two different
+# sources at once — a path dependency here, a git one two hops away — so this
+# forces every resolution back onto the copy that already lives in this repo,
+# which is the SDK those plugins were built and pinned against in the first
+# place.
+dependency_overrides:
+  swayve_plugin_sdk:
+    path: ../swayve_plugin_sdk

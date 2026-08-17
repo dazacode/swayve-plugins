@@ -1,5 +1,10 @@
 # Capabilities
 
+> Examples below reference `plugins/youtube_music` as a worked case. It now
+> lives in
+> [`Daza-Swayve-plugins`](https://github.com/dazacode/Daza-Swayve-plugins),
+> not in this repository — the reasoning still applies, only the path changed.
+
 A capability is a question the plugin can answer. The vocabulary is closed —
 arbitrary strings are rejected by the schema — and each capability corresponds
 to one provider interface, registered during `initialize`:

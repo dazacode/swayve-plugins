@@ -5,9 +5,16 @@ Flutter. If your plugin needs any of those to be tested, something has been
 wired wrong.
 
 ```bash
-cd plugins/my_plugin
+cd my_plugin        # in a checkout of Daza-Swayve-plugins, or wherever your plugin lives
 dart test
 ```
+
+Examples below reference `plugins/youtube_music` and `plugins/example` by the
+path they had while this repository still contained plugins directly. Both
+(and `soundcloud`) now live in
+[`Daza-Swayve-plugins`](https://github.com/dazacode/Daza-Swayve-plugins);
+adjust the path or clone that repo alongside this one to run a command as
+written.
 
 Plugin tests use `package:test` and run under `dart test`, not the Flutter test
 runner. If a plugin genuinely needs Flutter, say why in its README — but note
@@ -386,11 +393,11 @@ side runs today; host-backed namespacing is **pending host work**.
 
 ```bash
 dart format . && dart analyze
-dart run tools/validate_plugin.dart --all --strict
+dart run tools/validate_plugin.dart --all --strict --plugins-root ../Daza-Swayve-plugins
 dart test                                        # tools, from the repo root
 (cd packages/swayve_plugin_sdk && dart test)
-(cd plugins/example && dart test)
-(cd plugins/youtube_music && dart test)
+(cd ../Daza-Swayve-plugins/example && dart test)
+(cd ../Daza-Swayve-plugins/youtube_music && dart test)
 ```
 
 CI runs the same commands: `validate` covers formatting, `dart analyze

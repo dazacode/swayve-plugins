@@ -3,6 +3,18 @@
 How a plugin release leaves this repository, what a tag triggers, and what does
 not exist yet.
 
+> **This describes `release.yml` as it worked while plugins lived in this
+> repository.** The plugin catalogue has since moved to
+> [`Daza-Swayve-plugins`](https://github.com/dazacode/Daza-Swayve-plugins)
+> (private), so a `<plugin>-v<semver>` tag pushed here now has nothing under
+> `plugins/` to find and the workflow fails harmlessly with "directory does
+> not exist" rather than publishing anything. `Daza-Swayve-plugins` does not
+> yet have an equivalent tag-triggered release workflow of its own — for now,
+> package and publish a plugin bundle by hand with the tools below, run from
+> a `swayve-plugins` checkout against a `Daza-Swayve-plugins` plugin
+> directory. An `sdk-v<semver>` tag pushed here is unaffected — the SDK
+> itself still lives in `packages/swayve_plugin_sdk`, in this repository.
+
 ---
 
 ## Tag format
@@ -31,15 +43,15 @@ artefact whose contents contradict its name.
 
 ```bash
 # 1. Bump the version in the manifest, and add a CHANGELOG entry.
-#    plugins/youtube_music/plugin.json  →  "version": "0.2.0"
+#    (in a Daza-Swayve-plugins checkout) youtube_music/plugin.json  →  "version": "0.2.0"
 
 # 2. Prove it green locally, exactly as CI will.
-dart format . && dart analyze
-dart run tools/validate_plugin.dart plugins/youtube_music --strict
-(cd plugins/youtube_music && dart test)
+(cd ../Daza-Swayve-plugins/youtube_music && dart format . && dart analyze)
+dart run tools/validate_plugin.dart ../Daza-Swayve-plugins/youtube_music --strict
+(cd ../Daza-Swayve-plugins/youtube_music && dart test)
 
 # 3. Build the artefacts you are about to publish, and verify them.
-dart run tools/package_plugin.dart plugins/youtube_music --out dist
+dart run tools/package_plugin.dart ../Daza-Swayve-plugins/youtube_music --out dist
 dart run tools/verify_package.dart dist/youtube_music-0.2.0.swayveplugin
 
 # 4. Merge to main, then tag the merge commit.

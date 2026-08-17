@@ -54,44 +54,34 @@ cd swayve-plugins
 
 dart pub get                                    # root: swayve_plugin_tools
 cd packages/swayve_plugin_sdk && dart pub get && cd ../..
-cd plugins/example        && dart pub get && cd ../..
-cd plugins/youtube_music  && dart pub get && cd ../..
 ```
+
+This repository has no plugins of its own to `pub get` into — if you're
+working on one, clone
+[`Daza-Swayve-plugins`](https://github.com/dazacode/Daza-Swayve-plugins)
+beside it and `dart pub get` there instead.
 
 Verify the checkout is healthy before changing anything:
 
 ```bash
-dart run tools/validate_plugin.dart --all
 dart test
 ```
+
+`tools/validate_plugin.dart --all` has nothing to validate here without a
+`--plugins-root` pointing at a `Daza-Swayve-plugins` checkout — see below.
 
 ---
 
 ## How the SDK is consumed
 
-A plugin's only dependency is `swayve_plugin_sdk`. How it points at the SDK
-depends on where the plugin lives, and the two cases are genuinely different.
+A plugin's only dependency is `swayve_plugin_sdk`. This repository holds no
+plugins of its own any more — `Daza-Swayve-plugins` does — so there is only
+one supported way a plugin points at the SDK: a **git dependency**.
 
-### A plugin inside this repository
-
-`plugins/example` and `plugins/youtube_music` use a relative path:
-
-```yaml
-# plugins/youtube_music/pubspec.yaml
-dependencies:
-  swayve_plugin_sdk:
-    path: ../../packages/swayve_plugin_sdk
-```
-
-This is a path *inside a single repository*. It resolves identically on any
-checkout and on a fresh CI runner, because both ends move together — the path
-is a fact about this repository's layout, not about a machine. It also means an
-SDK change is testable against both reference plugins in the same commit,
-without publishing anything.
-
-### A plugin in its own repository
-
-Use a **git dependency**:
+(There used to be a second form, a relative `path:` for a plugin living
+directly in this repository, back when `plugins/example` and
+`plugins/youtube_music` did. It's gone along with them — mentioned here only
+so a reader of an old commit isn't confused by it.)
 
 ```yaml
 dependencies:
@@ -121,12 +111,12 @@ That resolves only if the sibling layout is exactly right. It breaks in CI,
 breaks for anyone who clones somewhere else, and — worse — it would make a build
 depend on this repository existing at a particular path on disk.
 
-The two supported forms together satisfy both constraints that matter:
+The git dependency satisfies both constraints that matter:
 
 | Constraint | How it is satisfied |
 |---|---|
 | **Delete this repository and the client still builds.** | The client does not depend on the SDK at all. Nothing here is on the client's dependency graph; Swayve Core works with zero plugins. When the host work lands, the client will reference the SDK by URL, so a missing local checkout is irrelevant. |
-| **Clone this repository anywhere and plugins still develop.** | An in-repo plugin's path is relative to the repository root, and an external plugin's dependency is a URL and a ref. Neither refers to anything outside the checkout, so any location on any machine resolves identically — including a CI runner with no sibling directory at all. |
+| **Clone this repository anywhere and plugins still develop.** | A plugin's dependency is a URL and a ref, not a path — it refers to nothing outside its own checkout, so any location on any machine resolves identically, including a CI runner with no sibling directory at all. |
 
 ### Working on the SDK and an external plugin at once
 
@@ -142,8 +132,7 @@ dependency_overrides:
 ```
 
 Delete it before you package. CI resolves without it, which is the check that
-matters. In-repo plugins never need this — they already resolve against the
-working tree.
+matters.
 
 ---
 
@@ -183,9 +172,9 @@ final class MyCatalogProvider implements SwayveCatalogProvider {
 ### 2 · Validate — works today
 
 ```bash
-dart run tools/validate_plugin.dart plugins/my_plugin
-dart run tools/validate_plugin.dart plugins/my_plugin --strict --json
-dart format . && dart analyze
+dart run tools/validate_plugin.dart ../Daza-Swayve-plugins/my_plugin
+dart run tools/validate_plugin.dart ../Daza-Swayve-plugins/my_plugin --strict --json
+(cd ../Daza-Swayve-plugins/my_plugin && dart format . && dart analyze)
 ```
 
 `--strict` turns warnings into errors and is what CI runs, so run it before you
@@ -226,7 +215,7 @@ faster than any of the above and it is the only step that will still be here
 after every refactor:
 
 ```bash
-cd plugins/my_plugin && dart test
+cd ../Daza-Swayve-plugins/my_plugin && dart test
 ```
 
 ```dart
@@ -287,10 +276,10 @@ repository.
 | `dart format .` | Format. 80 columns, the Dart default. |
 | `dart analyze` | Must report **zero** issues, not "no errors". |
 | `dart test` | Tool tests, from the repository root. |
-| `cd plugins/my_plugin && dart test` | One plugin's tests. Each package resolves its own pubspec, so tests run from inside it — `dart test` has no `--directory` flag. |
-| `dart run tools/validate_plugin.dart plugins/my_plugin` | Validate one plugin. Takes several directories at once. |
-| `dart run tools/validate_plugin.dart --all` | Validate every plugin under `plugins/`. `--plugins-root <dir>` changes what `--all` scans. |
-| `dart run tools/package_plugin.dart plugins/my_plugin --out dist` | Validate, then build a deterministic `.swayveplugin` + `.sha256`. `--key <file>` signs it. |
+| `cd ../Daza-Swayve-plugins/my_plugin && dart test` | One plugin's tests. Each package resolves its own pubspec, so tests run from inside it — `dart test` has no `--directory` flag. |
+| `dart run tools/validate_plugin.dart ../Daza-Swayve-plugins/my_plugin` | Validate one plugin. Takes several directories at once. |
+| `dart run tools/validate_plugin.dart --all --plugins-root ../Daza-Swayve-plugins` | Validate every plugin in a `Daza-Swayve-plugins` checkout. `--plugins-root <dir>` changes what `--all` scans; there is no `plugins/` in *this* repo to default to any more. |
+| `dart run tools/package_plugin.dart ../Daza-Swayve-plugins/my_plugin --out dist` | Validate, then build a deterministic `.swayveplugin` + `.sha256`. `--key <file>` signs it. |
 | `dart run tools/verify_package.dart dist/my_plugin-0.1.0.swayveplugin` | Verify hashes, digest and archive structure. `--pubkey`, `--require-signature` and `--dest` refine it. |
 
 All three tools accept `--json`, `--quiet`, `--strict` and `--help`.
@@ -303,9 +292,9 @@ Exit codes: `0` OK · `1` failed · `2` bad usage · `3` internal error.
 ```bash
 dart format .
 dart analyze
-dart run tools/validate_plugin.dart --all --strict
+dart run tools/validate_plugin.dart --all --strict --plugins-root ../Daza-Swayve-plugins
 dart test                              # from the repo root: swayve_plugin_tools
-(cd plugins/my_plugin && dart test)
+(cd ../Daza-Swayve-plugins/my_plugin && dart test)
 ```
 
 CI runs `dart analyze --fatal-infos`, so treat an info as a failure locally too.
