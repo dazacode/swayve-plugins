@@ -36,6 +36,7 @@ final class SwayveTrack {
     this.availability = SwayveAvailability.none,
     this.kind = SwayveTrackKind.song,
     this.extra = const {},
+    this.externalUrl,
   });
 
   /// The identifier the host will hand back to ask for playback or details.
@@ -90,6 +91,13 @@ final class SwayveTrack {
   /// the host may persist it.
   final Map<String, Object?> extra;
 
+  /// Where a person, not the host, can view this track on the provider's own
+  /// service — its page on soundcloud.com, its watch page on
+  /// music.youtube.com. Not the [availability]/stream address a host plays
+  /// from, and not stable in the way [id] must be: a host may show this to
+  /// someone as "view on the service" or offer to copy it, and nothing else.
+  final Uri? externalUrl;
+
   /// The artists' names joined for display, in credit order.
   ///
   /// Provided because the host's own model is single-artist; using this
@@ -114,6 +122,7 @@ final class SwayveTrack {
     SwayveAvailability? availability,
     SwayveTrackKind? kind,
     Map<String, Object?>? extra,
+    Uri? externalUrl,
   }) =>
       SwayveTrack(
         id: id ?? this.id,
@@ -129,6 +138,7 @@ final class SwayveTrack {
         availability: availability ?? this.availability,
         kind: kind ?? this.kind,
         extra: extra ?? this.extra,
+        externalUrl: externalUrl ?? this.externalUrl,
       );
 
   /// The wire form. Null fields are omitted; [duration] is milliseconds.
@@ -146,6 +156,7 @@ final class SwayveTrack {
         'availability': availability.toJson(),
         'kind': kind.wireName,
         'extra': extra.isEmpty ? null : extra,
+        'externalUrl': externalUrl?.toString(),
       });
 
   /// Parses the wire form produced by [toJson].
@@ -173,6 +184,7 @@ final class SwayveTrack {
       kind: SwayveTrackKind.fromWire(json['kind'] as String? ?? '') ??
           SwayveTrackKind.song,
       extra: reader.extra('extra'),
+      externalUrl: reader.uriOrNull('externalUrl'),
     );
   }
 
@@ -194,7 +206,8 @@ final class SwayveTrack {
       explicit == other.explicit &&
       availability == other.availability &&
       kind == other.kind &&
-      deepEquals(extra, other.extra);
+      deepEquals(extra, other.extra) &&
+      externalUrl == other.externalUrl;
 
   @override
   int get hashCode => Object.hash(
@@ -211,5 +224,6 @@ final class SwayveTrack {
         availability,
         kind,
         deepHash(extra),
+        externalUrl,
       );
 }
