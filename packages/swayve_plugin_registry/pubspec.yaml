@@ -9,14 +9,41 @@ environment:
   sdk: ^3.6.0
 
 dependencies:
+  # A git dependency, not `path: ../swayve_plugin_sdk` — even though this
+  # package and the SDK are still siblings in the same repository. The
+  # plugin catalogue moved out to its own repository, and the plugins there
+  # (soundcloud, youtube_music, below) have no local path back to the SDK,
+  # so *they* depend on it via git. Pub requires every request for one
+  # package, anywhere in a resolution, to agree on a single source — a path
+  # dependency and a git dependency to "the same" code are not
+  # interchangeable as far as pub's resolver is concerned, however identical
+  # their content — so a host app pulling in both this registry and (through
+  # it) those plugins would hit an unresolvable conflict if this stayed a
+  # path dependency. Matching the plugins' own source here means no host app
+  # that depends on this registry ever has to work around that itself; the
+  # alternative is every single one of them needing its own
+  # `dependency_overrides` to paper over a conflict this package created.
+  #
+  # The cost is local development convenience: testing an SDK change against
+  # this registry in the same uncommitted session now needs a
+  # `pubspec_overrides.yaml` (local-only, never committed) rather than
+  # working automatically, the way an in-repo path dependency used to. See
+  # `docs/development.md`'s "Working on the SDK and an external plugin at
+  # once" for that pattern — it already exists for exactly this situation.
   swayve_plugin_sdk:
-    path: ../swayve_plugin_sdk
+    git:
+      url: https://github.com/dazacode/swayve-plugins.git
+      path: packages/swayve_plugin_sdk
+      ref: 78810a83a51be4c7d1e3039000f6f64ec57ddc1c
   # The first-party plugin catalogue now lives in its own repository — see
   # https://github.com/dazacode/Daza-Swayve-plugins — so these are pinned git
-  # dependencies rather than path ones. Pinned by commit, same
-  # reasoning as swayve-client's own pin of this repo: a fresh checkout, CI
-  # included, always resolves the exact plugin code this registry was last
-  # verified against.
+  # dependencies too. Pinned by commit, same reasoning as swayve-client's own
+  # pin of this repo: a fresh checkout, CI included, always resolves the
+  # exact plugin code this registry was last verified against. Kept at the
+  # exact same commit as `swayve_plugin_sdk` above, for the reason explained
+  # there — both plugins declare that same ref for their own SDK dependency,
+  # and any drift between the three is the conflict this whole arrangement
+  # exists to avoid.
   soundcloud:
     git:
       url: https://github.com/dazacode/Daza-Swayve-plugins.git
@@ -31,14 +58,3 @@ dependencies:
 dev_dependencies:
   lints: ^5.0.0
   test: ^1.25.0
-
-# youtube_music and soundcloud, fetched from Daza-Swayve-plugins, each declare
-# their own git dependency on swayve_plugin_sdk (they have no local path to
-# reach it by). Pub refuses to resolve the same package from two different
-# sources at once — a path dependency here, a git one two hops away — so this
-# forces every resolution back onto the copy that already lives in this repo,
-# which is the SDK those plugins were built and pinned against in the first
-# place.
-dependency_overrides:
-  swayve_plugin_sdk:
-    path: ../swayve_plugin_sdk

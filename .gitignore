@@ -30,13 +30,20 @@ dist/
 # across machines and across time. A committed lockfile is what makes that
 # reproducible, so `/pubspec.lock` is deliberately NOT ignored — commit it.
 #
-# Everything under packages/ and plugins/ is a *library* consumed against a
-# range of dependency versions. Committing their lockfiles would pin CI to one
+# Everything under packages/ is a *library* consumed against a range of
+# dependency versions. Committing their lockfiles would pin CI to one
 # resolution and hide breakage that real consumers would hit, so they are
 # ignored below.
 # ---------------------------------------------------------------------------
 packages/**/pubspec.lock
-plugins/**/pubspec.lock
+
+# Local-only dependency overrides — pub reads this alongside a package's own
+# pubspec.yaml but it must never be committed. See
+# packages/swayve_plugin_registry/pubspec.yaml's comment on its
+# swayve_plugin_sdk dependency for the case this exists for: testing an SDK
+# change against the registry in the same uncommitted session, without
+# pushing first.
+**/pubspec_overrides.yaml
 
 # Flutter (plugins/youtube_music may be a Flutter package)
 .flutter-plugins
