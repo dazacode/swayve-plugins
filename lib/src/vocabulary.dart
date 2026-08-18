@@ -33,6 +33,37 @@ const List<String> kCapabilities = <String>[
   'artist_activity',
 ];
 
+/// The closed vocabulary of content a source declares it can be asked for, in
+/// schema order.
+///
+/// Mirrors `SwayveContentType` in the SDK. Kept as a plain list here for the
+/// same reason [kCapabilities] is: the tools package validates manifests
+/// without depending on the SDK, and the sync between the two lists is what
+/// `test/schema_sync_test.dart` exists to hold.
+const List<String> kContentTypes = <String>[
+  'songs',
+  'albums',
+  'artists',
+  'videos',
+];
+
+/// The closed vocabulary of source availabilities, in schema order.
+///
+/// Mirrors `SwayveSourceAvailability` in the SDK. A manifest states a default
+/// rather than an observation — whether a service can answer right now is
+/// knowable only to a running plugin — so in practice a manifest either omits
+/// this or says `ready`. It is in the vocabulary anyway because a plugin that
+/// ships switched off until somebody signs in has an honest use for `off`, and
+/// because letting the manifest spell a value the SDK cannot would be exactly
+/// the drift the schema sync test forbids.
+const List<String> kSourceAvailabilities = <String>[
+  'ready',
+  'offline',
+  'rate_limited',
+  'signed_out',
+  'off',
+];
+
 /// The closed permission vocabulary, in schema order.
 const List<String> kPermissions = <String>[
   'network',

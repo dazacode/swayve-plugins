@@ -110,6 +110,15 @@ abstract final class DiagnosticCodes {
   /// Rule 10. A path-valued field that is absolute, escaping or malformed.
   static const String unsafeRelativePath = 'unsafe_relative_path';
 
+  /// Rule 11. A searchable source that names nothing it can be asked for.
+  static const String sourceDeclaresNoContentTypes =
+      'source_declares_no_content_types';
+
+  /// Rule 11. A source declared by a plugin that is not somewhere a query can
+  /// be sent.
+  static const String sourceWithoutReachableCapability =
+      'source_without_reachable_capability';
+
   // --- setting descriptors, CONTRACT section 5 ------------------------------
   /// Two settings share an `id`.
   static const String settingDuplicateId = 'setting_duplicate_id';

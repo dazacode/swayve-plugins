@@ -238,6 +238,63 @@ final ObjectSpec mediaSpec = const ObjectSpec(
   },
 );
 
+/// One entry of the content-type vocabulary.
+final StringSpec contentTypeSpec = const StringSpec(values: kContentTypes);
+
+/// One entry of the source-availability vocabulary.
+final StringSpec sourceAvailabilitySpec =
+    const StringSpec(values: kSourceAvailabilities);
+
+/// A source id: the stable identity the host keys a person's source selection
+/// on.
+///
+/// Spelled like an [entrypointSpec] rather than like a [pluginIdSpec], because
+/// it is a name a person's saved filters live under rather than a globally
+/// unique package identity — and a reverse-DNS string is not something a host
+/// can put in a chip.
+final StringSpec sourceIdSpec = StringSpec(
+  minLength: 1,
+  maxLength: 64,
+  pattern: RegExp(r'^[a-z][a-z0-9_]*$'),
+);
+
+/// A glyph name the host resolves, not a path and not an asset.
+///
+/// Deliberately not [assetPathSpec]. `icon` is the plugin's own artwork, shipped
+/// in the bundle and rendered at whatever size the settings screen wants; this
+/// is a mark small enough for a source chip, and the host draws it from its own
+/// icon set so that every source in a filter row is drawn in one visual
+/// language. A name the host has never heard of falls back to a generic mark,
+/// which is why an unknown one is not an error here.
+final StringSpec iconNameSpec = StringSpec(
+  minLength: 1,
+  maxLength: 48,
+  pattern: RegExp(r'^[a-z][a-z0-9_]*$'),
+);
+
+/// `source`.
+///
+/// Every field of it is optional except the identity, and the whole object is
+/// optional, because a plugin is entitled not to be a source: a metadata or
+/// lyrics plugin enriches what the host already has and is never somewhere a
+/// query is sent. `availability` is accepted but is a declared default rather
+/// than an observation — see `kSourceAvailabilities`.
+final ObjectSpec sourceSpec = ObjectSpec(
+  required: const <String>{'sourceId'},
+  properties: <String, TypeSpec>{
+    'sourceId': sourceIdSpec,
+    'displayName': const StringSpec(minLength: 1, maxLength: 48, noEmoji: true),
+    'iconName': iconNameSpec,
+    'contentTypes': ArraySpec(
+      contentTypeSpec,
+      minItems: 0,
+      maxItems: 8,
+      uniqueItems: true,
+    ),
+    'availability': sourceAvailabilitySpec,
+  },
+);
+
 /// `network`.
 final ObjectSpec networkSpec = ObjectSpec(
   required: const <String>{'hosts'},
@@ -325,6 +382,7 @@ final ObjectSpec manifestSpec = ObjectSpec(
     'homepage': httpUrlSpec,
     'repository': httpUrlSpec,
     'icon': assetPathSpec,
+    'source': sourceSpec,
     'media': mediaSpec,
     'settings': ArraySpec(settingDescriptorSpec, minItems: 0, maxItems: 32),
     'network': networkSpec,

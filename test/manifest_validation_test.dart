@@ -678,6 +678,133 @@ void main() {
     });
   });
 
+  group('the source block', () {
+    Map<String, Object?> withSource(Map<String, Object?> source) =>
+        cleanManifest()..['source'] = source;
+
+    test('a manifest that declares no source is unchanged by the rule', () {
+      final Report report = validate(cleanManifest());
+      expect(report.diagnostics, isEmpty, reason: codesOf(report).toString());
+    });
+
+    test('a fully declared source passes with nothing to report', () {
+      final Report report = validate(
+        withSource(<String, Object?>{
+          'sourceId': 'demo_source',
+          'displayName': 'Demo Source',
+          'iconName': 'demo_source',
+          'contentTypes': <String>['songs', 'albums', 'artists', 'videos'],
+        }),
+      );
+      expect(report.diagnostics, isEmpty, reason: codesOf(report).toString());
+    });
+
+    test('a source that names nothing beyond its identity still passes', () {
+      // Everything but the id is optional, and it has to stay that way: a
+      // plugin that will not commit to a display name or a glyph is still a
+      // place a query can be sent, and the host has honest fallbacks for both.
+      final Report report = validate(
+        withSource(<String, Object?>{
+          'sourceId': 'demo_source',
+          'contentTypes': <String>['songs'],
+        }),
+      );
+      expect(report.diagnostics, isEmpty, reason: codesOf(report).toString());
+    });
+
+    test('an unknown content type is an enum failure, not a crash', () {
+      final Report report = validate(
+        withSource(<String, Object?>{
+          'sourceId': 'demo_source',
+          'contentTypes': <String>['songs', 'podcasts'],
+        }),
+      );
+      final Diagnostic d = diagnosticFor(report, DiagnosticCodes.fieldEnum);
+      expect(d.pointer, '/source/contentTypes/1');
+    });
+
+    test('a field the block does not define is rejected like any other', () {
+      final Report report = validate(
+        withSource(<String, Object?>{
+          'sourceId': 'demo_source',
+          'contentTypes': <String>['songs'],
+          'canSearch': true,
+        }),
+      );
+      // The whole point of reusing the capability vocabulary is that there is
+      // no second place to say a source is searchable. A manifest inventing
+      // one must not quietly work.
+      final Diagnostic d = diagnosticFor(report, DiagnosticCodes.fieldUnknown);
+      expect(d.pointer, '/source/canSearch');
+    });
+
+    test('a source object with no sourceId is a missing required field', () {
+      final Report report = validate(
+        withSource(<String, Object?>{'displayName': 'Demo Source'}),
+      );
+      final Diagnostic d = diagnosticFor(report, DiagnosticCodes.fieldRequired);
+      expect(d.pointer, '/source/sourceId');
+    });
+
+    test('11: searchable but naming no content types is advisory', () {
+      final Report report = validate(
+        withSource(<String, Object?>{'sourceId': 'demo_source'}),
+      );
+      final Diagnostic d = diagnosticFor(
+        report,
+        DiagnosticCodes.sourceDeclaresNoContentTypes,
+      );
+      expect(d.severity, Severity.info);
+      expect(d.pointer, '/source/contentTypes');
+      // Info, so --strict must not promote it: a plugin part-way through
+      // adopting the field has broken nothing.
+      expect(report.passed(strict: true), isTrue);
+    });
+
+    test('11: a source nothing can be asked of is advisory', () {
+      final Map<String, Object?> manifest = cleanManifest()
+        ..['capabilities'] = <String>['metadata']
+        ..['source'] = <String, Object?>{'sourceId': 'demo_source'};
+      final Diagnostic d = diagnosticFor(
+        validate(manifest),
+        DiagnosticCodes.sourceWithoutReachableCapability,
+      );
+      expect(d.severity, Severity.info);
+      expect(d.pointer, '/source');
+    });
+
+    test('the typed view reads every field back', () {
+      final ManifestValidation result = validateManifestText(
+        encodeManifest(
+          withSource(<String, Object?>{
+            'sourceId': 'demo_source',
+            'displayName': 'Demo Source',
+            'iconName': 'demo_source',
+            'contentTypes': <String>['songs', 'videos'],
+            'availability': 'ready',
+          }),
+        ),
+        target: 'fixture',
+      );
+      expect(result.manifest.hasSourceObject, isTrue);
+      expect(result.manifest.sourceId, 'demo_source');
+      expect(result.manifest.sourceDisplayName, 'Demo Source');
+      expect(result.manifest.sourceIconName, 'demo_source');
+      expect(result.manifest.sourceContentTypes, <String>['songs', 'videos']);
+      expect(result.manifest.sourceAvailability, 'ready');
+    });
+
+    test('the typed view answers nothing for a manifest with no source', () {
+      final ManifestValidation result = validateManifestText(
+        encodeManifest(cleanManifest()),
+        target: 'fixture',
+      );
+      expect(result.manifest.hasSourceObject, isFalse);
+      expect(result.manifest.sourceId, isNull);
+      expect(result.manifest.sourceContentTypes, isEmpty);
+    });
+  });
+
   group('diagnostic locations', () {
     test('a diagnostic points at the line the field is on', () {
       const String text = '''

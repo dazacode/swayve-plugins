@@ -67,6 +67,43 @@ final class PluginManifest {
     return null;
   }
 
+  /// Whether a `source` object is present at all.
+  ///
+  /// Distinct from every accessor below returning nothing: a plugin that
+  /// declared no source and a plugin that declared an empty one are different
+  /// claims, and only the second is worth a diagnostic.
+  bool get hasSourceObject => json['source'] is Map<String, Object?>;
+
+  /// `source.sourceId`.
+  String? get sourceId => _sourceField<String>('sourceId');
+
+  /// `source.displayName`.
+  String? get sourceDisplayName => _sourceField<String>('displayName');
+
+  /// `source.iconName`.
+  String? get sourceIconName => _sourceField<String>('iconName');
+
+  /// `source.availability`.
+  String? get sourceAvailability => _sourceField<String>('availability');
+
+  /// `source.contentTypes`, keeping only well-formed entries.
+  List<String> get sourceContentTypes {
+    final List<Object?>? types = _sourceField<List<Object?>>('contentTypes');
+    if (types == null) {
+      return const <String>[];
+    }
+    return types.whereType<String>().toList(growable: false);
+  }
+
+  T? _sourceField<T>(String key) {
+    final Object? source = json['source'];
+    if (source is Map<String, Object?>) {
+      final Object? value = source[key];
+      return value is T ? value : null;
+    }
+    return null;
+  }
+
   /// `platforms`, keeping only well-formed entries.
   List<String> get platforms => _stringList('platforms');
 

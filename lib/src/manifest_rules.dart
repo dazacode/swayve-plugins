@@ -36,6 +36,7 @@ final class ManifestRules {
     rule8FirstPartyAuthor();
     rule9VersionStability();
     rule10PathsAreSafe();
+    rule11SourceIsReachable();
     checkSettings();
   }
 
@@ -295,6 +296,49 @@ final class ManifestRules {
         '${pointer.substring(1)}: path must be relative to the plugin '
         "directory; '$value' $reasons",
         pointer: pointer,
+      );
+    }
+  }
+
+  /// Rule 11. A `source` block that describes somewhere nothing can be sent.
+  ///
+  /// Both halves are advisory, and for the same reason rule 1b is: what a
+  /// plugin can actually be asked for is not decidable from a manifest, and a
+  /// plugin that is honestly a little of both must not fail CI for its honesty.
+  ///
+  /// The first half catches the shape that produces a broken filter row: a
+  /// plugin declaring `search` and a `source` naming no content types is
+  /// telling the host both "put a query to me" and "there is nothing I answer
+  /// for", and the host resolves that by never offering the source at all —
+  /// which reads to a user as a plugin that installed and then did nothing.
+  ///
+  /// The second half catches the opposite: a `source` block on a plugin that
+  /// declares neither `search` nor `catalog` is describing a source that no
+  /// query and no browse can reach. That is a plugin filling in a field
+  /// because it exists rather than because it is one, and the cost is a source
+  /// row a person can select and get nothing from.
+  void rule11SourceIsReachable() {
+    if (!manifest.hasSourceObject) {
+      return;
+    }
+    final Set<String> capabilities = manifest.capabilities.toSet();
+    if (capabilities.contains('search') &&
+        manifest.sourceContentTypes.isEmpty) {
+      sink.info(
+        DiagnosticCodes.sourceDeclaresNoContentTypes,
+        "source: the 'search' capability is declared but source.contentTypes "
+        'names nothing this source can be asked for, so a host has nothing to '
+        'offer it under',
+        pointer: '/source/contentTypes',
+      );
+    }
+    if (!capabilities.contains('search') && !capabilities.contains('catalog')) {
+      sink.info(
+        DiagnosticCodes.sourceWithoutReachableCapability,
+        "source: declared, but the plugin declares neither 'search' nor "
+        "'catalog', so nothing can be asked of it; a plugin that only enriches "
+        'what the host already has is not a source',
+        pointer: '/source',
       );
     }
   }

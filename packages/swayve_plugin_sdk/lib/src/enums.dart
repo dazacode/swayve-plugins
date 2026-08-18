@@ -442,3 +442,111 @@ enum SwayveAuthStatus {
     return null;
   }
 }
+
+/// A kind of thing a source can be asked for.
+///
+/// Declared per source rather than assumed of every source, because sources
+/// genuinely differ: a service built on user uploads has no album to speak of,
+/// a video service answers with uploads and nothing else, and a plugin that
+/// only publishes a chart cannot be searched at all. The host draws a filter
+/// row from this, and a filter row offering *Albums* when the only source
+/// selected has never heard of an album is an interface lying about what it
+/// can do.
+///
+/// The rejected alternative was to reuse [SwayveSearchKind], which already
+/// names tracks, albums, artists and playlists. It is the wrong list twice
+/// over: it has no word for a video upload, which is exactly the distinction
+/// [SwayveTrackKind] exists to draw, and it names playlists, which are browsed
+/// rather than filtered for. A request parameter and a declaration of reach
+/// are different vocabularies that happen to overlap, and collapsing them
+/// would mean neither could grow a member without disturbing the other.
+enum SwayveContentType {
+  /// Individual recordings.
+  songs,
+
+  /// Releases.
+  albums,
+
+  /// Artists in their own right, not merely as a track's credit.
+  artists,
+
+  /// Video uploads — the [SwayveTrackKind.video] half of a catalogue.
+  videos;
+
+  /// The wire spelling of this content type.
+  String get wireName => name;
+
+  /// The content type named [wire], or `null` if unknown.
+  ///
+  /// A caller reading a manifest drops an unknown member rather than failing
+  /// the read. A plugin built against a later SDK naming a fifth kind of
+  /// content is describing reach this host has no way to offer anyway, and
+  /// refusing the whole source over a word in a list would lose the four kinds
+  /// it does understand.
+  static SwayveContentType? fromWire(String wire) {
+    for (final value in SwayveContentType.values) {
+      if (value.wireName == wire) return value;
+    }
+    return null;
+  }
+}
+
+/// Whether a source can answer right now, and why not when it cannot.
+///
+/// Deliberately not a bool, and deliberately finer-grained than the four states
+/// the host displays. "Cannot answer" has causes a person responds to
+/// completely differently — a service that is rate limited will come back on
+/// its own, a lapsed session needs signing into again, a plugin somebody
+/// switched off is doing exactly what it was told — and collapsing them into
+/// `available: false` is what produces an interface that says *unavailable* and
+/// leaves somebody with nothing to do about it.
+///
+/// The plugin names the cause; the host decides how many buckets to draw it in.
+/// That direction matters: a plugin knows why its own service is quiet and the
+/// host never can, so widening this list later costs the host nothing — an
+/// unrecognised cause reads as [offline], which is the honest default for
+/// *something is wrong and nobody here can say what*.
+enum SwayveSourceAvailability {
+  /// Answering now.
+  ready,
+
+  /// Reachable in principle, not right now — no network, the service
+  /// unreachable, a request that timed out. Nothing needs doing.
+  offline,
+
+  /// The service answered, and said this account is asking too often. Comes
+  /// back on its own, so nothing needs doing here either — but it is worth
+  /// telling apart from [offline], because the music is there and the plugin
+  /// is working.
+  ///
+  /// Its wire name is `rate_limited`.
+  rateLimited,
+
+  /// Needs the person to do something: sign in, sign in again, re-authorise.
+  ///
+  /// Its wire name is `signed_out`.
+  signedOut,
+
+  /// Deliberately switched off, by the person or by the plugin itself.
+  off;
+
+  /// The wire spelling of this availability.
+  String get wireName => switch (this) {
+        SwayveSourceAvailability.ready => 'ready',
+        SwayveSourceAvailability.offline => 'offline',
+        SwayveSourceAvailability.rateLimited => 'rate_limited',
+        SwayveSourceAvailability.signedOut => 'signed_out',
+        SwayveSourceAvailability.off => 'off',
+      };
+
+  /// Whether a query sent now could produce anything.
+  bool get canAnswer => this == SwayveSourceAvailability.ready;
+
+  /// The availability named [wire], or `null` if unknown.
+  static SwayveSourceAvailability? fromWire(String wire) {
+    for (final value in SwayveSourceAvailability.values) {
+      if (value.wireName == wire) return value;
+    }
+    return null;
+  }
+}
