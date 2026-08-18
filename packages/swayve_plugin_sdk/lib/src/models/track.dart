@@ -205,7 +205,9 @@ final class SwayveTrack {
       extra: reader.extra('extra'),
       externalUrl: reader.uriOrNull('externalUrl'),
       alternateNames: reader.objectOrNull(
-              'alternateNames', SwayveAlternateNames.fromJson) ??
+            'alternateNames',
+            SwayveAlternateNames.fromJson,
+          ) ??
           SwayveAlternateNames.none,
     );
   }
