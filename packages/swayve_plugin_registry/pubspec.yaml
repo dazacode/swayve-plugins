@@ -48,12 +48,12 @@ dependencies:
     git:
       url: https://github.com/dazacode/Daza-Swayve-plugins.git
       path: soundcloud
-      ref: a829b16d80e80fcd59ec758977912afdf8ee8b0c
+      ref: 5c7d32a745acfe4bdb4260c3de2e2cec96d0fb33
   youtube_music:
     git:
       url: https://github.com/dazacode/Daza-Swayve-plugins.git
       path: youtube_music
-      ref: a829b16d80e80fcd59ec758977912afdf8ee8b0c
+      ref: 5c7d32a745acfe4bdb4260c3de2e2cec96d0fb33
 
 dev_dependencies:
   lints: ^5.0.0
