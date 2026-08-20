@@ -23,6 +23,37 @@ the dependency decision that keeps both repositories independent.
 dart --version
 ```
 
+On Linux, install the Dart SDK however your distro prefers — the
+[archive tarball](https://dart.dev/get-dart), or `sudo apt install dart` on
+Debian/Ubuntu once Dart's own apt repository is added, per
+[dart.dev/get-dart](https://dart.dev/get-dart). No `PATH` quirks or Flutter
+dependency to work around: this repository and `Daza-Swayve-plugins` are pure
+Dart packages, not Flutter apps, so nothing here needs the Flutter SDK, a
+Linux desktop toolchain, or GTK/GStreamer — that list is `swayve-client`'s, for
+building the host app itself, not for writing a plugin against it.
+
+### Platform notes
+
+Every command in this document is already what a Linux (or macOS) developer
+would run — this repository has no PowerShell anywhere, on any platform, since
+`dart`/`git` behave identically wherever they run. There is nothing
+Linux-specific to translate.
+
+One real gotcha, discovered developing `youtube_music` under WSL and worth
+knowing before it costs you an afternoon: **`SwayveHostInfo.locale` is
+documented as a BCP-47 tag (`en-GB`) but is not guaranteed to actually be
+one.** A Linux dev machine — WSL especially, which ships with no system locale
+configured by default — can have a host pass through an empty string rather
+than a well-formed tag. `youtube_music`'s `language` getter
+(`youtube_music/lib/src/innertube_client.dart` in `Daza-Swayve-plugins`) is
+the fix to copy: trim it, fall back to `'en'` on empty, and take only the
+primary subtag before `-`/`_` rather than trusting the whole string is
+present and well-shaped. Any provider that builds a request from `host.locale`
+or `host.region` should do the same defensive parsing rather than assume the
+doc comment's example format always holds — see
+[testing.md](testing.md#what-to-test) for how to reproduce this in a test
+without needing a Linux machine at all.
+
 ---
 
 ## Local layout

@@ -86,6 +86,26 @@ it. Its default host is `Swayve 1.1.0` on `android`, API level 1, with
 `{SwayveWebEmbedKind.inAppWebView}` supported — override `host:` to test other
 platforms or an embed-less host.
 
+That includes reproducing a Linux/WSL host with no locale configured, without
+needing an actual Linux machine to do it — copy the default, switch the
+platform, and blank the locale:
+
+```dart
+final context = FakeSwayvePluginContext(
+  host: FakeSwayvePluginContext.defaultHostInfo.copyWith(
+    platform: SwayvePlatform.linux,
+    locale: '',
+  ),
+  permissions: {SwayvePermission.network},
+);
+```
+
+`SwayveHostInfo.region` is nullable and already exercises the "unknown"
+path when omitted; `locale` is not nullable, so an empty string is the
+realistic failure shape to test against, not `null`. See
+[development.md](development.md#platform-notes) for why this specific case is
+worth a test rather than a hypothetical.
+
 `registeredCapabilities` is the assertion that closes the loop between the
 manifest and the code:
 
@@ -272,6 +292,7 @@ test('the authorization header is never logged', () async {
 | `registeredCapabilities` vs the manifest | Catches a capability declared and never registered, and the reverse |
 | Every outbound URL against `network.hosts` | Read the allow-list from `plugin.json` itself, not from a constant in the plugin |
 | Availability mapping | `streamable`, `downloadable`, `onDevice` set independently and correctly |
+| Empty or malformed `host.locale` / `.region` | Not hypothetical — a real bug on Linux/WSL, whose default locale is frequently unset. See [development.md](development.md#platform-notes) and the `host:` override example above |
 
 The last two are worth copying from `plugins/youtube_music`, whose
 `network_allowlist_test.dart` and `manifest_agreement_test.dart` read the real

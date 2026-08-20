@@ -200,9 +200,13 @@ support comments — the real file has none.
   // downloaded at runtime. See platforms.md.
   "runtime": "compiled",
 
-  // No `linux`/`macos` here because this plugin has not been exercised there.
+  // No `macos` here because this plugin has never been exercised there.
+  // `linux` was added later than the rest, and only once this plugin had
+  // actually run against a Linux Swayve build — not the day the code first
+  // compiled for it. That caution found a real bug rather than a
+  // hypothetical one: see platforms.md's platform-matrix section.
   // Claim only what you have run.
-  "platforms": ["android", "ios", "windows"],
+  "platforms": ["android", "ios", "windows", "linux"],
 
   // Five capabilities. Four map to provider interfaces; `webview` does not —
   // it declares that this plugin's playback needs a host-rendered web surface.

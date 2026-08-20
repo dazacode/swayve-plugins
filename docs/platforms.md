@@ -46,10 +46,19 @@ client-side special case for their ids.
 | `linux` | ✅ | ✅ (declarative only) | |
 
 `platforms` must be non-empty and is a claim about where the plugin has actually
-been exercised, not a wish list. `youtube_music` lists
-`["android", "ios", "windows"]` because those are the platforms it has been run
-on; adding `linux` because it "should work" is how a plugin ends up broken for
-the one user who tried it.
+been exercised, not a wish list. `youtube_music` and `soundcloud` both now list
+`["android", "ios", "windows", "linux"]` — but `linux` was added only once each
+plugin had actually been run against a Linux Swayve build, not the moment
+`flutter build linux` first succeeded. That caution paid off: doing so surfaced
+a real bug rather than a hypothetical one — `youtube_music`'s InnerTube
+requests were sent with an invalid language code on any host with no locale
+configured, WSL's default, because `SwayveHostInfo.locale` isn't guaranteed to
+actually be the well-formed BCP-47 tag its doc comment promises. See
+[development.md](development.md#platform-notes) and
+[testing.md](testing.md#what-to-test) for the fix and how to test for it.
+Declaring `linux` before that fix landed — because the code "should work" the
+same as it does on Windows — is exactly the failure mode this rule exists to
+prevent.
 
 At load time the host checks that `platforms` contains the running platform, and
 that the plugin's `runtime` is supported there. Failing either is a
