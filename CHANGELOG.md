@@ -45,6 +45,15 @@ whole.
   (their liked and reposted tracks). Bumps `schemaVersion` to 2; existing
   `schemaVersion: 1` manifests keep validating unchanged.
 
+- **`personal_library` capability** — a twelfth entry in the closed capability
+  vocabulary, and `SwayveLibraryProvider` in `swayve_plugin_sdk`, for a plugin
+  to expose *the signed-in user's own* liked tracks. Unlike `artist_activity`,
+  it takes no target id at all — there is no artist to name, because the
+  account is the plugin's own session. A new cross-field rule
+  (`capability_requires_capability`) requires `authentication` alongside it:
+  there is no "own" library without a session. Bumps `schemaVersion` to 3;
+  existing `schemaVersion: 1` and `2` manifests keep validating unchanged.
+
 ## [0.1.0] — 2026-08-15
 
 Initial foundation: the plugin contract, the SDK that expresses it, the tooling

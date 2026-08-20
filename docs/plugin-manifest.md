@@ -33,7 +33,7 @@ dart run tools/validate_plugin.dart ../Daza-Swayve-plugins/my_plugin
 
 | Field | Type | Rule |
 |---|---|---|
-| `schemaVersion` | integer | `2` as of the `artist_activity` capability; `1` still validates. Rejected only if newer than the build understands. Not the plugin's version — see [versioning.md](versioning.md). |
+| `schemaVersion` | integer | `3` as of the `personal_library` capability; `1` and `2` still validate. Rejected only if newer than the build understands. Not the plugin's version — see [versioning.md](versioning.md). |
 | `id` | string | Reverse-DNS. Regex `^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*){2,}$` — at least three segments, lowercase, digits and `_` allowed but not as the first character of a segment. Max 128 characters. |
 | `name` | string | 1–64 characters, human readable, no emoji. This is what the user sees in Explore and in settings. |
 | `description` | string | 1–280 characters. One sentence describing what the plugin adds, not who wrote it. |
@@ -337,10 +337,10 @@ permission describes a plugin that cannot do the thing it says it does.
 
 ### 1b. Capability expects network — INFO
 
-The other eight capabilities — `search`, `catalog`, `streaming`, `metadata`,
-`lyrics`, `scrobbling`, `artwork`, `playlist_read` — *usually* reach an external
-service. When one is declared without the `network` permission, the validator
-says so and moves on:
+The other ten capabilities — `search`, `catalog`, `streaming`, `metadata`,
+`lyrics`, `scrobbling`, `artwork`, `playlist_read`, `artist_activity`,
+`personal_library` — *usually* reach an external service. When one is declared
+without the `network` permission, the validator says so and moves on:
 
 ```
   INFO    capabilities: 'search' usually reaches an external service; declare the 'network' permission unless this plugin serves purely local data
@@ -357,6 +357,27 @@ a permission it never uses — the exact over-permissioning the model exists to
 prevent. Real enforcement lives at runtime and is exact; see
 [permissions.md](permissions.md#under-declaration-is-caught-at-runtime).
 
+### 1c. Capability requires capability — ERROR
+
+`personal_library` is structurally unusable without `authentication`, for the
+same reason `webview` and `authentication` need their own permissions in 1a:
+the capability describes the signed-in user's *own* liked tracks, and there is
+no "own" without a session.
+
+| Capability | Requires capability |
+|---|---|
+| `personal_library` | `authentication` |
+
+```
+  ERROR   capabilities: 'personal_library' requires capability 'authentication'   (plugin.json:15)
+```
+
+Code: `capability_requires_capability`. This is a distinct rule from 1a because
+what is missing is another declared capability, not a permission — a manifest
+holding `external_auth` without also declaring `authentication` is still an
+error here, because the permission grants the credential slot but says nothing
+about whether the plugin runs a sign-in flow at all.
+
 ### 2. Unimplied permission — WARNING
 
 A permission that nothing justifies is over-permissioning.
@@ -367,7 +388,7 @@ A permission that nothing justifies is over-permissioning.
 
 Code: `permission_not_implied`. A permission counts as justified when any
 declared capability implies it — either structurally (rule 1a) or because it is
-one of the eight network-expecting capabilities. Two further exemptions:
+one of the ten network-expecting capabilities. Two further exemptions:
 
 - `local_plugin_storage` and `clipboard` are **self-justifying**. They are host
   facilities rather than provider interfaces, so no capability could ever imply

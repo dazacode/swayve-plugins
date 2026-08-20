@@ -80,6 +80,11 @@ abstract final class DiagnosticCodes {
   /// without the `network` permission.
   static const String capabilityExpectsNetwork = 'capability_expects_network';
 
+  /// Rule 1c. A declared capability cannot work without another capability
+  /// that is missing — e.g. `personal_library` without `authentication`.
+  static const String capabilityRequiresCapability =
+      'capability_requires_capability';
+
   /// Rule 2. A permission is declared that no declared capability implies.
   static const String permissionNotImplied = 'permission_not_implied';
 

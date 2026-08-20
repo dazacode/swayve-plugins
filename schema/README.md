@@ -7,7 +7,7 @@
 |---|---|
 | `$id` | `https://swayve.app/schema/swayve-plugin.schema.json` |
 | Draft | `https://json-schema.org/draft/2020-12/schema` |
-| `schemaVersion` | `2` (`1` also validates) |
+| `schemaVersion` | `3` (`1` and `2` also validate) |
 
 Point an editor at it to get completion and inline errors while writing a
 manifest:
@@ -161,11 +161,12 @@ entry. Change one and the test will tell you to change the other.
 
 ## Changing the schema
 
-`schemaVersion` is `2`, having moved from `1` when the `artist_activity`
-capability was added. The check in `checkCompatibility()` only rejects a
-`schemaVersion` *newer* than the build understands — a `schemaVersion: 1`
-manifest keeps validating on a build that implements `2`, because the format
-has so far only ever widened.
+`schemaVersion` is `3`, having moved from `2` to `3` when the `personal_library`
+capability was added (and from `1` to `2` when `artist_activity` was added
+before it). The check in `checkCompatibility()` only rejects a `schemaVersion`
+*newer* than the build understands — a `schemaVersion: 1` manifest keeps
+validating on a build that implements `3`, because the format has so far only
+ever widened.
 
 * Adding an **optional** field is a minor change: add it to the schema, to
   `lib/src/schema_spec.dart`, and to `docs/plugin-manifest.md`.

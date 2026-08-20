@@ -8,8 +8,8 @@ While the version is `0.x` the API is unstable: a minor bump may break you.
 
 ## Unreleased
 
-Manifest schema version 2. Purely additive over v1 — a v1 manifest still
-validates unchanged.
+Manifest schema version 3. Purely additive over v1 — a v1 (or v2) manifest
+still validates unchanged.
 
 ### Added
 
@@ -19,6 +19,12 @@ validates unchanged.
   layer the generic catalogue capabilities don't cover.
 - `SwayvePluginContext.registerArtistActivityProvider`, and
   `FakeSwayvePluginContext.artistActivityProviders` for testing it.
+- `SwayveCapability.personalLibrary` and `SwayveLibraryProvider` — the
+  signed-in user's own liked tracks, distinct from `SwayveArtistActivityProvider`
+  in that it takes no target id: the account is the plugin's own session, not
+  a third party. An eleventh provider interface. Manifest schema version 3.
+- `SwayvePluginContext.registerLibraryProvider`, and
+  `FakeSwayvePluginContext.libraryProviders` for testing it.
 
 ## 0.1.0
 

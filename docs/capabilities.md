@@ -22,9 +22,9 @@ defect: the host will report the plugin as unavailable rather than silently
 treating the capability as absent.
 
 Adding a capability to the vocabulary is a schema change and requires the docs,
-the SDK and the validator to move together. There are eleven in v1.
+the SDK and the validator to move together. There are twelve in v1.
 
-## The eleven at a glance
+## The twelve at a glance
 
 | Capability | Provider interface | Registration | Implies |
 |---|---|---|---|
@@ -37,6 +37,7 @@ the SDK and the validator to move together. There are eleven in v1.
 | `artwork` | `SwayveArtworkProvider` | `registerArtworkProvider` | `network` |
 | `playlist_read` | `SwayvePlaylistProvider` | `registerPlaylistProvider` | `network` |
 | `artist_activity` | `SwayveArtistActivityProvider` | `registerArtistActivityProvider` | `network` |
+| `personal_library` | `SwayveLibraryProvider` | `registerLibraryProvider` | `network`, `authentication` |
 | `authentication` | `SwayveAuthProvider` | `registerAuthProvider` | `external_auth` |
 | `webview` | *(none — host facility)* | — | `webview` |
 
@@ -421,6 +422,50 @@ knows how to page through this too.
 
 Read-only, the same as `playlist_read`: there is no way for a plugin to like
 or repost on the user's behalf through this interface.
+
+---
+
+## `personal_library`
+
+```dart
+abstract interface class SwayveLibraryProvider {
+  Future<SwayvePage<SwayveTrack>> likedTracks(
+      SwayveBrowseRequest request, {SwayveCancellationToken? cancel});
+}
+```
+
+**What the host does with it.** It reads the tracks the *signed-in* account
+has liked and turns them into a library the user browses the same way they
+browse a paired computer's library — this is the capability the whole
+authentication story exists to feed.
+
+This is not `artist_activity` wearing a different name, and the difference is
+the whole point of the interface. `SwayveArtistActivityProvider.likedTracks`
+takes an *artist's* `SwayveMediaId` and answers a question about someone else,
+public and browsable without ever signing in. `SwayveLibraryProvider.likedTracks`
+takes **no target id at all** — there is nothing to name, because the account
+*is* the plugin's own session. Where `artist_activity` describes a service's
+social features, `personal_library` describes turning a plugin's
+authentication into a first-class library the rest of the host already knows
+how to render.
+
+That is also why `personal_library` is the one capability in the vocabulary
+that requires *another capability*, not just a permission: declaring it
+without `authentication` describes a "signed-in user's own" something with no
+session to own it. The validator enforces this structurally
+(`capability_requires_capability`, rule 1c — see
+[plugin-manifest.md](plugin-manifest.md#1c-capability-requires-capability--error)),
+the same way `webview` and `authentication` each require their own permission.
+
+Call `likedTracks` only while `SwayveAuthProvider.authState()` reports
+`SwayveAuthStatus.signedIn`. A call made while signed out should throw
+`SwayvePluginAuthRequiredException` rather than answer with an empty page — an
+empty library and "you are not signed in" are different facts, and only one of
+them is a reason to show a sign-in prompt.
+
+Pagination follows the same cursor rules as every other paginated provider in
+this SDK: return `SwayvePage(items: [...], cursor: next)`, and `null` for
+`cursor` only once there truly is no more.
 
 ---
 

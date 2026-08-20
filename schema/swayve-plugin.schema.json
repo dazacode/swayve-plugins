@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://swayve.app/schema/swayve-plugin.schema.json",
   "title": "Swayve plugin manifest",
-  "description": "Structure of a Swayve plugin's plugin.json. schemaVersion 2 (a schemaVersion 1 manifest also validates). This file is the published contract; cross-field rules that a JSON Schema cannot express live in swayve_plugin_tools and are documented in schema/README.md.",
+  "description": "Structure of a Swayve plugin's plugin.json. schemaVersion 3 (a schemaVersion 1 or 2 manifest also validates). This file is the published contract; cross-field rules that a JSON Schema cannot express live in swayve_plugin_tools and are documented in schema/README.md.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -236,7 +236,8 @@
         "webview",
         "artwork",
         "playlist_read",
-        "artist_activity"
+        "artist_activity",
+        "personal_library"
       ]
     },
     "permission": {

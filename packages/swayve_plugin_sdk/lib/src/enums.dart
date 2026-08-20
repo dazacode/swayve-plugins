@@ -53,7 +53,19 @@ enum SwayveCapability {
   /// that grows one can say so, not a promise that all of them will.
   ///
   /// Its wire name is `artist_activity`.
-  artistActivity;
+  artistActivity,
+
+  /// The signed-in user's own liked tracks on the provider's service.
+  /// Requires a `SwayveLibraryProvider`.
+  ///
+  /// Unlike [artistActivity], this takes no target id: there is no artist to
+  /// name, because the plugin's own session *is* the account whose library
+  /// this exposes. A provider declares it only when it also has some way to
+  /// sign in — declaring `personal_library` without `authentication` describes
+  /// a "signed-in user's own" anything with no session to own it.
+  ///
+  /// Its wire name is `personal_library`.
+  personalLibrary;
 
   /// The manifest spelling of this capability.
   ///
@@ -72,6 +84,7 @@ enum SwayveCapability {
         SwayveCapability.artwork => 'artwork',
         SwayveCapability.playlistRead => 'playlist_read',
         SwayveCapability.artistActivity => 'artist_activity',
+        SwayveCapability.personalLibrary => 'personal_library',
       };
 
   /// The capability named [wire], or `null` if the name is not in the v1

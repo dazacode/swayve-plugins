@@ -84,4 +84,7 @@ abstract interface class SwayvePluginContext {
 
   /// Registers the plugin's `authentication` implementation.
   void registerAuthProvider(SwayveAuthProvider provider);
+
+  /// Registers the plugin's `personal_library` implementation.
+  void registerLibraryProvider(SwayveLibraryProvider provider);
 }

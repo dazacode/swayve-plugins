@@ -193,6 +193,36 @@ abstract interface class SwayveArtistActivityProvider {
   });
 }
 
+/// The signed-in user's own liked tracks on the provider's service.
+/// Capability: `personal_library`.
+///
+/// This is not [SwayveArtistActivityProvider]. That interface takes an
+/// *artist's* media id and describes somebody else's public activity; this one
+/// takes no target id at all, because there is nothing to name — the plugin's
+/// own session *is* the account whose library this returns. A provider that
+/// registers this is declaring "I can turn my signed-in session into a
+/// library the host can browse", which only makes sense for a plugin that also
+/// declares `authentication`: without a session there is no "own" to speak of.
+///
+/// Most providers have nothing here, the same way most have nothing for
+/// [SwayveArtistActivityProvider] — a plugin serving a bundled or anonymous
+/// catalogue has no personal library to expose, and registering this provider
+/// without ever being signed in would just be catalog browsing wearing a
+/// different name.
+abstract interface class SwayveLibraryProvider {
+  /// Returns a page of tracks the signed-in user has liked, most recent
+  /// first.
+  ///
+  /// Called only while the plugin reports `SwayveAuthStatus.signedIn`; a call
+  /// made while signed out should throw
+  /// `SwayvePluginAuthRequiredException` rather than return an empty page,
+  /// so the host can tell "nothing liked yet" apart from "not signed in".
+  Future<SwayvePage<SwayveTrack>> likedTracks(
+    SwayveBrowseRequest request, {
+    SwayveCancellationToken? cancel,
+  });
+}
+
 /// A user-facing sign-in flow. Capability: `authentication`, permission
 /// `external_auth`.
 ///

@@ -27,6 +27,7 @@ final class ManifestRules {
     checkCompatibility();
     rule1CapabilityRequiresPermission();
     rule1bCapabilityExpectsNetwork();
+    rule1cCapabilityRequiresCapability();
     rule2OverPermissioned();
     rule3DownloadableRequiresStreaming();
     rule4BundledRuntimeNotAllowedOnIos();
@@ -129,6 +130,33 @@ final class ManifestRules {
         "capabilities: '$capability' usually reaches an external service; "
         "declare the 'network' permission unless this plugin serves purely "
         'local data',
+        pointer: joinPointer('/capabilities', i),
+      );
+    }
+  }
+
+  /// Rule 1c. A capability that is unusable without another capability.
+  ///
+  /// Only `personal_library` lands here today, and for the same reason rule 1a
+  /// exists: `personal_library` describes the signed-in user's own liked
+  /// tracks, which has no meaning without a session, and `authentication` is
+  /// what a plugin declares to say it can obtain one. This is a distinct rule
+  /// from 1a because the missing thing is a capability, not a permission — a
+  /// manifest could declare `external_auth` without `authentication` and this
+  /// rule would still fire, because holding the permission is not the same as
+  /// declaring the flow that uses it.
+  void rule1cCapabilityRequiresCapability() {
+    final List<String> capabilities = manifest.capabilities;
+    final Set<String> declared = capabilities.toSet();
+    for (var i = 0; i < capabilities.length; i++) {
+      final String capability = capabilities[i];
+      final String? required = kCapabilityRequiredCapability[capability];
+      if (required == null || declared.contains(required)) {
+        continue;
+      }
+      sink.error(
+        DiagnosticCodes.capabilityRequiresCapability,
+        "capabilities: '$capability' requires capability '$required'",
         pointer: joinPointer('/capabilities', i),
       );
     }

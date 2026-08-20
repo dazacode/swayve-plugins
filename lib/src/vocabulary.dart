@@ -4,7 +4,9 @@
 /// cannot know what it means. A manifest declaring an older one stays valid:
 /// the format only ever widens (a new capability, a new optional field), so
 /// this build reads a `schemaVersion: 1` manifest exactly as a v1 build would.
-const int kManifestSchemaVersion = 2;
+/// `3` as of the `personal_library` capability; `1` and `2` manifests still
+/// validate unchanged.
+const int kManifestSchemaVersion = 3;
 
 /// The SDK major API level this build of the tools implements.
 const int kSwayvePluginApiVersion = 1;
@@ -31,6 +33,7 @@ const List<String> kCapabilities = <String>[
   'artwork',
   'playlist_read',
   'artist_activity',
+  'personal_library',
 ];
 
 /// The closed vocabulary of content a source declares it can be asked for, in
@@ -107,6 +110,18 @@ const Map<String, String> kCapabilityRequiredPermission = <String, String>{
   'authentication': 'external_auth',
 };
 
+/// Capability to the *other capability* it is structurally unusable without.
+///
+/// This is the same idea as [kCapabilityRequiredPermission], one level up: a
+/// `personal_library` capability describes the signed-in user's own liked
+/// tracks, and there is no "own" without a session — which is exactly what
+/// `authentication` provides. Unlike the permission table, the missing thing
+/// here is another declared capability, not a grant, so it gets its own map
+/// and its own rule rather than being folded into the existing one.
+const Map<String, String> kCapabilityRequiredCapability = <String, String>{
+  'personal_library': 'authentication',
+};
+
 /// Capabilities that usually, but not necessarily, reach an external service.
 ///
 /// A plugin can serve any of these from data it already has: a bundled
@@ -123,6 +138,7 @@ const Set<String> kNetworkExpectingCapabilities = <String>{
   'artwork',
   'playlist_read',
   'artist_activity',
+  'personal_library',
 };
 
 /// The permissions that [capabilities] justify holding.

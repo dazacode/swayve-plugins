@@ -158,11 +158,33 @@ Declaring either capability without its permission describes a plugin that
 cannot do the thing it says it does, so it is an **error**
 (`capability_requires_permission`).
 
+### Structural: capability requires capability — ERROR
+
+One capability is unusable without *another declared capability*, rather than
+a permission:
+
+| Capability | Requires | Why it is structural |
+|---|---|---|
+| `personal_library` | `authentication` | The capability is the signed-in user's own liked tracks. There is no "own" without a session, and `authentication` is what a plugin declares to say it can obtain one. |
+
+```
+  ERROR   capabilities: 'personal_library' requires capability 'authentication'
+```
+
+Code: `capability_requires_capability`. This is deliberately a separate rule
+from the one above, not another row in that table: holding `external_auth`
+says a plugin *may* touch the credential store, but says nothing about whether
+it runs a sign-in flow at all. A manifest could hold `external_auth` through a
+`type: "secret"` setting alone (see [below](#credentials)) and still have no
+`authentication` capability to put a session behind `personal_library`. See
+[plugin-manifest.md](plugin-manifest.md#1c-capability-requires-capability--error)
+for the validator rule.
+
 ### Advisory: capability expects network — INFO
 
-The other nine capabilities — `search`, `catalog`, `streaming`, `metadata`,
-`lyrics`, `scrobbling`, `artwork`, `playlist_read`, `artist_activity` —
-*usually* reach an external
+The other ten capabilities — `search`, `catalog`, `streaming`, `metadata`,
+`lyrics`, `scrobbling`, `artwork`, `playlist_read`, `artist_activity`,
+`personal_library` — *usually* reach an external
 service. Declaring one without `network` produces an **info note**
 (`capability_expects_network`), never a warning and never an error, and
 `--strict` does not promote it.

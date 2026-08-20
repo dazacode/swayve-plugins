@@ -361,7 +361,7 @@ void main() {
 
     test('a future schemaVersion is rejected the same way', () {
       final Map<String, Object?> manifest = cleanManifest()
-        ..['schemaVersion'] = 3;
+        ..['schemaVersion'] = 4;
       final Diagnostic d = diagnosticFor(
         validate(manifest),
         DiagnosticCodes.unsupportedSchemaVersion,
@@ -385,6 +385,71 @@ void main() {
         ..['capabilities'] = <String>['search', 'artist_activity'];
       final Report report = validate(manifest);
       expect(report.diagnostics, isEmpty, reason: codesOf(report).toString());
+    });
+
+    test(
+        'schemaVersion 3 with the personal_library capability validates', () {
+      final Map<String, Object?> manifest = cleanManifest()
+        ..['schemaVersion'] = 3
+        ..['capabilities'] = <String>[
+          'search',
+          'authentication',
+          'personal_library',
+        ]
+        ..['permissions'] = <String>['network', 'external_auth'];
+      final Report report = validate(manifest);
+      expect(report.diagnostics, isEmpty, reason: codesOf(report).toString());
+    });
+  });
+
+  group('cross-field rule 1c', () {
+    test('personal_library requires authentication', () {
+      final Map<String, Object?> manifest = cleanManifest()
+        ..['capabilities'] = <String>['search', 'personal_library'];
+      final Diagnostic d = diagnosticFor(
+        validate(manifest),
+        DiagnosticCodes.capabilityRequiresCapability,
+      );
+      expect(d.severity, Severity.error);
+      expect(
+        d.message,
+        contains("'personal_library' requires capability 'authentication'"),
+      );
+      expect(d.pointer, '/capabilities/1');
+    });
+
+    test('personal_library alongside authentication is clean', () {
+      final Map<String, Object?> manifest = cleanManifest()
+        ..['capabilities'] = <String>[
+          'search',
+          'authentication',
+          'personal_library',
+        ]
+        ..['permissions'] = <String>['network', 'external_auth'];
+      expect(
+        codesOf(validate(manifest)),
+        isNot(contains(DiagnosticCodes.capabilityRequiresCapability)),
+      );
+    });
+
+    test('every other capability is unaffected by rule 1c', () {
+      final Map<String, Object?> manifest = cleanManifest()
+        ..['capabilities'] = <String>[
+          'search',
+          'catalog',
+          'streaming',
+          'metadata',
+          'lyrics',
+          'scrobbling',
+          'artwork',
+          'playlist_read',
+          'artist_activity',
+        ]
+        ..['permissions'] = <String>['network'];
+      expect(
+        codesOf(validate(manifest)),
+        isNot(contains(DiagnosticCodes.capabilityRequiresCapability)),
+      );
     });
   });
 

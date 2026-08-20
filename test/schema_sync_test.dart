@@ -171,7 +171,20 @@ void main() {
       'webview': 'webview',
       'authentication': 'external_auth',
     });
-    expect(kNetworkExpectingCapabilities, hasLength(9));
+    expect(kNetworkExpectingCapabilities, hasLength(10));
+  });
+
+  test('only personal_library has a capability-requires-capability rule', () {
+    expect(kCapabilityRequiredCapability, <String, String>{
+      'personal_library': 'authentication',
+    });
+    for (final String capability in kCapabilityRequiredCapability.values) {
+      expect(
+        kCapabilities,
+        contains(capability),
+        reason: '$capability is referenced but is not in the vocabulary',
+      );
+    }
   });
 
   test(r'every $defs entry is reachable from the manifest', () {

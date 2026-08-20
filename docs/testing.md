@@ -77,7 +77,7 @@ go through `storage`.
 | `fakeSettings` | Call `set(id, value)` to simulate a user edit |
 | `fakeWebView` | Script navigation and assert on `presentations` |
 | `grantedPermissions` | The set the context was built with |
-| `searchProviders`, `catalogProviders`, `streamProviders`, `metadataProviders`, `lyricsProviders`, `scrobbleProviders`, `artworkProviders`, `playlistProviders`, `authProviders` | What the plugin registered |
+| `searchProviders`, `catalogProviders`, `streamProviders`, `metadataProviders`, `lyricsProviders`, `scrobbleProviders`, `artworkProviders`, `playlistProviders`, `artistActivityProviders`, `authProviders`, `libraryProviders` | What the plugin registered |
 | `registeredCapabilities` | Those lists collapsed to a `Set<SwayveCapability>` |
 | `close()` | **Await it in teardown.** Cancels hung requests and closes the settings stream. |
 

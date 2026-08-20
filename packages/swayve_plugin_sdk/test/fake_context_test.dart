@@ -71,6 +71,15 @@ final class _EchoArtistActivityProvider
       const SwayvePage(items: []);
 }
 
+final class _EchoLibraryProvider implements SwayveLibraryProvider {
+  @override
+  Future<SwayvePage<SwayveTrack>> likedTracks(
+    SwayveBrowseRequest request, {
+    SwayveCancellationToken? cancel,
+  }) async =>
+      const SwayvePage(items: []);
+}
+
 final class _EchoSearchProvider implements SwayveSearchProvider {
   _EchoSearchProvider(this._http);
 
@@ -237,6 +246,19 @@ void main() {
       expect(
         context.registeredCapabilities,
         contains(SwayveCapability.artistActivity),
+      );
+    });
+
+    test('a library provider is recorded and mapped back', () {
+      final context = FakeSwayvePluginContext();
+      final provider = _EchoLibraryProvider();
+
+      context.registerLibraryProvider(provider);
+
+      expect(context.libraryProviders, [provider]);
+      expect(
+        context.registeredCapabilities,
+        contains(SwayveCapability.personalLibrary),
       );
     });
 

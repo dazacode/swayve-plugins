@@ -28,6 +28,7 @@ void main() {
           'artwork',
           'playlist_read',
           'artist_activity',
+          'personal_library',
         ],
       );
     });
@@ -48,6 +49,15 @@ void main() {
         SwayveCapability.artistActivity,
       );
       expect(SwayveCapability.fromWire('artistActivity'), isNull);
+    });
+
+    test('personalLibrary is snake_case on the wire, camelCase in Dart', () {
+      expect(SwayveCapability.personalLibrary.wireName, 'personal_library');
+      expect(
+        SwayveCapability.fromWire('personal_library'),
+        SwayveCapability.personalLibrary,
+      );
+      expect(SwayveCapability.fromWire('personalLibrary'), isNull);
     });
 
     test('unknown names return null rather than throwing', () {
