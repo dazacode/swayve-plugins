@@ -362,13 +362,29 @@ void main() {
       expect(document['ok'], isFalse); // misnamed_directory fails
     });
 
-    test('an empty plugins root is bad usage', () {
+    test('a plugins root somebody named but that holds nothing is bad usage',
+        () {
       expect(
         _run(
           'tools/validate_plugin.dart',
           <String>['--all', '--plugins-root', temp.path],
         ).exitCode,
         ExitCodes.badUsage,
+      );
+    });
+
+    test('the default plugins root holding nothing passes vacuously', () {
+      // This repository holds no plugins at all any more — the catalogue moved
+      // to its own repository — so `--all` with no root named finds nothing on
+      // every run. It has to pass: a CI gate that is red for a reason unrelated
+      // to the change under review is one everybody learns to ignore, and a
+      // real manifest regression would then land looking exactly like the
+      // noise. Naming a root is still the way to say "I expected plugins
+      // here", and that stays a usage error above.
+      expect(
+        _run('tools/validate_plugin.dart', <String>['--all', '--strict'])
+            .exitCode,
+        ExitCodes.ok,
       );
     });
   });

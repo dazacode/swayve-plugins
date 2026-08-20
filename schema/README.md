@@ -84,6 +84,8 @@ code, visible with `--json`.
 | `first_party_author_mismatch` | error | `app.swayve.plugins.*` requires `author.name` of `Swayve` |
 | `prerelease_api_unstable` | info | A `0.x` version means the surface may still move |
 | `unsafe_relative_path` | error | A path-valued field that is absolute, escaping or malformed |
+| `source_declares_no_content_types` | info | `search` is declared but `source.contentTypes` names nothing to offer it under |
+| `source_without_reachable_capability` | info | A `source` on a plugin declaring neither `search` nor `catalog` |
 
 #### Capabilities and permissions
 

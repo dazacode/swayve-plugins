@@ -79,11 +79,56 @@ the library exports whatever it exports.
 | `homepage` | uri | `http`/`https`. Where a user should go to learn about the plugin. |
 | `repository` | uri | `http`/`https`. Where its source lives. |
 | `icon` | string | Relative path under `assets/`, ending `.png` or `.svg`. Subject to rule 10, and the file must exist at packaging time (`icon_file_missing`). |
+| `source` | object | How the plugin presents itself as a place a query can be sent. See [below](#source). |
 | `media` | object | `{ "streamable": bool, "downloadable": bool, "offlineCache": bool }` — all default `false`. |
 | `settings` | array&lt;SettingDescriptor&gt; | Max 32 entries. See [below](#settings). |
 | `network` | object | `{ "hosts": [string] }` — the outbound hostnames the plugin will contact. Wildcards of the form `*.host.tld` are allowed. |
 | `timeouts` | object | `{ "requestMs": int 1000–30000, "operationMs": int 1000–60000 }`. Bounds, not guarantees — the host applies its own hard limits regardless. |
 | `keywords` | array&lt;string&gt; | Max 10 entries, lowercase. |
+
+### `source`
+
+```jsonc
+"source": {
+  "sourceId": "soundcloud",          // required; ^[a-z][a-z0-9_]*$, max 64
+  "displayName": "SoundCloud",       // optional; falls back to sourceId
+  "iconName": "soundcloud",          // optional; a glyph name, NOT a path
+  "contentTypes": ["songs", "artists"],   // optional; songs|albums|artists|videos
+  "availability": "ready"            // optional; a declared default, see below
+}
+```
+
+The whole object is optional, and a plugin that is not a source should leave it
+out: a metadata or lyrics plugin enriches what the host already has and is never
+somewhere a query is sent.
+
+**`contentTypes` is declared, never derived.** The obvious alternative is for the
+host to read it off the capability list — `catalog` means it has albums, and so
+on — and that is wrong in both directions. A catalogue provider for a service
+built on user uploads has no albums to offer however firmly it declares
+`catalog`; a service with a video half and a music half declares one `search`
+capability for two very different things. Deriving would have the host inventing
+claims on a plugin's behalf and then rendering them as though the plugin had made
+them.
+
+**`iconName` is a glyph name, not `icon`.** `icon` is the plugin's own artwork,
+shipped in the bundle and rendered at whatever size the settings screen wants.
+`iconName` is a mark small enough for a source chip, drawn by the host from its
+own icon set so that every source in a filter row is in one visual language. A
+name the host has never heard of falls back to a generic source mark, so an
+unfamiliar one is not an error — and a plugin shipping neither still appears
+everywhere it should.
+
+**There is no `canSearch`.** Whether a text query means anything to a source is
+already answered by the `search` capability, and a second place to say it is a
+second place for it to be wrong. `source` deliberately does not repeat the
+capability list.
+
+**`availability` is a declared default, not an observation.** Whether a service
+can answer *right now* is knowable only to a running plugin, so in practice a
+manifest either omits this or says `ready`; it is in the vocabulary for the
+plugin that ships switched off until somebody signs in. The live value is
+republished by the running plugin through `SwayveSourceDescriptor`.
 
 ### `media` is three independent facts
 

@@ -14,6 +14,31 @@ whole.
 
 ### Added
 
+- **`source`, an optional manifest block** — `sourceId`, `displayName`,
+  `iconName`, `contentTypes` and `availability`, so a plugin can declare itself
+  as a *place a query can be sent* rather than leaving the host to derive that
+  from its capability list. Searchability is not repeated here: the existing
+  `search` capability remains the only place it is stated. `SwayveContentType`
+  and `SwayveSourceAvailability` join the closed vocabularies, and
+  `SwayveSourceDescriptor` carries the same shape at runtime so a plugin can
+  republish a live availability. Every field is optional and the whole block is
+  optional; a manifest that omits it validates exactly as before.
+- **`SwayveTrack.alternateNames`** — original, romanized and translated titles
+  for a track, its credit and its release, plus free-form aliases, as
+  `SwayveAlternateNames`. A name the service itself published is the best answer
+  anyone downstream will ever have, and several services already hold these in
+  payloads the plugins were discarding. Optional, defaulting to
+  `SwayveAlternateNames.none`, so a provider that publishes none is unaffected.
+
+### Fixed
+
+- **`validate_plugin --all` no longer fails on a repository with no plugins.**
+  The plugin catalogue moved to its own repository, leaving `--all` over the
+  default root a hard usage failure on every push and `validate` red on `main`
+  for a reason unrelated to any change under review. Nothing to validate is now
+  a passing answer; an explicitly named `--plugins-root` that holds nothing is
+  still a usage error, because somebody who named a directory meant it to exist.
+
 - **`artist_activity` capability** — an eleventh entry in the closed capability
   vocabulary, and `SwayveArtistActivityProvider` in `swayve_plugin_sdk`, for a
   plugin to expose an artist's own public activity on the provider's service

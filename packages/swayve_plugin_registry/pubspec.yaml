@@ -34,7 +34,7 @@ dependencies:
     git:
       url: https://github.com/dazacode/swayve-plugins.git
       path: packages/swayve_plugin_sdk
-      ref: a8d43e67d35108bf1ab45c6b8a94e14453e975af
+      ref: 21a22e392a32cf9fdf385f6b556bd999d9905a4d
   # The first-party plugin catalogue now lives in its own repository — see
   # https://github.com/dazacode/Daza-Swayve-plugins — so these are pinned git
   # dependencies too. Pinned by commit, same reasoning as swayve-client's own
@@ -48,12 +48,12 @@ dependencies:
     git:
       url: https://github.com/dazacode/Daza-Swayve-plugins.git
       path: soundcloud
-      ref: d9e57f7e63ea713ab386d934d8395dbffc316779
+      ref: 313042a28f78bbc2a5a9481e075ecbbf5c7819d5
   youtube_music:
     git:
       url: https://github.com/dazacode/Daza-Swayve-plugins.git
       path: youtube_music
-      ref: d9e57f7e63ea713ab386d934d8395dbffc316779
+      ref: 313042a28f78bbc2a5a9481e075ecbbf5c7819d5
 
 dev_dependencies:
   lints: ^5.0.0

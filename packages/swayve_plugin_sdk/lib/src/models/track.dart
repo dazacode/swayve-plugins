@@ -3,6 +3,7 @@ import 'package:meta/meta.dart';
 import '../enums.dart';
 import '../internal/equality.dart';
 import '../internal/json.dart';
+import 'alternate_names.dart';
 import 'availability.dart';
 import 'image_ref.dart';
 import 'media_id.dart';
@@ -37,6 +38,7 @@ final class SwayveTrack {
     this.kind = SwayveTrackKind.song,
     this.extra = const {},
     this.externalUrl,
+    this.alternateNames = SwayveAlternateNames.none,
   });
 
   /// The identifier the host will hand back to ask for playback or details.
@@ -98,6 +100,19 @@ final class SwayveTrack {
   /// someone as "view on the service" or offer to copy it, and nothing else.
   final Uri? externalUrl;
 
+  /// The other names this recording, its credit and its release go by, as the
+  /// provider publishes them.
+  ///
+  /// [title] stays canonical and is never any of these. A provider that holds a
+  /// romanization or a translation puts it here beside the title rather than in
+  /// place of it, because a host that overwrote the title with a romanization
+  /// would have destroyed the only name the record actually has, and no display
+  /// preference switched back afterwards would return it.
+  ///
+  /// Defaults to [SwayveAlternateNames.none], which is what the overwhelming
+  /// majority of tracks and every provider that predates the field carry.
+  final SwayveAlternateNames alternateNames;
+
   /// The artists' names joined for display, in credit order.
   ///
   /// Provided because the host's own model is single-artist; using this
@@ -123,6 +138,7 @@ final class SwayveTrack {
     SwayveTrackKind? kind,
     Map<String, Object?>? extra,
     Uri? externalUrl,
+    SwayveAlternateNames? alternateNames,
   }) =>
       SwayveTrack(
         id: id ?? this.id,
@@ -139,6 +155,7 @@ final class SwayveTrack {
         kind: kind ?? this.kind,
         extra: extra ?? this.extra,
         externalUrl: externalUrl ?? this.externalUrl,
+        alternateNames: alternateNames ?? this.alternateNames,
       );
 
   /// The wire form. Null fields are omitted; [duration] is milliseconds.
@@ -157,6 +174,8 @@ final class SwayveTrack {
         'kind': kind.wireName,
         'extra': extra.isEmpty ? null : extra,
         'externalUrl': externalUrl?.toString(),
+        'alternateNames':
+            alternateNames.isEmpty ? null : alternateNames.toJson(),
       });
 
   /// Parses the wire form produced by [toJson].
@@ -185,6 +204,11 @@ final class SwayveTrack {
           SwayveTrackKind.song,
       extra: reader.extra('extra'),
       externalUrl: reader.uriOrNull('externalUrl'),
+      alternateNames: reader.objectOrNull(
+            'alternateNames',
+            SwayveAlternateNames.fromJson,
+          ) ??
+          SwayveAlternateNames.none,
     );
   }
 
@@ -207,7 +231,8 @@ final class SwayveTrack {
       availability == other.availability &&
       kind == other.kind &&
       deepEquals(extra, other.extra) &&
-      externalUrl == other.externalUrl;
+      externalUrl == other.externalUrl &&
+      alternateNames == other.alternateNames;
 
   @override
   int get hashCode => Object.hash(
@@ -225,5 +250,6 @@ final class SwayveTrack {
         kind,
         deepHash(extra),
         externalUrl,
+        alternateNames,
       );
 }

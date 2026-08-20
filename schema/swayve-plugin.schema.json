@@ -111,6 +111,10 @@
       "description": "Relative path to the plugin icon, inside assets/, png or svg.",
       "$ref": "#/$defs/assetPath"
     },
+    "source": {
+      "description": "How this plugin presents itself as a place a query can be sent. Optional: a plugin that only enriches what the host already has is not a source.",
+      "$ref": "#/$defs/source"
+    },
     "media": {
       "description": "What the plugin claims it can do with media. Three independent facts.",
       "$ref": "#/$defs/media"
@@ -194,6 +198,30 @@
       "maxLength": 48,
       "pattern": "^[a-z][a-z0-9_]*$"
     },
+    "sourceId": {
+      "$comment": "The identity a person's saved source selection is keyed on. Distinct from the plugin id: that identifies a package, this identifies a place music comes from.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9_]*$"
+    },
+    "iconName": {
+      "$comment": "A glyph name the host resolves from its own icon set, not a path and not a shipped asset. An unknown name falls back to a generic source mark.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 48,
+      "pattern": "^[a-z][a-z0-9_]*$"
+    },
+    "contentType": {
+      "description": "Closed vocabulary of what a source can be asked for.",
+      "type": "string",
+      "enum": ["songs", "albums", "artists", "videos"]
+    },
+    "sourceAvailability": {
+      "description": "Closed vocabulary of whether a source can answer. In a manifest this is a declared default, not an observation: whether a service can answer right now is knowable only to a running plugin.",
+      "type": "string",
+      "enum": ["ready", "offline", "rate_limited", "signed_out", "off"]
+    },
     "capability": {
       "description": "Closed capability vocabulary. Each entry maps to exactly one provider interface.",
       "type": "string",
@@ -248,6 +276,31 @@
         },
         "url": { "$ref": "#/$defs/httpUrl" },
         "email": { "$ref": "#/$defs/email" }
+      }
+    },
+    "source": {
+      "$comment": "Everything here except the identity is optional, and the whole object is optional. What a source can be asked for is declared rather than derived from the capability list: a catalog provider for a service built on user uploads has no albums to offer however firmly it declares catalog.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sourceId"],
+      "properties": {
+        "sourceId": { "$ref": "#/$defs/sourceId" },
+        "displayName": {
+          "description": "What a person calls the service. Names the service, not the plugin. No emoji.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 48
+        },
+        "iconName": { "$ref": "#/$defs/iconName" },
+        "contentTypes": {
+          "description": "What this source can be asked for. Empty means it publishes a catalogue but is not worth putting a query to.",
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 8,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/contentType" }
+        },
+        "availability": { "$ref": "#/$defs/sourceAvailability" }
       }
     },
     "media": {
