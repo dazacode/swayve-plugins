@@ -361,7 +361,7 @@ void main() {
 
     test('a future schemaVersion is rejected the same way', () {
       final Map<String, Object?> manifest = cleanManifest()
-        ..['schemaVersion'] = 4;
+        ..['schemaVersion'] = 5;
       final Diagnostic d = diagnosticFor(
         validate(manifest),
         DiagnosticCodes.unsupportedSchemaVersion,
@@ -397,6 +397,31 @@ void main() {
           'personal_library',
         ]
         ..['permissions'] = <String>['network', 'external_auth'];
+      final Report report = validate(manifest);
+      expect(report.diagnostics, isEmpty, reason: codesOf(report).toString());
+    });
+
+    test('schemaVersion 4 with the session_capture capability validates', () {
+      final Map<String, Object?> manifest = cleanManifest()
+        ..['schemaVersion'] = 4
+        ..['capabilities'] = <String>['search', 'session_capture']
+        ..['permissions'] = <String>['network', 'webview', 'external_auth']
+        ..['settings'] = <Object?>[
+          <String, Object?>{
+            'id': 'session_cookie',
+            'type': 'secret',
+            'label': 'Session cookie',
+          },
+        ]
+        ..['session_capture'] = <String, Object?>{
+          'hosts': <String>['music.example.test'],
+          'capture': <Object?>[
+            <String, Object?>{
+              'from': 'cookie_header',
+              'as_secret': 'session_cookie',
+            },
+          ],
+        };
       final Report report = validate(manifest);
       expect(report.diagnostics, isEmpty, reason: codesOf(report).toString());
     });
@@ -450,6 +475,183 @@ void main() {
         codesOf(validate(manifest)),
         isNot(contains(DiagnosticCodes.capabilityRequiresCapability)),
       );
+    });
+  });
+
+  group('cross-field rule 1a (session_capture)', () {
+    test(
+        'session_capture requires both webview and external_auth, one '
+        'diagnostic per missing permission', () {
+      final Map<String, Object?> manifest = cleanManifest()
+        ..['capabilities'] = <String>['session_capture']
+        ..['permissions'] = <String>[]
+        ..['settings'] = <Object?>[
+          <String, Object?>{
+            'id': 'session_cookie',
+            'type': 'secret',
+            'label': 'Session cookie',
+          },
+        ]
+        ..['session_capture'] = <String, Object?>{
+          'hosts': <String>['music.example.test'],
+          'capture': <Object?>[
+            <String, Object?>{
+              'from': 'cookie_header',
+              'as_secret': 'session_cookie',
+            },
+          ],
+        };
+      final List<Diagnostic> hits = validate(manifest)
+          .diagnostics
+          .where(
+            (Diagnostic d) =>
+                d.code == DiagnosticCodes.capabilityRequiresPermission,
+          )
+          .toList();
+      expect(hits, hasLength(2));
+      expect(hits[0].severity, Severity.error);
+      expect(
+        hits[0].message,
+        contains("'session_capture' requires permission 'webview'"),
+      );
+      expect(hits[0].pointer, '/capabilities/0');
+      expect(hits[1].severity, Severity.error);
+      expect(
+        hits[1].message,
+        contains("'session_capture' requires permission 'external_auth'"),
+      );
+      expect(hits[1].pointer, '/capabilities/0');
+    });
+  });
+
+  group('cross-field rule 12', () {
+    Map<String, Object?> withSessionCapture(Map<String, Object?> block) =>
+        cleanManifest()
+          ..['capabilities'] = <String>['search', 'session_capture']
+          ..['permissions'] = <String>['network', 'webview', 'external_auth']
+          ..['settings'] = <Object?>[
+            <String, Object?>{
+              'id': 'session_cookie',
+              'type': 'secret',
+              'label': 'Session cookie',
+            },
+          ]
+          ..['session_capture'] = block;
+
+    test('a fully declared session_capture block passes with nothing to '
+        'report', () {
+      final Report report = validate(
+        withSessionCapture(<String, Object?>{
+          'hosts': <String>['music.example.test'],
+          'capture': <Object?>[
+            <String, Object?>{
+              'from': 'cookie_header',
+              'as_secret': 'session_cookie',
+            },
+          ],
+        }),
+      );
+      expect(report.diagnostics, isEmpty, reason: codesOf(report).toString());
+    });
+
+    test('the capability declared without the object is an error', () {
+      final Map<String, Object?> manifest = cleanManifest()
+        ..['capabilities'] = <String>['search', 'session_capture']
+        ..['permissions'] = <String>['network', 'webview', 'external_auth'];
+      final Diagnostic d = diagnosticFor(
+        validate(manifest),
+        DiagnosticCodes.sessionCaptureObjectMissing,
+      );
+      expect(d.severity, Severity.error);
+      expect(d.pointer, '/capabilities/1');
+    });
+
+    test('the object without the capability is an info note', () {
+      final Map<String, Object?> manifest = cleanManifest()
+        ..['permissions'] = <String>['network', 'external_auth']
+        ..['settings'] = <Object?>[
+          <String, Object?>{
+            'id': 'session_cookie',
+            'type': 'secret',
+            'label': 'Session cookie',
+          },
+        ]
+        ..['session_capture'] = <String, Object?>{
+          'hosts': <String>['music.example.test'],
+          'capture': <Object?>[
+            <String, Object?>{
+              'from': 'cookie_header',
+              'as_secret': 'session_cookie',
+            },
+          ],
+        };
+      final Report report = validate(manifest);
+      final Diagnostic d = diagnosticFor(
+        report,
+        DiagnosticCodes.sessionCaptureObjectWithoutCapability,
+      );
+      expect(d.severity, Severity.info);
+      expect(d.pointer, '/session_capture');
+      // Info, so --strict must not promote it.
+      expect(report.passed(strict: true), isTrue);
+    });
+
+    test('hosts empty is an error', () {
+      final Diagnostic d = diagnosticFor(
+        validate(
+          withSessionCapture(<String, Object?>{
+            'hosts': <String>[],
+            'capture': <Object?>[
+              <String, Object?>{
+                'from': 'cookie_header',
+                'as_secret': 'session_cookie',
+              },
+            ],
+          }),
+        ),
+        DiagnosticCodes.sessionCaptureHostsEmpty,
+      );
+      expect(d.severity, Severity.error);
+      expect(d.pointer, '/session_capture/hosts');
+    });
+
+    test('an unknown capture[].from is an error', () {
+      final Diagnostic d = diagnosticFor(
+        validate(
+          withSessionCapture(<String, Object?>{
+            'hosts': <String>['music.example.test'],
+            'capture': <Object?>[
+              <String, Object?>{
+                'from': 'response_header:x-goog-pageid',
+                'as_secret': 'session_cookie',
+              },
+            ],
+          }),
+        ),
+        DiagnosticCodes.sessionCaptureUnknownSource,
+      );
+      expect(d.severity, Severity.error);
+      expect(d.pointer, '/session_capture/capture/0/from');
+    });
+
+    test('an as_secret not matching a declared secret setting is an error',
+        () {
+      final Diagnostic d = diagnosticFor(
+        validate(
+          withSessionCapture(<String, Object?>{
+            'hosts': <String>['music.example.test'],
+            'capture': <Object?>[
+              <String, Object?>{
+                'from': 'cookie_header',
+                'as_secret': 'not_declared',
+              },
+            ],
+          }),
+        ),
+        DiagnosticCodes.sessionCaptureSecretNotDeclared,
+      );
+      expect(d.severity, Severity.error);
+      expect(d.pointer, '/session_capture/capture/0/as_secret');
     });
   });
 

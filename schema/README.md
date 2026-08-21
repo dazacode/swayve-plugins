@@ -7,7 +7,7 @@
 |---|---|
 | `$id` | `https://swayve.app/schema/swayve-plugin.schema.json` |
 | Draft | `https://json-schema.org/draft/2020-12/schema` |
-| `schemaVersion` | `3` (`1` and `2` also validate) |
+| `schemaVersion` | `4` (`1`, `2` and `3` also validate) |
 
 Point an editor at it to get completion and inline errors while writing a
 manifest:
@@ -59,6 +59,9 @@ Everything shared lives under `$defs` so a manifest constraint is stated once:
 | `author` | `{ name, url?, email? }` |
 | `media` | `{ streamable?, downloadable?, offlineCache? }` |
 | `network` | `{ hosts }` |
+| `sessionCaptureSource` | The closed `session_capture.capture[].from` vocabulary |
+| `sessionCaptureEntry` | `{ from, as_secret }` |
+| `sessionCapture` | `{ hosts, capture }` |
 | `timeouts` | `{ requestMs?, operationMs? }` |
 | `settingOption` | `{ value, label }` |
 | `settingDescriptor` | One host-rendered setting |
@@ -86,17 +89,24 @@ code, visible with `--json`.
 | `unsafe_relative_path` | error | A path-valued field that is absolute, escaping or malformed |
 | `source_declares_no_content_types` | info | `search` is declared but `source.contentTypes` names nothing to offer it under |
 | `source_without_reachable_capability` | info | A `source` on a plugin declaring neither `search` nor `catalog` |
+| `session_capture_object_missing` | error | `session_capture` capability declared with no `session_capture` object |
+| `session_capture_object_without_capability` | info | A `session_capture` object declared without the capability |
+| `session_capture_hosts_empty` | error | `session_capture.hosts` is empty or missing |
+| `session_capture_unknown_source` | error | A `session_capture.capture[].from` outside the closed vocabulary |
+| `session_capture_secret_not_declared` | error | A `session_capture.capture[].as_secret` naming no declared `secret` setting |
 
 #### Capabilities and permissions
 
-Two capabilities are **structurally** unusable without a permission, because the
-capability and the permission describe the same act. Declaring one without the
-other describes a plugin that cannot do what it says it does, so it is an error:
+Three capabilities are **structurally** unusable without one or more
+permissions, because the capability and the permission(s) describe the same
+act. Declaring a capability without every permission it requires describes a
+plugin that cannot do what it says it does, so each missing one is an error:
 
-| Capability | Required permission |
+| Capability | Required permission(s) |
 |---|---|
 | `webview` | `webview` |
 | `authentication` | `external_auth` |
+| `session_capture` | `webview` and `external_auth` |
 
 The remaining nine — `search` `catalog` `streaming` `metadata` `lyrics`
 `scrobbling` `artwork` `playlist_read` `artist_activity` — *usually* reach an
@@ -161,12 +171,12 @@ entry. Change one and the test will tell you to change the other.
 
 ## Changing the schema
 
-`schemaVersion` is `3`, having moved from `2` to `3` when the `personal_library`
-capability was added (and from `1` to `2` when `artist_activity` was added
-before it). The check in `checkCompatibility()` only rejects a `schemaVersion`
-*newer* than the build understands — a `schemaVersion: 1` manifest keeps
-validating on a build that implements `3`, because the format has so far only
-ever widened.
+`schemaVersion` is `4`, having moved from `3` to `4` when the `session_capture`
+capability was added (from `2` to `3` when `personal_library` was added, and
+from `1` to `2` when `artist_activity` was added before that). The check in
+`checkCompatibility()` only rejects a `schemaVersion` *newer* than the build
+understands — a `schemaVersion: 1` manifest keeps validating on a build that
+implements `4`, because the format has so far only ever widened.
 
 * Adding an **optional** field is a minor change: add it to the schema, to
   `lib/src/schema_spec.dart`, and to `docs/plugin-manifest.md`.

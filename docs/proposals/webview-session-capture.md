@@ -1,13 +1,20 @@
-# Phase 2 (proposal, not implemented): automatic account-context capture
+# Phase 2: automatic account-context capture
 
-Status: **design only**. Nothing in this document is implemented. It exists
-to record the shape of the next step after `youtube_music`'s beta ships
-with manual credential entry (paste a session cookie, optionally paste a
-`page_id`) — see that plugin's `plugin.json` (`session_cookie` and
-`page_id` settings) and `lib/src/providers/library_provider.dart` for how
-they're used today. The problem generalises past YouTube Music — any plugin
-whose only sign-in path is "paste something from DevTools" is a candidate
-for this — but YouTube Music is the motivating, worked case below.
+Status: **implemented — see CHANGELOG**. The `session_capture` capability,
+`SwayveSessionCaptureController` and the manifest block sketched below landed
+in `swayve-plugins`; see this repository's `CHANGELOG.md` for the summary and
+`docs/capabilities.md#session_capture` / `docs/plugin-manifest.md#session_capture`
+for the shipped shape. This document is kept as the design record — the two
+sketches below were updated to match what was actually built (see the
+`page_script:youtube_page_id` note in particular), but the surrounding
+rationale is unchanged from the original proposal. It exists to record the
+shape of the next step after `youtube_music`'s beta ships with manual
+credential entry (paste a session cookie, optionally paste a `page_id`) — see
+that plugin's `plugin.json` (`session_cookie` and `page_id` settings) and
+`lib/src/providers/library_provider.dart` for how they're used today. The
+problem generalises past YouTube Music — any plugin whose only sign-in path is
+"paste something from DevTools" is a candidate for this — but YouTube Music is
+the motivating, worked case below.
 
 ## The problem this solves
 
@@ -104,13 +111,28 @@ abstract interface class SwayveSessionCaptureController {
   "hosts": ["music.youtube.com"],
   "capture": [
     { "from": "cookie_header", "as_secret": "session_cookie" },
-    { "from": "response_header:x-goog-pageid", "as_secret": "page_id" }
+    { "from": "page_script:youtube_page_id", "as_secret": "page_id" }
   ]
 }
 ```
 
-Both sketches are illustrative, not final — the point being validated here
-is that the *shape* of the restriction (declared, host-scoped, named
+**Why `page_script:youtube_page_id` and not `response_header:x-goog-pageid`,**
+as an earlier sketch of this proposal had it: `webview_flutter` has no API for
+reading response headers off in-webview network traffic, so
+`response_header:*` was never implementable on the platform this feature
+actually targets. The mechanism that shipped instead runs a fixed,
+host-owned JavaScript snippet through `runJavaScriptReturningResult` —
+ported from the existing desktop bookmarklet's `window.ytcfg.data_` parsing
+logic (`plugins_settings_screen.dart`'s `_pageIdBookmarklet` in the host
+app). Same technique — read the page id out of `ytcfg` state the page
+already has — different trigger: a bookmarklet the user runs by hand on
+desktop becomes a snippet the host runs automatically on completion. The
+vocabulary stays closed and host-owned either way: a plugin still names only
+*what* to capture, never *how*.
+
+Both sketches were illustrative rather than final when this proposal was
+written, and the point being validated here still holds now that one of
+them shipped: the *shape* of the restriction (declared, host-scoped, named
 artifacts only, no raw plugin access) is enough to implement automatic
 capture without widening any existing permission.
 

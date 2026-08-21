@@ -29,6 +29,22 @@ whole.
   anyone downstream will ever have, and several services already hold these in
   payloads the plugins were discarding. Optional, defaulting to
   `SwayveAlternateNames.none`, so a provider that publishes none is unaffected.
+- **`session_capture` capability** — a thirteenth entry in the closed
+  capability vocabulary, and `SwayveSessionCaptureController` in
+  `swayve_plugin_sdk`, for a plugin whose sign-in has no redirect URL to hand
+  back — only page state the host must extract itself. Unlike `webview` and
+  `authentication`, which each require one permission, `session_capture` is
+  the first capability requiring **two**: `webview` (the capture flow is a web
+  view presentation) and `external_auth` (it ends by writing straight into the
+  credential store). `SwayvePermissionEnforcement.guardAll` generalises the
+  existing single-permission `guard` to check a facility gated on more than
+  one permission, throwing on the first missing one. The manifest's new
+  `session_capture` block (`hosts` plus a `capture` list) draws `from` from a
+  closed, host-owned vocabulary — `cookie_header` and
+  `page_script:youtube_page_id` — so a plugin names *what* to capture, never
+  *how*; a new rule 12 validates the block is well-formed and that every
+  `as_secret` names a declared `secret` setting. Bumps `schemaVersion` to 4;
+  existing `schemaVersion: 1`–`3` manifests keep validating unchanged.
 
 ### Fixed
 

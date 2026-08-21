@@ -30,10 +30,11 @@ final storage = context.storage;   // throws SwayvePermissionDeniedException
 The SDK ships one reference mixin, `SwayvePermissionEnforcement`, which the host
 mixes into its real context and the harness mixes into
 `FakeSwayvePluginContext`. A test that passes against the fake will not fail
-differently on device. It exposes `hasPermission`, `requirePermission` and
-`guard`, and requires implementers to return the **effective** set — the
-intersection of declared and granted, not merely what the manifest asked for.
-See [testing.md](testing.md).
+differently on device. It exposes `hasPermission`, `requirePermission`,
+`guard` and `guardAll` (for a facility gated on more than one permission, such
+as `sessionCapture`'s `webview` + `external_auth`), and requires implementers
+to return the **effective** set — the intersection of declared and granted,
+not merely what the manifest asked for. See [testing.md](testing.md).
 
 ---
 
@@ -146,17 +147,19 @@ distinction explicit with two separate rules.
 
 ### Structural: capability requires permission — ERROR
 
-Exactly two capabilities are unusable without a permission, because the
-capability and the permission describe *the same act*:
+Exactly three capabilities are unusable without a permission, because the
+capability and the permission(s) describe *the same act*:
 
 | Capability | Requires | Why it is structural |
 |---|---|---|
 | `webview` | `webview` | The capability is "this plugin needs the host to render a web view". The permission is what grants that. |
 | `authentication` | `external_auth` | The capability is a host-mediated auth flow. The permission is what grants it, plus the credential slot the flow writes to. |
+| `session_capture` | `webview` **and** `external_auth` | The capability is a web view presentation (`webview`) that ends by writing straight into the credential store (`external_auth`) — both halves of `webview` + `authentication` at once, in a single flow. |
 
-Declaring either capability without its permission describes a plugin that
-cannot do the thing it says it does, so it is an **error**
-(`capability_requires_permission`).
+Declaring a capability without every permission it requires describes a
+plugin that cannot do the thing it says it does, so each missing one is an
+**error** (`capability_requires_permission`) — `session_capture` with neither
+permission granted produces two diagnostics, one per missing permission.
 
 ### Structural: capability requires capability — ERROR
 
@@ -363,6 +366,15 @@ The flow is:
 Every step the plugin takes runs through a host facility that is permission-
 gated, host-timed and host-loggable. There is no step where the plugin holds a
 capability the host did not hand it.
+
+A plugin whose sign-in has no redirect URL to hand back — only page state, a
+cookie, a value sitting in the page's own script context — declares
+`session_capture` instead of driving steps 3-5 itself. The host still presents
+the web view and watches for the same kind of completion match, but on match
+it extracts exactly the artifacts the manifest's `session_capture.capture`
+list names and writes them straight into `SwayveCredentialStore` — the plugin
+never sees step 4's redirect equivalent at all. See
+[capabilities.md](capabilities.md#session_capture) for the full shape.
 
 ### `type: "secret"` settings
 

@@ -83,6 +83,7 @@ the library exports whatever it exports.
 | `media` | object | `{ "streamable": bool, "downloadable": bool, "offlineCache": bool }` — all default `false`. |
 | `settings` | array&lt;SettingDescriptor&gt; | Max 32 entries. See [below](#settings). |
 | `network` | object | `{ "hosts": [string] }` — the outbound hostnames the plugin will contact. Wildcards of the form `*.host.tld` are allowed. |
+| `session_capture` | object | `{ "hosts": [string], "capture": [SessionCaptureEntry] }` — required when the `session_capture` capability is declared. See [below](#session_capture). |
 | `timeouts` | object | `{ "requestMs": int 1000–30000, "operationMs": int 1000–60000 }`. Bounds, not guarantees — the host applies its own hard limits regardless. |
 | `keywords` | array&lt;string&gt; | Max 10 entries, lowercase. |
 
@@ -154,6 +155,40 @@ runtime failure in the field rather than at review time.
 
 The reference plugin takes this seriously in both directions — see
 [permissions.md](permissions.md#an-allow-list-is-a-claim-about-what-you-do).
+
+### `session_capture`
+
+```jsonc
+"session_capture": {
+  "hosts": ["music.youtube.com"],           // required; scopes the capture flow
+  "capture": [
+    { "from": "cookie_header", "as_secret": "session_cookie" },
+    { "from": "page_script:youtube_page_id", "as_secret": "page_id" }
+  ]
+}
+```
+
+Required — and only meaningful — alongside the `session_capture` capability
+(rule 12; see [below](#12-session_capture-is-well-formed)). `hosts` scopes the
+flow the same way `network.hosts` scopes outbound requests, and must be
+non-empty. Each `capture` entry names one artifact to extract on completion:
+
+- **`from`** is drawn from a closed, host-owned vocabulary — currently
+  `cookie_header` (the session cookie the platform's native cookie manager
+  holds for `hosts`) and `page_script:youtube_page_id` (a fixed JavaScript
+  snippet the host runs via `runJavaScriptReturningResult`; **never** a
+  plugin-supplied script). A plugin names *what* to capture, never *how* — the
+  extraction mechanism behind each `from` value lives entirely in the host.
+- **`as_secret`** is the credential-store key the extracted value is written
+  under, and must match the `id` of a `settings` entry with `type: "secret"`
+  (rule 12 again). The plugin reads it back with
+  `SwayveCredentialStore.readSecret`, exactly as it would for a value the user
+  pasted in by hand — the capture path and the manual-paste path converge on
+  the same storage.
+
+See [capabilities.md](capabilities.md#session_capture) for the SDK surface
+this block drives, and [permissions.md](permissions.md#structural-capability-requires-permission--error)
+for why `session_capture` requires both `webview` and `external_auth`.
 
 ---
 
@@ -320,20 +355,23 @@ that is well-formed but describes something that cannot work.
 
 ### 1a. Capability requires permission — ERROR
 
-Exactly two capabilities are **structurally** unusable without a permission,
-because the capability and the permission describe the same act:
+Exactly three capabilities are **structurally** unusable without a permission,
+because the capability and the permission(s) describe the same act:
 
 | Capability | Requires permission |
 |---|---|
 | `webview` | `webview` |
 | `authentication` | `external_auth` |
+| `session_capture` | `webview` **and** `external_auth` |
 
 ```
   ERROR   capabilities: 'webview' requires permission 'webview'   (plugin.json:15)
 ```
 
-Code: `capability_requires_permission`. Declaring either capability without its
-permission describes a plugin that cannot do the thing it says it does.
+Code: `capability_requires_permission`. Declaring a capability without every
+permission it requires describes a plugin that cannot do the thing it says it
+does — one diagnostic per missing permission, so `session_capture` with
+neither `webview` nor `external_auth` declared produces two.
 
 ### 1b. Capability expects network — INFO
 
@@ -486,6 +524,45 @@ extraction time, on the archive's entry names — see
 [packaging.md](packaging.md#extraction-safety). Both checks are needed: the
 manifest check catches an author's mistake at review time, the extraction check
 catches an attacker at load time.
+
+### 11. `source` is reachable — INFO
+
+Both halves are advisory, for the same reason 1b is: what a plugin can
+actually be asked for is not decidable from a manifest.
+
+```
+  INFO    source: the 'search' capability is declared but source.contentTypes names nothing this source can be asked for, so a host has nothing to offer it under
+  INFO    source: declared, but the plugin declares neither 'search' nor 'catalog', so nothing can be asked of it; a plugin that only enriches what the host already has is not a source
+```
+
+Codes: `source_declares_no_content_types` (a `search` capability paired with an
+empty `source.contentTypes`) and `source_without_reachable_capability` (a
+`source` block on a plugin declaring neither `search` nor `catalog`). Neither
+promotes under `--strict`.
+
+### 12. `session_capture` is well-formed — ERROR / INFO
+
+Mirrors 11's asymmetric severity, one level over: declaring the capability
+with no block to back it up describes a plugin that cannot do the thing it
+says it does (**error**), while a block with no capability to run it is dead
+configuration nothing will ever execute (**info**). Once a block is present,
+its contents are checked regardless of which way that mismatch went.
+
+```
+  ERROR   capabilities: 'session_capture' is declared but no session_capture object is present
+  INFO    session_capture: declared, but the plugin does not declare the 'session_capture' capability, so this block will never run
+  ERROR   session_capture: hosts is empty or missing; the capture flow must be scoped to at least one host
+  ERROR   session_capture: capture[0].from 'response_header:x-goog-pageid' is not in the closed vocabulary (cookie_header, page_script:youtube_page_id)
+  ERROR   session_capture: capture[0].as_secret 'token' does not name a 'secret'-typed setting this manifest declares
+```
+
+Codes: `session_capture_object_missing`, `session_capture_object_without_capability`,
+`session_capture_hosts_empty`, `session_capture_unknown_source`,
+`session_capture_secret_not_declared`. The last two duplicate what the schema
+already enforces for `from` (a closed `enum`) and partially for `as_secret` (a
+`settingId` pattern) — the schema cannot express *cross-field* facts like "this
+id must name a declared `secret` setting", which is exactly what this rule
+adds.
 
 ### Reading the output
 

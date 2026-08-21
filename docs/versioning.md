@@ -50,18 +50,18 @@ thing that makes the `.sha256` sidecar useless.
 
 ### `schemaVersion`
 
-Which manifest *format* the file uses. `3` as of the `personal_library`
-capability (`2` as of `artist_activity` before it); a manifest declaring `4` is
-rejected by a build that only understands up to `3`, rather than optimistically
-parsed.
+Which manifest *format* the file uses. `4` as of the `session_capture`
+capability (`3` as of `personal_library`, `2` as of `artist_activity` before
+it); a manifest declaring `5` is rejected by a build that only understands up
+to `4`, rather than optimistically parsed.
 
 This is the first thing the host checks, because it determines whether the rest
-of the file can be interpreted at all. A future `schemaVersion: 3` might mean
+of the file can be interpreted at all. A future `schemaVersion: 5` might mean
 fields have been renamed, removed or re-typed; a host that parsed it as if it
 were an older version would not fail, it would misread.
 
 Unlike `swayvePluginApi`, this is not (yet) a strict ceiling check with nothing
-below it: a build that understands `schemaVersion: 3` also reads a
+below it: a build that understands `schemaVersion: 4` also reads a
 `schemaVersion: 1` manifest correctly, because every bump so far has only
 widened the format (a new capability, a new optional field) rather than
 changing what the old fields mean. The check rejects a manifest only when its

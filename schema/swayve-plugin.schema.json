@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://swayve.app/schema/swayve-plugin.schema.json",
   "title": "Swayve plugin manifest",
-  "description": "Structure of a Swayve plugin's plugin.json. schemaVersion 3 (a schemaVersion 1 or 2 manifest also validates). This file is the published contract; cross-field rules that a JSON Schema cannot express live in swayve_plugin_tools and are documented in schema/README.md.",
+  "description": "Structure of a Swayve plugin's plugin.json. schemaVersion 4 (a schemaVersion 1, 2 or 3 manifest also validates). This file is the published contract; cross-field rules that a JSON Schema cannot express live in swayve_plugin_tools and are documented in schema/README.md.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -23,7 +23,7 @@
   ],
   "properties": {
     "schemaVersion": {
-      "description": "Manifest schema version this plugin.json is written in. Currently 2; a manifest declaring 1 is still valid.",
+      "description": "Manifest schema version this plugin.json is written in. Currently 4; a manifest declaring 1, 2 or 3 is still valid.",
       "type": "integer",
       "minimum": 1
     },
@@ -129,6 +129,10 @@
     "network": {
       "description": "Outbound network the plugin declares up front.",
       "$ref": "#/$defs/network"
+    },
+    "session_capture": {
+      "description": "A one-shot, host-mediated capture of a sign-in session: which host(s) the flow is scoped to, and which named artifacts to extract and write into which credential-store keys.",
+      "$ref": "#/$defs/sessionCapture"
     },
     "timeouts": {
       "description": "Plugin-requested timeout budget. The host still applies its own hard limits.",
@@ -237,7 +241,8 @@
         "artwork",
         "playlist_read",
         "artist_activity",
-        "personal_library"
+        "personal_library",
+        "session_capture"
       ]
     },
     "permission": {
@@ -327,6 +332,45 @@
           "maxItems": 64,
           "uniqueItems": true,
           "items": { "$ref": "#/$defs/hostPattern" }
+        }
+      }
+    },
+    "sessionCaptureSource": {
+      "description": "Closed vocabulary of what a session_capture entry may extract. Host-owned: a plugin names what to capture, never how.",
+      "type": "string",
+      "enum": ["cookie_header", "page_script:youtube_page_id"]
+    },
+    "sessionCaptureEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from", "as_secret"],
+      "properties": {
+        "from": { "$ref": "#/$defs/sessionCaptureSource" },
+        "as_secret": {
+          "description": "The credential-store key this artifact is written under. Must match the id of a settings entry with type: secret.",
+          "$ref": "#/$defs/settingId"
+        }
+      }
+    },
+    "sessionCapture": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["hosts", "capture"],
+      "properties": {
+        "hosts": {
+          "description": "The host(s) the capture flow is scoped to.",
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 64,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/hostPattern" }
+        },
+        "capture": {
+          "description": "The named artifacts to extract on completion and where each one is written.",
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": { "$ref": "#/$defs/sessionCaptureEntry" }
         }
       }
     },

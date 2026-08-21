@@ -135,6 +135,7 @@ void main() {
     expect(enumOf('platform'), kPlatforms);
     expect(enumOf('runtime'), kRuntimes);
     expect(enumOf('settingType'), kSettingTypes);
+    expect(enumOf('sessionCaptureSource'), kSessionCaptureSources);
   });
 
   test('every capability the schema allows is accounted for by a rule', () {
@@ -155,7 +156,7 @@ void main() {
       reason: 'a capability belongs to one table or the other, never both',
     );
     for (final String permission in <String>[
-      ...kCapabilityRequiredPermission.values,
+      ...kCapabilityRequiredPermission.values.expand((List<String> v) => v),
       'network',
     ]) {
       expect(
@@ -166,10 +167,13 @@ void main() {
     }
   });
 
-  test('only webview and authentication are structural implications', () {
-    expect(kCapabilityRequiredPermission, <String, String>{
-      'webview': 'webview',
-      'authentication': 'external_auth',
+  test(
+      'only webview, authentication and session_capture are structural '
+      'implications', () {
+    expect(kCapabilityRequiredPermission, <String, List<String>>{
+      'webview': <String>['webview'],
+      'authentication': <String>['external_auth'],
+      'session_capture': <String>['webview', 'external_auth'],
     });
     expect(kNetworkExpectingCapabilities, hasLength(10));
   });

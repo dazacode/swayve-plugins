@@ -131,6 +131,40 @@ final class PluginManifest {
   /// Whether `network` is present at all.
   bool get hasNetworkObject => json['network'] is Map<String, Object?>;
 
+  /// `session_capture.hosts`, keeping only well-formed entries.
+  List<String> get sessionCaptureHosts {
+    final Object? sessionCapture = json['session_capture'];
+    if (sessionCapture is Map<String, Object?>) {
+      final Object? hosts = sessionCapture['hosts'];
+      if (hosts is List<Object?>) {
+        return hosts.whereType<String>().toList(growable: false);
+      }
+    }
+    return const <String>[];
+  }
+
+  /// `session_capture.capture`, keeping only well-formed entries.
+  ///
+  /// Each entry is the raw object, unvalidated: rule 12 is what checks that
+  /// `from` is in [kSessionCaptureSources] and that `as_secret` names a
+  /// declared `secret` setting.
+  List<Map<String, Object?>> get sessionCaptureEntries {
+    final Object? sessionCapture = json['session_capture'];
+    if (sessionCapture is Map<String, Object?>) {
+      final Object? capture = sessionCapture['capture'];
+      if (capture is List<Object?>) {
+        return capture
+            .whereType<Map<String, Object?>>()
+            .toList(growable: false);
+      }
+    }
+    return const <Map<String, Object?>>[];
+  }
+
+  /// Whether `session_capture` is present at all.
+  bool get hasSessionCaptureObject =>
+      json['session_capture'] is Map<String, Object?>;
+
   /// `media.<flag>`, or `false` when absent. All three default to `false`.
   bool mediaFlag(String flag) {
     final Object? media = json['media'];

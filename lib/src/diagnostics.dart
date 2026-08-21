@@ -124,6 +124,30 @@ abstract final class DiagnosticCodes {
   static const String sourceWithoutReachableCapability =
       'source_without_reachable_capability';
 
+  /// Rule 12. `session_capture` capability declared with no `session_capture`
+  /// object.
+  static const String sessionCaptureObjectMissing =
+      'session_capture_object_missing';
+
+  /// Rule 12. A `session_capture` object declared without the
+  /// `session_capture` capability.
+  static const String sessionCaptureObjectWithoutCapability =
+      'session_capture_object_without_capability';
+
+  /// Rule 12. `session_capture.hosts` is empty or missing.
+  static const String sessionCaptureHostsEmpty =
+      'session_capture_hosts_empty';
+
+  /// Rule 12. A `session_capture.capture[].from` outside
+  /// [kSessionCaptureSources].
+  static const String sessionCaptureUnknownSource =
+      'session_capture_unknown_source';
+
+  /// Rule 12. A `session_capture.capture[].as_secret` that does not name a
+  /// `secret`-typed setting the manifest declares.
+  static const String sessionCaptureSecretNotDeclared =
+      'session_capture_secret_not_declared';
+
   // --- setting descriptors, CONTRACT section 5 ------------------------------
   /// Two settings share an `id`.
   static const String settingDuplicateId = 'setting_duplicate_id';

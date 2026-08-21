@@ -22,9 +22,9 @@ defect: the host will report the plugin as unavailable rather than silently
 treating the capability as absent.
 
 Adding a capability to the vocabulary is a schema change and requires the docs,
-the SDK and the validator to move together. There are twelve in v1.
+the SDK and the validator to move together. There are thirteen in v1.
 
-## The twelve at a glance
+## The thirteen at a glance
 
 | Capability | Provider interface | Registration | Implies |
 |---|---|---|---|
@@ -40,14 +40,19 @@ the SDK and the validator to move together. There are twelve in v1.
 | `personal_library` | `SwayveLibraryProvider` | `registerLibraryProvider` | `network`, `authentication` |
 | `authentication` | `SwayveAuthProvider` | `registerAuthProvider` | `external_auth` |
 | `webview` | *(none — host facility)* | — | `webview` |
+| `session_capture` | *(none — host facility)* | — | `webview`, `external_auth` |
 
-`webview` is the one capability with no provider interface. It does not answer a
-question; it declares that this plugin's flows require the host to present a web
-surface, which the plugin then drives through `SwayveWebViewController`. It is
-in the capability vocabulary rather than the permission vocabulary alone because
-the host needs to know at *discovery* time whether a plugin will need an embed
-surface — on a platform or build where none is available, that is a
-compatibility fact, not a runtime surprise.
+`webview` and `session_capture` are the two capabilities with no provider
+interface. `webview` does not answer a question; it declares that this
+plugin's flows require the host to present a web surface, which the plugin
+then drives through `SwayveWebViewController`. `session_capture` is narrower
+still: it declares that the host may, once, present a web surface and write
+what it extracts from it straight into the plugin's own credential slot — see
+[`session_capture` below](#session_capture). Both are in the capability
+vocabulary rather than the permission vocabulary alone because the host needs
+to know at *discovery* time whether a plugin will need an embed surface — on a
+platform or build where none is available, that is a compatibility fact, not a
+runtime surprise.
 
 In the Dart enum the wire names are camel-cased: `SwayveCapability.playlistRead`
 has `wireName == 'playlist_read'`. Use `SwayveCapability.fromWire('playlist_read')`
@@ -466,6 +471,64 @@ them is a reason to show a sign-in prompt.
 Pagination follows the same cursor rules as every other paginated provider in
 this SDK: return `SwayvePage(items: [...], cursor: next)`, and `null` for
 `cursor` only once there truly is no more.
+
+---
+
+## `session_capture`
+
+No provider interface. Declaring `session_capture` means "this plugin's
+sign-in has no redirect URL to hand back — the host must extract page state
+instead", and the plugin drives it through the context:
+
+```dart
+abstract interface class SwayveSessionCaptureController {
+  Future<SwayveSessionCaptureResult> presentForSessionCapture(
+    Uri start, {
+    required bool Function(Uri url) isComplete,
+    Duration? timeout,
+  });
+}
+
+enum SwayveSessionCaptureOutcome { succeeded, dismissed, timedOut, captureFailed }
+
+final class SwayveSessionCaptureResult {
+  final SwayveSessionCaptureOutcome outcome;
+  final Uri? completionUrl;
+  bool get isSuccess;
+}
+```
+
+**What the host does with it.** It presents a web view exactly as
+`presentForResult` does, watching for the same kind of completion match. The
+difference is what happens the instant that match fires: the host extracts
+each artifact named in the manifest's `session_capture.capture` list — the
+session cookie via the platform's native cookie manager, or a page value via a
+fixed, host-owned JavaScript snippet run through
+`runJavaScriptReturningResult` — and writes it straight into
+`SwayveCredentialStore` under its declared `as_secret` key. The plugin is
+never handed the value. `SwayveSessionCaptureResult` carries only the outcome
+and the completion URL, the same shape `presentForResult` returns today; a
+plugin that wants the captured data reads it back through
+`SwayvePluginContext.credentials`, exactly as it would for a value the user
+pasted in by hand.
+
+This is deliberately **not** a widening of `presentForResult` or of the
+`webview` permission. Reading a web view's cookie jar is a materially bigger
+grant than "let the user sign in somewhere," so `session_capture` is its own
+capability with its own structural requirement — both `webview` **and**
+`external_auth`, checked by `capability_requires_permission` (rule 1a) exactly
+like every other structural requirement in this vocabulary. See
+[plugin-manifest.md](plugin-manifest.md#session_capture) for the manifest
+block's shape and [permissions.md](permissions.md) for the two-permission
+requirement.
+
+`presentForSessionCapture` fires **once**, immediately after the completion
+predicate first matches — not a standing capability, not a live cookie-jar
+API, not observable per navigation — and only for the host(s) named in
+`session_capture.hosts`. `SwayveSessionCaptureOutcome.captureFailed` means the
+completion URL matched but one or more declared artifacts could not be
+extracted; nothing is written to the credential store in that case, the same
+as a normal extraction failure anywhere else in this SDK.
 
 ---
 

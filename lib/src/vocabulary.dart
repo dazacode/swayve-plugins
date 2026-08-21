@@ -4,9 +4,10 @@
 /// cannot know what it means. A manifest declaring an older one stays valid:
 /// the format only ever widens (a new capability, a new optional field), so
 /// this build reads a `schemaVersion: 1` manifest exactly as a v1 build would.
-/// `3` as of the `personal_library` capability; `1` and `2` manifests still
+/// `4` as of the `session_capture` capability (`3` as of `personal_library`,
+/// `2` as of `artist_activity` before it); `1` through `3` manifests still
 /// validate unchanged.
-const int kManifestSchemaVersion = 3;
+const int kManifestSchemaVersion = 4;
 
 /// The SDK major API level this build of the tools implements.
 const int kSwayvePluginApiVersion = 1;
@@ -34,6 +35,7 @@ const List<String> kCapabilities = <String>[
   'playlist_read',
   'artist_activity',
   'personal_library',
+  'session_capture',
 ];
 
 /// The closed vocabulary of content a source declares it can be asked for, in
@@ -97,17 +99,21 @@ const List<String> kSettingTypes = <String>[
   'secret',
 ];
 
-/// Capability to the permission it is structurally unusable without.
+/// Capability to the permission(s) it is structurally unusable without.
 ///
-/// These two are not heuristics. A `webview` capability is the ability to ask
-/// the host to render a web view, which is exactly what the `webview`
-/// permission grants; an `authentication` capability is a host-mediated auth
-/// flow, which is exactly what `external_auth` grants. Declaring either
-/// capability without its permission describes a plugin that cannot do the
-/// thing it says it does, so it is an error.
-const Map<String, String> kCapabilityRequiredPermission = <String, String>{
-  'webview': 'webview',
-  'authentication': 'external_auth',
+/// These are not heuristics. A `webview` capability is the ability to ask the
+/// host to render a web view, which is exactly what the `webview` permission
+/// grants; an `authentication` capability is a host-mediated auth flow, which
+/// is exactly what `external_auth` grants; a `session_capture` capability is
+/// both at once — a web view presentation (`webview`) that ends by writing
+/// into the credential store (`external_auth`). Declaring a capability
+/// without every permission it lists here describes a plugin that cannot do
+/// the thing it says it does, so each missing one is an error.
+const Map<String, List<String>> kCapabilityRequiredPermission =
+    <String, List<String>>{
+  'webview': <String>['webview'],
+  'authentication': <String>['external_auth'],
+  'session_capture': <String>['webview', 'external_auth'],
 };
 
 /// Capability to the *other capability* it is structurally unusable without.
@@ -151,9 +157,9 @@ const Set<String> kNetworkExpectingCapabilities = <String>{
 Set<String> permissionsJustifiedBy(Iterable<String> capabilities) {
   final Set<String> justified = <String>{};
   for (final String capability in capabilities) {
-    final String? required = kCapabilityRequiredPermission[capability];
+    final List<String>? required = kCapabilityRequiredPermission[capability];
     if (required != null) {
-      justified.add(required);
+      justified.addAll(required);
     }
     if (kNetworkExpectingCapabilities.contains(capability)) {
       justified.add('network');
@@ -171,3 +177,17 @@ const Set<String> kSelfJustifyingPermissions = <String>{
   'local_plugin_storage',
   'clipboard',
 };
+
+/// The closed vocabulary of `session_capture.capture[].from` values.
+///
+/// Host-owned and closed on purpose: a plugin names *what* to capture, never
+/// *how* — the extraction mechanism behind each entry lives entirely in the
+/// host, and a manifest cannot invent a new one. `cookie_header` is the
+/// session cookie the platform's native cookie manager holds for the
+/// `session_capture.hosts` the flow navigated to; `page_script:youtube_page_id`
+/// is a fixed, host-owned JavaScript snippet run via
+/// `runJavaScriptReturningResult`, not a plugin-supplied script.
+const List<String> kSessionCaptureSources = <String>[
+  'cookie_header',
+  'page_script:youtube_page_id',
+];

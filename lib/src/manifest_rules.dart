@@ -38,6 +38,7 @@ final class ManifestRules {
     rule9VersionStability();
     rule10PathsAreSafe();
     rule11SourceIsReachable();
+    rule12SessionCaptureIsWellFormed();
     checkSettings();
   }
 
@@ -76,26 +77,35 @@ final class ManifestRules {
     }
   }
 
-  /// Rule 1a. A capability that is unusable without a permission.
+  /// Rule 1a. A capability that is unusable without one or more permissions.
   ///
-  /// Only `webview` and `authentication` land here, and only because the
-  /// capability and the permission describe the same act: a plugin that
-  /// declares `webview` without the `webview` permission is describing a plugin
-  /// that cannot do the thing it says it does.
+  /// Only `webview`, `authentication` and `session_capture` land here, and
+  /// only because the capability and the permission(s) describe the same act:
+  /// a plugin that declares `webview` without the `webview` permission — or
+  /// `session_capture` without both `webview` and `external_auth` — is
+  /// describing a plugin that cannot do the thing it says it does. A
+  /// capability requiring more than one permission emits one diagnostic per
+  /// permission missing, in the order [kCapabilityRequiredPermission] lists
+  /// them.
   void rule1CapabilityRequiresPermission() {
     final List<String> capabilities = manifest.capabilities;
     final Set<String> permissions = manifest.permissions.toSet();
     for (var i = 0; i < capabilities.length; i++) {
       final String capability = capabilities[i];
-      final String? required = kCapabilityRequiredPermission[capability];
-      if (required == null || permissions.contains(required)) {
+      final List<String>? required = kCapabilityRequiredPermission[capability];
+      if (required == null) {
         continue;
       }
-      sink.error(
-        DiagnosticCodes.capabilityRequiresPermission,
-        "capabilities: '$capability' requires permission '$required'",
-        pointer: joinPointer('/capabilities', i),
-      );
+      for (final String permission in required) {
+        if (permissions.contains(permission)) {
+          continue;
+        }
+        sink.error(
+          DiagnosticCodes.capabilityRequiresPermission,
+          "capabilities: '$capability' requires permission '$permission'",
+          pointer: joinPointer('/capabilities', i),
+        );
+      }
     }
   }
 
@@ -368,6 +378,88 @@ final class ManifestRules {
         'what the host already has is not a source',
         pointer: '/source',
       );
+    }
+  }
+
+  /// Rule 12. A `session_capture` manifest block that does not match its own
+  /// capability declaration, or that is malformed where it is present.
+  ///
+  /// Mirrors rule 11's asymmetric severity: declaring the capability with no
+  /// block to back it up is a plugin that cannot do the thing it says it does
+  /// (error), while a block with no capability to run it is dead
+  /// configuration nothing will ever execute (info) — costly to a user only
+  /// in the sense of clutter, not correctness. Once a block is present, its
+  /// contents are checked regardless of which way the capability mismatch (if
+  /// any) went: a malformed capture entry is still a malformed capture entry.
+  void rule12SessionCaptureIsWellFormed() {
+    final bool declaresCapability =
+        manifest.capabilities.contains('session_capture');
+    final bool hasObject = manifest.hasSessionCaptureObject;
+
+    if (declaresCapability && !hasObject) {
+      final int index = manifest.capabilities.indexOf('session_capture');
+      sink.error(
+        DiagnosticCodes.sessionCaptureObjectMissing,
+        "capabilities: 'session_capture' is declared but no session_capture "
+        'object is present',
+        pointer: joinPointer('/capabilities', index),
+      );
+    }
+
+    if (!hasObject) {
+      return;
+    }
+
+    if (!declaresCapability) {
+      sink.info(
+        DiagnosticCodes.sessionCaptureObjectWithoutCapability,
+        'session_capture: declared, but the plugin does not declare the '
+        "'session_capture' capability, so this block will never run",
+        pointer: '/session_capture',
+      );
+    }
+
+    if (manifest.sessionCaptureHosts.isEmpty) {
+      sink.error(
+        DiagnosticCodes.sessionCaptureHostsEmpty,
+        'session_capture: hosts is empty or missing; the capture flow must '
+        'be scoped to at least one host',
+        pointer: '/session_capture/hosts',
+      );
+    }
+
+    final Set<String> declaredSecretIds = manifest.settings
+        .where((Map<String, Object?> setting) => setting['type'] == 'secret')
+        .map((Map<String, Object?> setting) => setting['id'])
+        .whereType<String>()
+        .toSet();
+
+    final List<Map<String, Object?>> entries = manifest.sessionCaptureEntries;
+    for (var i = 0; i < entries.length; i++) {
+      final Map<String, Object?> entry = entries[i];
+      final String entryBase = joinPointer('/session_capture/capture', i);
+
+      final Object? from = entry['from'];
+      if (from is! String || !kSessionCaptureSources.contains(from)) {
+        sink.error(
+          DiagnosticCodes.sessionCaptureUnknownSource,
+          'session_capture: capture[$i].from '
+          "'${from ?? 'missing'}' is not in the closed vocabulary "
+          '(${kSessionCaptureSources.join(', ')})',
+          pointer: joinPointer(entryBase, 'from'),
+        );
+      }
+
+      final Object? asSecret = entry['as_secret'];
+      if (asSecret is! String || !declaredSecretIds.contains(asSecret)) {
+        sink.error(
+          DiagnosticCodes.sessionCaptureSecretNotDeclared,
+          'session_capture: capture[$i].as_secret '
+          "'${asSecret ?? 'missing'}' does not name a 'secret'-typed setting "
+          'this manifest declares',
+          pointer: joinPointer(entryBase, 'as_secret'),
+        );
+      }
     }
   }
 

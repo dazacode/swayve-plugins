@@ -308,6 +308,33 @@ final ObjectSpec networkSpec = ObjectSpec(
   },
 );
 
+/// One entry of the `session_capture.capture[].from` vocabulary.
+final StringSpec sessionCaptureSourceSpec =
+    const StringSpec(values: kSessionCaptureSources);
+
+/// One entry of `session_capture.capture`.
+final ObjectSpec sessionCaptureEntrySpec = ObjectSpec(
+  required: const <String>{'from', 'as_secret'},
+  properties: <String, TypeSpec>{
+    'from': sessionCaptureSourceSpec,
+    'as_secret': settingIdSpec,
+  },
+);
+
+/// `session_capture`.
+final ObjectSpec sessionCaptureSpec = ObjectSpec(
+  required: const <String>{'hosts', 'capture'},
+  properties: <String, TypeSpec>{
+    'hosts': ArraySpec(
+      hostPatternSpec,
+      minItems: 0,
+      maxItems: 64,
+      uniqueItems: true,
+    ),
+    'capture': ArraySpec(sessionCaptureEntrySpec, minItems: 1, maxItems: 8),
+  },
+);
+
 /// `timeouts`.
 final ObjectSpec timeoutsSpec = const ObjectSpec(
   properties: <String, TypeSpec>{
@@ -386,6 +413,7 @@ final ObjectSpec manifestSpec = ObjectSpec(
     'media': mediaSpec,
     'settings': ArraySpec(settingDescriptorSpec, minItems: 0, maxItems: 32),
     'network': networkSpec,
+    'session_capture': sessionCaptureSpec,
     'timeouts': timeoutsSpec,
     'keywords': ArraySpec(
       keywordSpec,
