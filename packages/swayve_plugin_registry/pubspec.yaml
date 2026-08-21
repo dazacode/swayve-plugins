@@ -53,7 +53,7 @@ dependencies:
     git:
       url: https://github.com/dazacode/Daza-Swayve-plugins.git
       path: youtube_music
-      ref: 904d0afb9303e89547fd0d588ee5743671bd097f
+      ref: 3330d25804b5fd471c5362bd1b440f2518eebeee
 
 dev_dependencies:
   lints: ^5.0.0
