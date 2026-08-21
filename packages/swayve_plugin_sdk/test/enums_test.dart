@@ -182,7 +182,7 @@ void main() {
 
   test('the API level constants', () {
     expect(kSwayvePluginApiVersion, 1);
-    expect(kSwayveManifestSchemaVersion, 2);
+    expect(kSwayveManifestSchemaVersion, 4);
     expect(kSwayveMediaIdScheme, 'swayve');
   });
 

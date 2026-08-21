@@ -15,7 +15,7 @@ const int kSwayvePluginApiVersion = 1;
 /// older `schemaVersion` stays valid — the format only ever widens (a new
 /// capability, a new optional field), so a build that understands version 2
 /// still reads a version 1 manifest correctly.
-const int kSwayveManifestSchemaVersion = 2;
+const int kSwayveManifestSchemaVersion = 4;
 
 /// The URI scheme used by [SwayveMediaId.uri].
 ///
