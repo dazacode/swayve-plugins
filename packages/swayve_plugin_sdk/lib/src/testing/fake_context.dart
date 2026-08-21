@@ -2,6 +2,7 @@ import '../context.dart';
 import '../enums.dart';
 import '../host/http.dart';
 import '../host/logger.dart';
+import '../host/session_capture.dart';
 import '../host/settings.dart';
 import '../host/storage.dart';
 import '../host/webview.dart';
@@ -10,6 +11,7 @@ import '../permission_enforcement.dart';
 import '../providers.dart';
 import '../version.dart';
 import 'fake_http_client.dart';
+import 'fake_session_capture.dart';
 import 'fake_settings.dart';
 import 'fake_webview.dart';
 import 'in_memory_stores.dart';
@@ -39,7 +41,11 @@ final class FakeSwayvePluginContext
   ///
   /// The default grants nothing, which is the right default: a test must opt
   /// in to each permission its manifest declares.
-  FakeSwayvePluginContext({
+  ///
+  /// [sessionCapture], when omitted, is backed by the same [credentials]
+  /// store (also defaulted here when omitted) as [fakeCredentials] — a
+  /// successful scripted capture and a plugin's later `readSecret` agree.
+  factory FakeSwayvePluginContext({
     Set<SwayvePermission> permissions = const {},
     SwayveHostInfo? host,
     RecordingSwayvePluginLogger? logger,
@@ -48,14 +54,42 @@ final class FakeSwayvePluginContext
     InMemorySwayveCredentialStore? credentials,
     FakeSwayveSettingsView? settings,
     FakeSwayveWebViewController? webView,
+    FakeSwayveSessionCaptureController? sessionCapture,
+  }) {
+    final resolvedCredentials = credentials ?? InMemorySwayveCredentialStore();
+    return FakeSwayvePluginContext._(
+      permissions: permissions,
+      host: host,
+      logger: logger,
+      storage: storage,
+      http: http,
+      credentials: resolvedCredentials,
+      settings: settings,
+      webView: webView,
+      sessionCapture: sessionCapture ??
+          FakeSwayveSessionCaptureController(resolvedCredentials),
+    );
+  }
+
+  FakeSwayvePluginContext._({
+    Set<SwayvePermission> permissions = const {},
+    SwayveHostInfo? host,
+    RecordingSwayvePluginLogger? logger,
+    InMemorySwayvePluginStorage? storage,
+    FakeSwayveHttpClient? http,
+    required InMemorySwayveCredentialStore credentials,
+    FakeSwayveSettingsView? settings,
+    FakeSwayveWebViewController? webView,
+    required FakeSwayveSessionCaptureController sessionCapture,
   })  : grantedPermissions = Set<SwayvePermission>.unmodifiable(permissions),
         _host = host ?? defaultHostInfo,
         fakeLogger = logger ?? RecordingSwayvePluginLogger(),
         fakeStorage = storage ?? InMemorySwayvePluginStorage(),
         fakeHttp = http ?? FakeSwayveHttpClient(),
-        fakeCredentials = credentials ?? InMemorySwayveCredentialStore(),
+        fakeCredentials = credentials,
         fakeSettings = settings ?? FakeSwayveSettingsView(),
-        fakeWebView = webView ?? FakeSwayveWebViewController();
+        fakeWebView = webView ?? FakeSwayveWebViewController(),
+        fakeSessionCapture = sessionCapture;
 
   /// The host a fake context describes unless a test says otherwise:
   /// Swayve 1.1.0 on Android, API level 1, able to render an in-app web view.
@@ -95,6 +129,11 @@ final class FakeSwayvePluginContext
 
   /// The scripted web view behind [webView].
   final FakeSwayveWebViewController fakeWebView;
+
+  /// The scripted session-capture controller behind [sessionCapture].
+  ///
+  /// Writes a successful capture's secrets into [fakeCredentials].
+  final FakeSwayveSessionCaptureController fakeSessionCapture;
 
   final List<SwayveSearchProvider> _searchProviders = <SwayveSearchProvider>[];
   final List<SwayveCatalogProvider> _catalogProviders =
@@ -207,6 +246,12 @@ final class FakeSwayvePluginContext
   @override
   SwayveWebViewController get webView =>
       guard(SwayvePermission.webview, () => fakeWebView);
+
+  @override
+  SwayveSessionCaptureController get sessionCapture => guardAll(
+        const {SwayvePermission.webview, SwayvePermission.externalAuth},
+        () => fakeSessionCapture,
+      );
 
   @override
   void registerSearchProvider(SwayveSearchProvider provider) =>

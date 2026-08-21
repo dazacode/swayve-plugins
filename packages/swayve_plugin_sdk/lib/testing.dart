@@ -24,6 +24,7 @@ library;
 export 'src/testing/cancellation_token_source.dart';
 export 'src/testing/fake_context.dart';
 export 'src/testing/fake_http_client.dart';
+export 'src/testing/fake_session_capture.dart';
 export 'src/testing/fake_settings.dart';
 export 'src/testing/fake_webview.dart';
 export 'src/testing/in_memory_stores.dart';

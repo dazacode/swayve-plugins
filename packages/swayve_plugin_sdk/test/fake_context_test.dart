@@ -162,6 +162,16 @@ void main() {
           ),
         ),
       );
+      expect(
+        () => context.sessionCapture,
+        throwsA(
+          isA<SwayvePermissionDeniedException>().having(
+            (error) => error.permission,
+            'permission',
+            SwayvePermission.webview,
+          ),
+        ),
+      );
     });
 
     test('a context with no permissions grants no guarded facility', () {
@@ -171,9 +181,28 @@ void main() {
         () => context.storage,
         () => context.credentials,
         () => context.webView,
+        () => context.sessionCapture,
       ]) {
         expect(access, throwsA(isA<SwayvePermissionDeniedException>()));
       }
+    });
+
+    test(
+        'session capture requires both webview and external_auth; only '
+        'webview is not enough', () {
+      final context = FakeSwayvePluginContext(
+        permissions: const {SwayvePermission.webview},
+      );
+      expect(
+        () => context.sessionCapture,
+        throwsA(
+          isA<SwayvePermissionDeniedException>().having(
+            (error) => error.permission,
+            'permission',
+            SwayvePermission.externalAuth,
+          ),
+        ),
+      );
     });
 
     test('unguarded facilities are always available', () {
@@ -191,6 +220,7 @@ void main() {
       expect(context.storage, isNotNull);
       expect(context.credentials, isNotNull);
       expect(context.webView, isNotNull);
+      expect(context.sessionCapture, isNotNull);
     });
 
     test('the denial names the permission the plugin should have declared', () {
@@ -511,6 +541,78 @@ void main() {
       await expectLater(
         controller.presentForResult(
           Uri.parse('https://provider.test/login'),
+          isComplete: (_) => true,
+          timeout: const Duration(seconds: 1),
+        ),
+        throwsA(isA<SwayvePluginTimeoutException>()),
+      );
+    });
+  });
+
+  group('FakeSwayveSessionCaptureController', () {
+    test(
+        'a successful capture writes the scripted secrets into '
+        'fakeCredentials', () async {
+      final context = FakeSwayvePluginContext(
+        permissions: const {
+          SwayvePermission.webview,
+          SwayvePermission.externalAuth,
+        },
+      );
+      context.fakeSessionCapture.enqueueNavigation(
+        [
+          Uri.parse('https://music.example.test/login'),
+          Uri.parse('https://music.example.test/home'),
+        ],
+        capturedSecrets: const {
+          'session_cookie': 'cookie-value',
+          'page_id': 'page-id-value',
+        },
+      );
+
+      final result = await context.sessionCapture.presentForSessionCapture(
+        Uri.parse('https://music.example.test/login'),
+        isComplete: (url) => url.path == '/home',
+      );
+
+      expect(result.outcome, SwayveSessionCaptureOutcome.succeeded);
+      expect(result.isSuccess, isTrue);
+      expect(result.completionUrl?.path, '/home');
+      expect(
+        await context.credentials.readSecret('session_cookie'),
+        'cookie-value',
+      );
+      expect(await context.credentials.readSecret('page_id'), 'page-id-value');
+      expect(context.fakeSessionCapture.presentations, hasLength(1));
+      await context.close();
+    });
+
+    test('a dismissal resolves without writing any secret', () async {
+      final context = FakeSwayvePluginContext(
+        permissions: const {
+          SwayvePermission.webview,
+          SwayvePermission.externalAuth,
+        },
+      );
+      context.fakeSessionCapture.enqueueDismissal();
+
+      final result = await context.sessionCapture.presentForSessionCapture(
+        Uri.parse('https://music.example.test/login'),
+        isComplete: (_) => true,
+      );
+
+      expect(result.outcome, SwayveSessionCaptureOutcome.dismissed);
+      expect(result.completionUrl, isNull);
+      expect(context.fakeCredentials.secretKeys, isEmpty);
+    });
+
+    test('a timeout throws', () async {
+      final controller =
+          FakeSwayveSessionCaptureController(InMemorySwayveCredentialStore())
+            ..enqueueTimeout();
+      await expectLater(
+        controller.presentForSessionCapture(
+          Uri.parse('https://music.example.test/login'),
           isComplete: (_) => true,
           timeout: const Duration(seconds: 1),
         ),

@@ -36,6 +36,7 @@ export 'src/enums.dart';
 export 'src/exceptions.dart';
 export 'src/host/http.dart';
 export 'src/host/logger.dart';
+export 'src/host/session_capture.dart';
 export 'src/host/settings.dart';
 export 'src/host/storage.dart';
 export 'src/host/webview.dart';

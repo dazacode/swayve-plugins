@@ -1,5 +1,6 @@
 import 'host/http.dart';
 import 'host/logger.dart';
+import 'host/session_capture.dart';
 import 'host/settings.dart';
 import 'host/storage.dart';
 import 'host/webview.dart';
@@ -14,11 +15,12 @@ import 'providers.dart';
 /// the capabilities it declared, and uses the facilities its permissions
 /// allow.
 ///
-/// **Permission-guarded facilities** — [storage], [http], [credentials] and
-/// [webView] — throw `SwayvePermissionDeniedException` **synchronously** when
-/// the plugin did not declare the matching permission. Reading the getter is
-/// what throws, not the first call on it, so the failure names the line that
-/// over-reached. [host], [log] and [settings] are always available.
+/// **Permission-guarded facilities** — [storage], [http], [credentials],
+/// [webView] and [sessionCapture] — throw `SwayvePermissionDeniedException`
+/// **synchronously** when the plugin did not declare the matching
+/// permission(s). Reading the getter is what throws, not the first call on
+/// it, so the failure names the line that over-reached. [host], [log] and
+/// [settings] are always available.
 ///
 /// **Registration** is only valid during `initialize`. A host may reject a
 /// provider registered later, and it always rejects a provider whose
@@ -54,6 +56,11 @@ abstract interface class SwayvePluginContext {
   ///
   /// Requires the `webview` permission.
   SwayveWebViewController get webView;
+
+  /// A one-shot, host-mediated capture of a sign-in session.
+  ///
+  /// Requires both the `webview` and `external_auth` permissions.
+  SwayveSessionCaptureController get sessionCapture;
 
   /// Registers the plugin's `search` implementation.
   void registerSearchProvider(SwayveSearchProvider provider);

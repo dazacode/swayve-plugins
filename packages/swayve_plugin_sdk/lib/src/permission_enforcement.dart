@@ -47,4 +47,18 @@ mixin SwayvePermissionEnforcement {
     requirePermission(permission);
     return facility();
   }
+
+  /// Returns [facility] if every permission in [permissions] is granted, and
+  /// throws [SwayvePermissionDeniedException] naming the first one — in the
+  /// order [permissions] iterates — that is not.
+  ///
+  /// For a facility guarded by more than one permission, checked structurally
+  /// (e.g. `session_capture`'s `webview` + `external_auth` requirement).
+  /// [facility] is produced lazily, exactly as in [guard].
+  T guardAll<T>(Iterable<SwayvePermission> permissions, T Function() facility) {
+    for (final permission in permissions) {
+      requirePermission(permission);
+    }
+    return facility();
+  }
 }

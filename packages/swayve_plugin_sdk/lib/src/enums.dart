@@ -65,7 +65,16 @@ enum SwayveCapability {
   /// a "signed-in user's own" anything with no session to own it.
   ///
   /// Its wire name is `personal_library`.
-  personalLibrary;
+  personalLibrary,
+
+  /// A one-shot, host-mediated capture of a sign-in session, for a plugin
+  /// whose sign-in flow has no redirect URL to hand back — just page state
+  /// (cookies, in-page script state) the host extracts on the plugin's
+  /// behalf. Requires a `SwayveSessionCaptureController` and **both** the
+  /// `webview` and `externalAuth` permissions.
+  ///
+  /// Its wire name is `session_capture`.
+  sessionCapture;
 
   /// The manifest spelling of this capability.
   ///
@@ -85,6 +94,7 @@ enum SwayveCapability {
         SwayveCapability.playlistRead => 'playlist_read',
         SwayveCapability.artistActivity => 'artist_activity',
         SwayveCapability.personalLibrary => 'personal_library',
+        SwayveCapability.sessionCapture => 'session_capture',
       };
 
   /// The capability named [wire], or `null` if the name is not in the v1

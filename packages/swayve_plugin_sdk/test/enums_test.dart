@@ -29,6 +29,7 @@ void main() {
           'playlist_read',
           'artist_activity',
           'personal_library',
+          'session_capture',
         ],
       );
     });

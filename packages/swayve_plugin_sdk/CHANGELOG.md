@@ -8,8 +8,8 @@ While the version is `0.x` the API is unstable: a minor bump may break you.
 
 ## Unreleased
 
-Manifest schema version 3. Purely additive over v1 — a v1 (or v2) manifest
-still validates unchanged.
+Manifest schema version 4. Purely additive over v1 — a v1 (or v2 or v3)
+manifest still validates unchanged.
 
 ### Added
 
@@ -25,6 +25,20 @@ still validates unchanged.
   a third party. An eleventh provider interface. Manifest schema version 3.
 - `SwayvePluginContext.registerLibraryProvider`, and
   `FakeSwayvePluginContext.libraryProviders` for testing it.
+- `SwayveCapability.sessionCapture` and `SwayveSessionCaptureController` — a
+  one-shot, host-mediated capture of a sign-in session for a plugin whose
+  sign-in has no redirect URL to hand back, only page state the host must
+  extract. Requires **both** `webview` and `external_auth`; the plugin never
+  sees the captured values, only the outcome
+  (`SwayveSessionCaptureOutcome`/`SwayveSessionCaptureResult`). Manifest
+  schema version 4.
+- `SwayvePluginContext.sessionCapture`, and
+  `SwayvePermissionEnforcement.guardAll` — generalises `guard` to a facility
+  gated on more than one permission, throwing on the first missing one.
+- `FakeSwayveSessionCaptureController` in `testing.dart`, scripted the same
+  way as `FakeSwayveWebViewController` plus the ability to script which
+  secrets a successful capture writes into a shared
+  `InMemorySwayveCredentialStore`.
 
 ## 0.1.0
 
