@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://swayve.app/schema/swayve-plugin.schema.json",
   "title": "Swayve plugin manifest",
-  "description": "Structure of a Swayve plugin's plugin.json. schemaVersion 4 (a schemaVersion 1, 2 or 3 manifest also validates). This file is the published contract; cross-field rules that a JSON Schema cannot express live in swayve_plugin_tools and are documented in schema/README.md.",
+  "description": "Structure of a Swayve plugin's plugin.json. schemaVersion 5 (a schemaVersion 1, 2, 3 or 4 manifest also validates). This file is the published contract; cross-field rules that a JSON Schema cannot express live in swayve_plugin_tools and are documented in schema/README.md.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -23,7 +23,7 @@
   ],
   "properties": {
     "schemaVersion": {
-      "description": "Manifest schema version this plugin.json is written in. Currently 4; a manifest declaring 1, 2 or 3 is still valid.",
+      "description": "Manifest schema version this plugin.json is written in. Currently 5; a manifest declaring 1, 2, 3 or 4 is still valid.",
       "type": "integer",
       "minimum": 1
     },
@@ -242,7 +242,8 @@
         "playlist_read",
         "artist_activity",
         "personal_library",
-        "session_capture"
+        "session_capture",
+        "personal_library_push"
       ]
     },
     "permission": {

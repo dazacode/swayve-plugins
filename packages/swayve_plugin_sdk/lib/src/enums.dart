@@ -74,7 +74,27 @@ enum SwayveCapability {
   /// `webview` and `externalAuth` permissions.
   ///
   /// Its wire name is `session_capture`.
-  sessionCapture;
+  sessionCapture,
+
+  /// Pushing tracks from the local Swayve library up to the provider's own
+  /// service. Requires a `SwayveLibraryPushProvider` and the
+  /// `personal_library` capability.
+  ///
+  /// This is the write counterpart of [personalLibrary], and the trust gap
+  /// between the two is exactly why it is a separate capability rather than
+  /// a method bolted onto [SwayveLibraryProvider]: sending a user's own files
+  /// somewhere is a materially bigger grant than reading a signed-in
+  /// library back, and it deserves its own visible manifest line — the same
+  /// reasoning [playlistRead] never grew a `_write` sibling for.
+  ///
+  /// A provider declares this only when it also declares [personalLibrary]:
+  /// there is no "push to my library" without first having a library that
+  /// session owns. There is no new permission behind it beyond what
+  /// [personalLibrary] already needs — `network`, already covered by the
+  /// existing permission plus the manifest's own `network.hosts` allowlist.
+  ///
+  /// Its wire name is `personal_library_push`.
+  personalLibraryPush;
 
   /// The manifest spelling of this capability.
   ///
@@ -95,6 +115,7 @@ enum SwayveCapability {
         SwayveCapability.artistActivity => 'artist_activity',
         SwayveCapability.personalLibrary => 'personal_library',
         SwayveCapability.sessionCapture => 'session_capture',
+        SwayveCapability.personalLibraryPush => 'personal_library_push',
       };
 
   /// The capability named [wire], or `null` if the name is not in the v1
@@ -568,6 +589,35 @@ enum SwayveSourceAvailability {
   /// The availability named [wire], or `null` if unknown.
   static SwayveSourceAvailability? fromWire(String wire) {
     for (final value in SwayveSourceAvailability.values) {
+      if (value.wireName == wire) return value;
+    }
+    return null;
+  }
+}
+
+/// A digest algorithm a `SwayveLibraryPushProvider` uses to recognise a
+/// track its service already has, before the host spends any bandwidth
+/// resending it.
+///
+/// Closed rather than an arbitrary string, for the same reason every other
+/// vocabulary in this file is closed: dedup only works when the host and the
+/// provider agree on exactly which digest is being compared. `md5` is the
+/// only member today because it is the only digest the first
+/// `personal_library_push` provider's own upload protocol speaks — not
+/// because this SDK has any preference between digests in general. The host
+/// already computes a SHA-256 for its own on-device library hash, so a
+/// provider needing that instead is exactly what a second member here would
+/// be for.
+enum SwayveUploadHashAlgorithm {
+  /// MD5, reported as 32 lowercase hex characters.
+  md5;
+
+  /// The wire spelling of this algorithm.
+  String get wireName => name;
+
+  /// The algorithm named [wire], or `null` if unknown.
+  static SwayveUploadHashAlgorithm? fromWire(String wire) {
+    for (final value in SwayveUploadHashAlgorithm.values) {
       if (value.wireName == wire) return value;
     }
     return null;

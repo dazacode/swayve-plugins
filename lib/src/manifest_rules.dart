@@ -147,14 +147,17 @@ final class ManifestRules {
 
   /// Rule 1c. A capability that is unusable without another capability.
   ///
-  /// Only `personal_library` lands here today, and for the same reason rule 1a
-  /// exists: `personal_library` describes the signed-in user's own liked
-  /// tracks, which has no meaning without a session, and `authentication` is
-  /// what a plugin declares to say it can obtain one. This is a distinct rule
-  /// from 1a because the missing thing is a capability, not a permission — a
-  /// manifest could declare `external_auth` without `authentication` and this
-  /// rule would still fire, because holding the permission is not the same as
-  /// declaring the flow that uses it.
+  /// `personal_library` and `personal_library_push` land here, both for the
+  /// same reason rule 1a exists: `personal_library` describes the signed-in
+  /// user's own liked tracks, which has no meaning without a session, and
+  /// `authentication` is what a plugin declares to say it can obtain one.
+  /// `personal_library_push` describes *writing* to that same library, so it
+  /// requires `personal_library` itself rather than reaching past it to
+  /// `authentication` directly. This is a distinct rule from 1a because the
+  /// missing thing is a capability, not a permission — a manifest could
+  /// declare `external_auth` without `authentication` and this rule would
+  /// still fire, because holding the permission is not the same as declaring
+  /// the flow that uses it.
   void rule1cCapabilityRequiresCapability() {
     final List<String> capabilities = manifest.capabilities;
     final Set<String> declared = capabilities.toSet();

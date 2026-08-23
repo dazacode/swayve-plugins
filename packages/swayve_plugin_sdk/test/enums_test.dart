@@ -30,6 +30,7 @@ void main() {
           'artist_activity',
           'personal_library',
           'session_capture',
+          'personal_library_push',
         ],
       );
     });
@@ -59,6 +60,20 @@ void main() {
         SwayveCapability.personalLibrary,
       );
       expect(SwayveCapability.fromWire('personalLibrary'), isNull);
+    });
+
+    test(
+        'personalLibraryPush is snake_case on the wire, camelCase in Dart',
+        () {
+      expect(
+        SwayveCapability.personalLibraryPush.wireName,
+        'personal_library_push',
+      );
+      expect(
+        SwayveCapability.fromWire('personal_library_push'),
+        SwayveCapability.personalLibraryPush,
+      );
+      expect(SwayveCapability.fromWire('personalLibraryPush'), isNull);
     });
 
     test('unknown names return null rather than throwing', () {
@@ -178,11 +193,28 @@ void main() {
       expect(SwayveAuthStatus.signedOut.wireName, 'signed_out');
       expect(SwayveAuthStatus.signedIn.wireName, 'signed_in');
     });
+
+    test('SwayveUploadHashAlgorithm round-trips', () {
+      for (final value in SwayveUploadHashAlgorithm.values) {
+        expect(SwayveUploadHashAlgorithm.fromWire(value.wireName), value);
+      }
+      expect(SwayveUploadHashAlgorithm.md5.wireName, 'md5');
+      expect(SwayveUploadHashAlgorithm.fromWire('sha256'), isNull);
+    });
+
+    test('SwayveUploadOutcome round-trips and is snake_case', () {
+      for (final value in SwayveUploadOutcome.values) {
+        expect(SwayveUploadOutcome.fromWire(value.wireName), value);
+      }
+      expect(SwayveUploadOutcome.uploaded.wireName, 'uploaded');
+      expect(SwayveUploadOutcome.alreadyPresent.wireName, 'already_present');
+      expect(SwayveUploadOutcome.failed.wireName, 'failed');
+    });
   });
 
   test('the API level constants', () {
     expect(kSwayvePluginApiVersion, 1);
-    expect(kSwayveManifestSchemaVersion, 4);
+    expect(kSwayveManifestSchemaVersion, 5);
     expect(kSwayveMediaIdScheme, 'swayve');
   });
 

@@ -4,10 +4,11 @@
 /// cannot know what it means. A manifest declaring an older one stays valid:
 /// the format only ever widens (a new capability, a new optional field), so
 /// this build reads a `schemaVersion: 1` manifest exactly as a v1 build would.
-/// `4` as of the `session_capture` capability (`3` as of `personal_library`,
-/// `2` as of `artist_activity` before it); `1` through `3` manifests still
-/// validate unchanged.
-const int kManifestSchemaVersion = 4;
+/// `5` as of the `personal_library_push` capability (`4` as of
+/// `session_capture`, `3` as of `personal_library`, `2` as of
+/// `artist_activity` before it); `1` through `4` manifests still validate
+/// unchanged.
+const int kManifestSchemaVersion = 5;
 
 /// The SDK major API level this build of the tools implements.
 const int kSwayvePluginApiVersion = 1;
@@ -36,6 +37,7 @@ const List<String> kCapabilities = <String>[
   'artist_activity',
   'personal_library',
   'session_capture',
+  'personal_library_push',
 ];
 
 /// The closed vocabulary of content a source declares it can be asked for, in
@@ -121,11 +123,16 @@ const Map<String, List<String>> kCapabilityRequiredPermission =
 /// This is the same idea as [kCapabilityRequiredPermission], one level up: a
 /// `personal_library` capability describes the signed-in user's own liked
 /// tracks, and there is no "own" without a session — which is exactly what
-/// `authentication` provides. Unlike the permission table, the missing thing
-/// here is another declared capability, not a grant, so it gets its own map
-/// and its own rule rather than being folded into the existing one.
+/// `authentication` provides. `personal_library_push` follows the identical
+/// shape one level further: it describes *writing* to that same signed-in
+/// user's library, and there is no "own library to push to" without first
+/// having declared the capability that reads one. Unlike the permission
+/// table, the missing thing here is another declared capability, not a
+/// grant, so it gets its own map and its own rule rather than being folded
+/// into the existing one.
 const Map<String, String> kCapabilityRequiredCapability = <String, String>{
   'personal_library': 'authentication',
+  'personal_library_push': 'personal_library',
 };
 
 /// Capabilities that usually, but not necessarily, reach an external service.
@@ -145,6 +152,7 @@ const Set<String> kNetworkExpectingCapabilities = <String>{
   'playlist_read',
   'artist_activity',
   'personal_library',
+  'personal_library_push',
 };
 
 /// The permissions that [capabilities] justify holding.

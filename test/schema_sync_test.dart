@@ -175,12 +175,15 @@ void main() {
       'authentication': <String>['external_auth'],
       'session_capture': <String>['webview', 'external_auth'],
     });
-    expect(kNetworkExpectingCapabilities, hasLength(10));
+    expect(kNetworkExpectingCapabilities, hasLength(11));
   });
 
-  test('only personal_library has a capability-requires-capability rule', () {
+  test(
+      'only personal_library and personal_library_push have a '
+      'capability-requires-capability rule', () {
     expect(kCapabilityRequiredCapability, <String, String>{
       'personal_library': 'authentication',
+      'personal_library_push': 'personal_library',
     });
     for (final String capability in kCapabilityRequiredCapability.values) {
       expect(

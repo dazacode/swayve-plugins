@@ -16,6 +16,8 @@ final class RecordedHttpRequest {
     this.headers = const {},
     this.body,
     this.timeout,
+    this.multipartFields,
+    this.multipartFile,
   });
 
   /// The HTTP method, upper-cased: `GET` or `POST`.
@@ -32,6 +34,14 @@ final class RecordedHttpRequest {
 
   /// The timeout the plugin asked for, if any.
   final Duration? timeout;
+
+  /// The form fields, for a `postMultipart` call. `null` for every other
+  /// kind of request.
+  final Map<String, String>? multipartFields;
+
+  /// The file, for a `postMultipart` call. `null` for every other kind of
+  /// request.
+  final SwayveMultipartFile? multipartFile;
 
   @override
   String toString() => 'RecordedHttpRequest($method $url)';
@@ -128,7 +138,15 @@ final class FakeSwayveHttpClient implements SwayveHttpClient {
     Duration? timeout,
     SwayveCancellationToken? cancel,
   }) =>
-      _handle('GET', url, headers, null, timeout, cancel);
+      _handle(
+        RecordedHttpRequest(
+          method: 'GET',
+          url: url,
+          headers: Map<String, String>.unmodifiable(headers ?? const {}),
+          timeout: timeout,
+        ),
+        cancel,
+      );
 
   @override
   Future<SwayveHttpResponse> post(
@@ -138,25 +156,45 @@ final class FakeSwayveHttpClient implements SwayveHttpClient {
     Duration? timeout,
     SwayveCancellationToken? cancel,
   }) =>
-      _handle('POST', url, headers, body, timeout, cancel);
+      _handle(
+        RecordedHttpRequest(
+          method: 'POST',
+          url: url,
+          headers: Map<String, String>.unmodifiable(headers ?? const {}),
+          body: body,
+          timeout: timeout,
+        ),
+        cancel,
+      );
 
-  Future<SwayveHttpResponse> _handle(
-    String method,
-    Uri url,
+  @override
+  Future<SwayveHttpResponse> postMultipart(
+    Uri url, {
     Map<String, String>? headers,
-    Object? body,
+    required Map<String, String> fields,
+    required SwayveMultipartFile file,
     Duration? timeout,
     SwayveCancellationToken? cancel,
+  }) =>
+      _handle(
+        RecordedHttpRequest(
+          method: 'POST',
+          url: url,
+          headers: Map<String, String>.unmodifiable(headers ?? const {}),
+          timeout: timeout,
+          multipartFields: Map<String, String>.unmodifiable(fields),
+          multipartFile: file,
+        ),
+        cancel,
+      );
+
+  Future<SwayveHttpResponse> _handle(
+    RecordedHttpRequest request,
+    SwayveCancellationToken? cancel,
   ) {
-    _requests.add(
-      RecordedHttpRequest(
-        method: method,
-        url: url,
-        headers: Map<String, String>.unmodifiable(headers ?? const {}),
-        body: body,
-        timeout: timeout,
-      ),
-    );
+    final String method = request.method;
+    final Uri url = request.url;
+    _requests.add(request);
     cancel?.throwIfCancelled();
     if (_queue.isEmpty) {
       throw StateError(

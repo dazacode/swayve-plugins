@@ -80,6 +80,24 @@ final class _EchoLibraryProvider implements SwayveLibraryProvider {
       const SwayvePage(items: []);
 }
 
+final class _EchoLibraryPushProvider implements SwayveLibraryPushProvider {
+  @override
+  SwayveUploadHashAlgorithm? get dedupAlgorithm => SwayveUploadHashAlgorithm.md5;
+
+  @override
+  Future<Set<String>> knownUploadHashes({
+    SwayveCancellationToken? cancel,
+  }) async =>
+      const {};
+
+  @override
+  Future<SwayveUploadResult> uploadTrack(
+    SwayveUploadItem item, {
+    SwayveCancellationToken? cancel,
+  }) async =>
+      const SwayveUploadResult(outcome: SwayveUploadOutcome.uploaded);
+}
+
 final class _EchoSearchProvider implements SwayveSearchProvider {
   _EchoSearchProvider(this._http);
 
@@ -289,6 +307,19 @@ void main() {
       expect(
         context.registeredCapabilities,
         contains(SwayveCapability.personalLibrary),
+      );
+    });
+
+    test('a library-push provider is recorded and mapped back', () {
+      final context = FakeSwayvePluginContext();
+      final provider = _EchoLibraryPushProvider();
+
+      context.registerLibraryPushProvider(provider);
+
+      expect(context.libraryPushProviders, [provider]);
+      expect(
+        context.registeredCapabilities,
+        contains(SwayveCapability.personalLibraryPush),
       );
     });
 

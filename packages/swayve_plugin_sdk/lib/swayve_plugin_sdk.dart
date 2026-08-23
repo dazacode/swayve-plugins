@@ -56,6 +56,7 @@ export 'src/models/scrobble.dart';
 export 'src/models/search.dart';
 export 'src/models/source_descriptor.dart';
 export 'src/models/track.dart';
+export 'src/models/upload.dart';
 export 'src/permission_enforcement.dart';
 export 'src/playback.dart';
 export 'src/plugin.dart';

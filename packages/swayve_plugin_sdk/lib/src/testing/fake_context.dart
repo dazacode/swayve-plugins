@@ -153,6 +153,8 @@ final class FakeSwayvePluginContext
   final List<SwayveAuthProvider> _authProviders = <SwayveAuthProvider>[];
   final List<SwayveLibraryProvider> _libraryProviders =
       <SwayveLibraryProvider>[];
+  final List<SwayveLibraryPushProvider> _libraryPushProviders =
+      <SwayveLibraryPushProvider>[];
 
   /// The search providers registered so far.
   List<SwayveSearchProvider> get searchProviders =>
@@ -198,6 +200,10 @@ final class FakeSwayvePluginContext
   List<SwayveLibraryProvider> get libraryProviders =>
       List.unmodifiable(_libraryProviders);
 
+  /// The library-push providers registered so far.
+  List<SwayveLibraryPushProvider> get libraryPushProviders =>
+      List.unmodifiable(_libraryPushProviders);
+
   /// The capabilities implied by everything registered so far.
   ///
   /// Compare it with the plugin's declared capabilities to prove the two
@@ -215,6 +221,8 @@ final class FakeSwayvePluginContext
           SwayveCapability.artistActivity,
         if (_authProviders.isNotEmpty) SwayveCapability.authentication,
         if (_libraryProviders.isNotEmpty) SwayveCapability.personalLibrary,
+        if (_libraryPushProviders.isNotEmpty)
+          SwayveCapability.personalLibraryPush,
       };
 
   /// Releases the resources the fakes hold. Call it in a test's teardown.
@@ -298,4 +306,8 @@ final class FakeSwayvePluginContext
   @override
   void registerLibraryProvider(SwayveLibraryProvider provider) =>
       _libraryProviders.add(provider);
+
+  @override
+  void registerLibraryPushProvider(SwayveLibraryPushProvider provider) =>
+      _libraryPushProviders.add(provider);
 }

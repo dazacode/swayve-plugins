@@ -94,4 +94,7 @@ abstract interface class SwayvePluginContext {
 
   /// Registers the plugin's `personal_library` implementation.
   void registerLibraryProvider(SwayveLibraryProvider provider);
+
+  /// Registers the plugin's `personal_library_push` implementation.
+  void registerLibraryPushProvider(SwayveLibraryPushProvider provider);
 }

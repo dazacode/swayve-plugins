@@ -30,6 +30,7 @@ import 'models/playlist.dart';
 import 'models/scrobble.dart';
 import 'models/search.dart';
 import 'models/track.dart';
+import 'models/upload.dart';
 import 'playback.dart';
 
 /// Free-text search. Capability: `search`.
@@ -219,6 +220,65 @@ abstract interface class SwayveLibraryProvider {
   /// so the host can tell "nothing liked yet" apart from "not signed in".
   Future<SwayvePage<SwayveTrack>> likedTracks(
     SwayveBrowseRequest request, {
+    SwayveCancellationToken? cancel,
+  });
+}
+
+/// Pushing tracks from the local Swayve library up to the provider's own
+/// service. Capability: `personal_library_push`.
+///
+/// The host, not the plugin, owns the local-file loop: no plugin can read
+/// the device filesystem, so the host reads each track's bytes itself and
+/// hands them over one call at a time through [uploadTrack]. That is also
+/// why this interface has no progress callback anywhere on it. Every
+/// provider method in this SDK is a bounded, timeout-checked `Future`
+/// (principle 7) — a broken plugin must never be able to hang the host the
+/// way a raw byte stream could — and a whole push is many such calls, not
+/// one long-running one. Progress across the whole run is therefore the
+/// host's concern, not this interface's: it is file-granular and
+/// byte-weighted across whichever files the host is currently looping
+/// through, computed the same way the host already computes progress for
+/// its other many-files, one-at-a-time operations.
+///
+/// [dedupAlgorithm] and [knownUploadHashes] exist so the host can skip a
+/// track the provider's service already has before spending any bandwidth
+/// resending it. [dedupAlgorithm] is nullable because not every provider's
+/// upload protocol has a dedup concept at all — a provider returning `null`
+/// is declaring "every push is a fresh upload; there is nothing here to
+/// check first," and the host must not call [knownUploadHashes] in that
+/// case.
+abstract interface class SwayveLibraryPushProvider {
+  /// The digest the host must compute over a candidate track's bytes to
+  /// compare against [knownUploadHashes], or `null` when this provider has
+  /// no dedup concept to offer.
+  SwayveUploadHashAlgorithm? get dedupAlgorithm;
+
+  /// Returns every hash, in [dedupAlgorithm]'s form, the provider's service
+  /// already holds for this signed-in account.
+  ///
+  /// Only ever called when [dedupAlgorithm] is non-null. The host computes
+  /// the same digest over each local candidate and treats a match as
+  /// [SwayveUploadOutcome.alreadyPresent] without calling [uploadTrack] —
+  /// unless the user has explicitly chosen to push a known duplicate anyway,
+  /// in which case the host calls [uploadTrack] regardless and leaves it to
+  /// the provider's own service to decide what a duplicate upload means.
+  Future<Set<String>> knownUploadHashes({SwayveCancellationToken? cancel});
+
+  /// Uploads one track's bytes.
+  ///
+  /// Called once per track, in a host-driven loop — never handed a batch,
+  /// and never expected to report on more than the one [item] it was given.
+  /// A single track failing to upload is reported through
+  /// [SwayveUploadResult.outcome] being [SwayveUploadOutcome.failed], not by
+  /// throwing: the host keeps looping through the remaining tracks
+  /// regardless and shows every failure together at the end of the run,
+  /// which only works if one bad file cannot unwind the whole call stack.
+  /// Reserve throwing for what the other conventions in this file already
+  /// reserve it for — the plugin cannot do this at all, or could not do it
+  /// right now — not for an ordinary per-track rejection from the remote
+  /// service.
+  Future<SwayveUploadResult> uploadTrack(
+    SwayveUploadItem item, {
     SwayveCancellationToken? cancel,
   });
 }

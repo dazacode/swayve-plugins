@@ -49,6 +49,56 @@ abstract interface class SwayveHttpClient {
     Duration? timeout,
     SwayveCancellationToken? cancel,
   });
+
+  /// Performs a `multipart/form-data` POST carrying [fields] and exactly one
+  /// [file].
+  ///
+  /// Single file per request, buffered rather than streamed — the same
+  /// "buffered, not streamed" stance [SwayveHttpResponse] already takes, and
+  /// a deliberately narrow match for what a `personal_library_push`
+  /// provider's own upload protocol actually needs: one track, sent once,
+  /// alongside a handful of plain form fields. This is not a general
+  /// multi-file or streaming-upload primitive, and there is no plan to widen
+  /// it into one.
+  ///
+  /// [timeout] defaults to `SwayveTimeouts.request` or the manifest's
+  /// `timeouts.requestMs` when it declares one, the same as [post].
+  Future<SwayveHttpResponse> postMultipart(
+    Uri url, {
+    Map<String, String>? headers,
+    required Map<String, String> fields,
+    required SwayveMultipartFile file,
+    Duration? timeout,
+    SwayveCancellationToken? cancel,
+  });
+}
+
+/// The one file a [SwayveHttpClient.postMultipart] call carries.
+@immutable
+final class SwayveMultipartFile {
+  /// Creates a multipart file.
+  const SwayveMultipartFile({
+    required this.fieldName,
+    required this.filename,
+    required this.bytes,
+    this.contentType,
+  });
+
+  /// The multipart form field name this file is submitted under.
+  final String fieldName;
+
+  /// The filename reported to the server.
+  final String filename;
+
+  /// The file's raw bytes, sent as-is.
+  final List<int> bytes;
+
+  /// The MIME type to send with the file part, when known.
+  final String? contentType;
+
+  @override
+  String toString() =>
+      'SwayveMultipartFile($fieldName, $filename, ${bytes.length} bytes)';
 }
 
 /// One HTTP response, already fully read.

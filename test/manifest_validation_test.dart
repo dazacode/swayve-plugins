@@ -361,7 +361,7 @@ void main() {
 
     test('a future schemaVersion is rejected the same way', () {
       final Map<String, Object?> manifest = cleanManifest()
-        ..['schemaVersion'] = 5;
+        ..['schemaVersion'] = 6;
       final Diagnostic d = diagnosticFor(
         validate(manifest),
         DiagnosticCodes.unsupportedSchemaVersion,
@@ -425,6 +425,22 @@ void main() {
       final Report report = validate(manifest);
       expect(report.diagnostics, isEmpty, reason: codesOf(report).toString());
     });
+
+    test(
+        'schemaVersion 5 with the personal_library_push capability validates',
+        () {
+      final Map<String, Object?> manifest = cleanManifest()
+        ..['schemaVersion'] = 5
+        ..['capabilities'] = <String>[
+          'search',
+          'authentication',
+          'personal_library',
+          'personal_library_push',
+        ]
+        ..['permissions'] = <String>['network', 'external_auth'];
+      final Report report = validate(manifest);
+      expect(report.diagnostics, isEmpty, reason: codesOf(report).toString());
+    });
   });
 
   group('cross-field rule 1c', () {
@@ -475,6 +491,101 @@ void main() {
         codesOf(validate(manifest)),
         isNot(contains(DiagnosticCodes.capabilityRequiresCapability)),
       );
+    });
+
+    test('personal_library_push requires personal_library', () {
+      final Map<String, Object?> manifest = cleanManifest()
+        ..['capabilities'] = <String>[
+          'search',
+          'authentication',
+          'personal_library_push',
+        ]
+        ..['permissions'] = <String>['network', 'external_auth'];
+      final Diagnostic d = diagnosticFor(
+        validate(manifest),
+        DiagnosticCodes.capabilityRequiresCapability,
+      );
+      expect(d.severity, Severity.error);
+      expect(
+        d.message,
+        contains(
+          "'personal_library_push' requires capability 'personal_library'",
+        ),
+      );
+      expect(d.pointer, '/capabilities/2');
+    });
+
+    test(
+        'personal_library_push alongside personal_library and network is '
+        'clean', () {
+      final Map<String, Object?> manifest = cleanManifest()
+        ..['capabilities'] = <String>[
+          'search',
+          'authentication',
+          'personal_library',
+          'personal_library_push',
+        ]
+        ..['permissions'] = <String>['network', 'external_auth'];
+      expect(
+        codesOf(validate(manifest)),
+        isNot(contains(DiagnosticCodes.capabilityRequiresCapability)),
+      );
+    });
+
+    test(
+        'personal_library_push declared without personal_library is still '
+        'flagged even when authentication and external_auth are both '
+        'present', () {
+      // Holding authentication (and its permission) is not the same as
+      // declaring personal_library — the intermediate capability rule 1c
+      // requires personal_library_push to name is exactly that one, not
+      // authentication reached past it.
+      final Map<String, Object?> manifest = cleanManifest()
+        ..['capabilities'] = <String>[
+          'search',
+          'authentication',
+          'personal_library_push',
+        ]
+        ..['permissions'] = <String>['network', 'external_auth'];
+      final Diagnostic d = diagnosticFor(
+        validate(manifest),
+        DiagnosticCodes.capabilityRequiresCapability,
+      );
+      expect(
+        d.message,
+        contains("requires capability 'personal_library'"),
+      );
+    });
+
+    test(
+        'personal_library_push without the network permission is an info '
+        'note only, the same as every other network-expecting capability',
+        () {
+      final Map<String, Object?> manifest = cleanManifest()
+        ..['capabilities'] = <String>[
+          'search',
+          'authentication',
+          'personal_library',
+          'personal_library_push',
+        ]
+        ..['permissions'] = <String>['external_auth']
+        ..remove('network');
+      final Report report = validate(manifest);
+      final List<Diagnostic> hits = report.diagnostics
+          .where(
+            (Diagnostic d) =>
+                d.code == DiagnosticCodes.capabilityExpectsNetwork,
+          )
+          .toList();
+      expect(
+        hits.map((Diagnostic d) => d.message),
+        contains(
+          contains("'personal_library_push' usually reaches an external "
+              'service'),
+        ),
+      );
+      expect(report.errorCount, 0);
+      expect(report.passed(strict: true), isTrue);
     });
   });
 
