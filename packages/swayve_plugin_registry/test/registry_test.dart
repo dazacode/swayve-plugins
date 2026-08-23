@@ -17,6 +17,13 @@ void main() {
     );
   });
 
+  test('lists ibroadcast under its manifest id', () {
+    expect(
+      firstPartyCompiledPlugins.keys,
+      contains('dev.dazacode.swayve.ibroadcast'),
+    );
+  });
+
   test('every factory builds a plugin whose identity id matches its key', () {
     for (final entry in firstPartyCompiledPlugins.entries) {
       final SwayvePlugin plugin = entry.value();

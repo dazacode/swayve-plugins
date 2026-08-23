@@ -54,6 +54,14 @@ dependencies:
       url: https://github.com/dazacode/Daza-Swayve-plugins.git
       path: youtube_music
       ref: ae0554709576ae62c282a37b325265ed8d92b741
+  # Unlike soundcloud/youtube_music, this one lives in its own repository
+  # rather than in Daza-Swayve-plugins — see that plugin's own README for
+  # why. Pinned to the same swayve_plugin_sdk commit as everything else
+  # above, for the same reason.
+  ibroadcast:
+    git:
+      url: https://github.com/dazacode/ibroadcast-swayve-plugin.git
+      ref: 3c773c0d28f44b001624fec8fabd2abd00986239
 
 dev_dependencies:
   lints: ^5.0.0
