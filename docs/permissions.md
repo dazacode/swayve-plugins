@@ -51,12 +51,19 @@ abstract interface class SwayveHttpClient {
       Duration? timeout, SwayveCancellationToken? cancel});
   Future<SwayveHttpResponse> post(Uri url, {Map<String, String>? headers,
       Object? body, Duration? timeout, SwayveCancellationToken? cancel});
+  Future<SwayveHttpResponse> postMultipart(Uri url, {Map<String, String>? headers,
+      required Map<String, String> fields, required SwayveMultipartFile file,
+      Duration? timeout, SwayveCancellationToken? cancel});
 }
 ```
 
 **Does not grant** raw sockets, WebSockets, listening on a port, `dart:io`
 (which the SDK forbids outright), requests to hosts outside `network.hosts`, or
-any request the host chooses to refuse. `GET` and `POST` are the whole surface.
+any request the host chooses to refuse. `GET`, `POST` and a single-file
+`postMultipart` are the whole surface — the last of which exists only to feed
+the `personal_library_push` capability's `SwayveLibraryPushProvider.uploadTrack`
+its bytes; it is buffered, not streamed, and takes exactly one file, the same
+"not a general primitive" stance every method here takes.
 
 Hosts are matched against the declared list, with `*.host.tld` matching one or
 more leading labels. A request to an undeclared host is refused by the client
@@ -169,6 +176,7 @@ a permission:
 | Capability | Requires | Why it is structural |
 |---|---|---|
 | `personal_library` | `authentication` | The capability is the signed-in user's own liked tracks. There is no "own" without a session, and `authentication` is what a plugin declares to say it can obtain one. |
+| `personal_library_push` | `personal_library` | The capability is *writing* to that same signed-in user's library. There is no "push to my library" without first declaring the capability that reads one — so it requires `personal_library` itself, not `authentication` reached past it. |
 
 ```
   ERROR   capabilities: 'personal_library' requires capability 'authentication'
@@ -185,9 +193,9 @@ for the validator rule.
 
 ### Advisory: capability expects network — INFO
 
-The other ten capabilities — `search`, `catalog`, `streaming`, `metadata`,
+The other eleven capabilities — `search`, `catalog`, `streaming`, `metadata`,
 `lyrics`, `scrobbling`, `artwork`, `playlist_read`, `artist_activity`,
-`personal_library` — *usually* reach an external
+`personal_library`, `personal_library_push` — *usually* reach an external
 service. Declaring one without `network` produces an **info note**
 (`capability_expects_network`), never a warning and never an error, and
 `--strict` does not promote it.

@@ -45,6 +45,33 @@ whole.
   *how*; a new rule 12 validates the block is well-formed and that every
   `as_secret` names a declared `secret` setting. Bumps `schemaVersion` to 4;
   existing `schemaVersion: 1`–`3` manifests keep validating unchanged.
+- **`personal_library_push` capability** — a fourteenth entry in the closed
+  capability vocabulary, and `SwayveLibraryPushProvider` in
+  `swayve_plugin_sdk`, for a plugin that pushes tracks from the local Swayve
+  library up to its own service. This is the write counterpart of
+  `personal_library`, and it is its own capability rather than a method
+  bolted onto `SwayveLibraryProvider` because write access is a materially
+  bigger trust grant than read access and deserves its own visible manifest
+  line — the same reasoning `docs/capabilities.md` already gives for why
+  `playlist_read` never grew a `_write` sibling. It structurally requires
+  `personal_library` (rule 1c, alongside `personal_library`'s own existing
+  requirement of `authentication`) and needs no new permission: `network`,
+  already implied by `personal_library`, is the whole mechanism. The
+  interface has no progress callback — every provider call in this SDK is a
+  bounded `Future`, and a whole push's progress is file-granular and
+  byte-weighted across files, which is a host concern, not this interface's.
+  `SwayveHttpClient` grows `postMultipart`, a single-file, buffered
+  `multipart/form-data` POST, plus the `SwayveMultipartFile` it takes,
+  implemented on `FakeSwayveHttpClient` for plugin tests. New models
+  `SwayveUploadItem`, `SwayveUploadOutcome` and `SwayveUploadResult`, and a
+  new `SwayveUploadHashAlgorithm` enum (`md5` for now) so a provider can
+  declare which digest a host should compute for dedup, or `null` when it
+  has no dedup concept at all. `FakeSwayvePluginContext` grows
+  `registerLibraryPushProvider`/`libraryPushProviders`, mirroring
+  `registerLibraryProvider` exactly. See
+  `docs/proposals/library-push.md` for the full design record. Bumps
+  `schemaVersion` to 5; existing `schemaVersion: 1`–`4` manifests keep
+  validating unchanged.
 
 ### Fixed
 

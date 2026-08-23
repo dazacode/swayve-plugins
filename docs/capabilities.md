@@ -22,9 +22,9 @@ defect: the host will report the plugin as unavailable rather than silently
 treating the capability as absent.
 
 Adding a capability to the vocabulary is a schema change and requires the docs,
-the SDK and the validator to move together. There are thirteen in v1.
+the SDK and the validator to move together. There are fourteen in v1.
 
-## The thirteen at a glance
+## The fourteen at a glance
 
 | Capability | Provider interface | Registration | Implies |
 |---|---|---|---|
@@ -41,6 +41,7 @@ the SDK and the validator to move together. There are thirteen in v1.
 | `authentication` | `SwayveAuthProvider` | `registerAuthProvider` | `external_auth` |
 | `webview` | *(none — host facility)* | — | `webview` |
 | `session_capture` | *(none — host facility)* | — | `webview`, `external_auth` |
+| `personal_library_push` | `SwayveLibraryPushProvider` | `registerLibraryPushProvider` | `network`, `personal_library` |
 
 `webview` and `session_capture` are the two capabilities with no provider
 interface. `webview` does not answer a question; it declares that this
@@ -529,6 +530,72 @@ API, not observable per navigation — and only for the host(s) named in
 completion URL matched but one or more declared artifacts could not be
 extracted; nothing is written to the credential store in that case, the same
 as a normal extraction failure anywhere else in this SDK.
+
+---
+
+## `personal_library_push`
+
+```dart
+abstract interface class SwayveLibraryPushProvider {
+  SwayveUploadHashAlgorithm? get dedupAlgorithm;
+  Future<Set<String>> knownUploadHashes({SwayveCancellationToken? cancel});
+  Future<SwayveUploadResult> uploadTrack(
+      SwayveUploadItem item, {SwayveCancellationToken? cancel});
+}
+
+enum SwayveUploadHashAlgorithm { md5 }
+
+final class SwayveUploadItem {
+  Uint8List bytes; String fileName; String? mimeType; String contentHash;
+  String title; String artist; String? album; bool knownDuplicate;
+}
+
+enum SwayveUploadOutcome { uploaded, alreadyPresent, failed }
+
+final class SwayveUploadResult {
+  SwayveUploadOutcome outcome; String? remoteId; String? message;
+}
+```
+
+**What the host does with it.** This is the write counterpart of
+`personal_library`: instead of reading a signed-in account's library into
+Swayve, it pushes tracks from the local Swayve library up to the provider's
+own service. The host owns the whole loop — no plugin can read the device
+filesystem, so the host is the only side that ever reads a local track's
+bytes off disk. It reads each selected track, builds a `SwayveUploadItem`,
+and calls `uploadTrack` once per track, moving on regardless of whether that
+call reported success or [SwayveUploadOutcome.failed] — one bad file must
+never stop the rest of the run.
+
+There is deliberately **no progress callback anywhere on this interface**.
+Every provider method in this SDK is a bounded, timeout-checked `Future`
+(principle 7); a raw byte-progress stream would be the one long-running,
+unbounded primitive in an SDK that otherwise has none, and a broken plugin
+holding it open could hang the host exactly the way principle 7 exists to
+prevent. Progress across a whole push is therefore entirely a host concern —
+file-granular and byte-weighted across whichever files it is currently
+looping through — not something a provider reports.
+
+`dedupAlgorithm` and `knownUploadHashes` exist so the host can skip a track
+the remote service already has before spending any bandwidth resending it.
+`dedupAlgorithm` is nullable: a provider whose upload protocol has no dedup
+concept returns `null`, and the host must not call `knownUploadHashes` in
+that case. When it is non-null, the host computes that digest over each
+local candidate, compares it against the set `knownUploadHashes` returns,
+and sets `SwayveUploadItem.knownDuplicate` accordingly before ever calling
+`uploadTrack` — unless the user has explicitly chosen to push a known
+duplicate anyway.
+
+This is why `personal_library_push` **requires** `personal_library`
+(rule 1c, the same structural mechanism `personal_library` itself uses to
+require `authentication`) rather than reaching past it to `authentication`
+directly: there is no "push to my library" without first having declared the
+capability that reads one. It needs no permission beyond what
+`personal_library` already implies — `network`, covered by the existing
+permission plus the manifest's own `network.hosts` allowlist — so there is
+no new manifest block for it either, unlike `session_capture`. See
+[the proposal doc](proposals/library-push.md) for the full design record,
+including why this is audio-only, file-granular and single-plugin for now.
 
 ---
 

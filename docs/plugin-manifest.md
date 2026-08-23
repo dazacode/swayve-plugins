@@ -33,7 +33,7 @@ dart run tools/validate_plugin.dart ../Daza-Swayve-plugins/my_plugin
 
 | Field | Type | Rule |
 |---|---|---|
-| `schemaVersion` | integer | `3` as of the `personal_library` capability; `1` and `2` still validate. Rejected only if newer than the build understands. Not the plugin's version — see [versioning.md](versioning.md). |
+| `schemaVersion` | integer | `5` as of the `personal_library_push` capability (`4` as of `session_capture`, `3` as of `personal_library`); `1` through `4` still validate. Rejected only if newer than the build understands. Not the plugin's version — see [versioning.md](versioning.md). |
 | `id` | string | Reverse-DNS. Regex `^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*){2,}$` — at least three segments, lowercase, digits and `_` allowed but not as the first character of a segment. Max 128 characters. |
 | `name` | string | 1–64 characters, human readable, no emoji. This is what the user sees in Explore and in settings. |
 | `description` | string | 1–280 characters. One sentence describing what the plugin adds, not who wrote it. |
@@ -189,6 +189,19 @@ non-empty. Each `capture` entry names one artifact to extract on completion:
 See [capabilities.md](capabilities.md#session_capture) for the SDK surface
 this block drives, and [permissions.md](permissions.md#structural-capability-requires-permission--error)
 for why `session_capture` requires both `webview` and `external_auth`.
+
+### `personal_library_push` adds no manifest block
+
+Unlike `session_capture`, declaring the `personal_library_push` capability
+does not introduce any new top-level manifest key. There is nothing the host
+needs to know about the shape of a push ahead of time — no hosts to scope, no
+artifacts to name — because the only host-owned mechanism it depends on is
+already covered by `network.hosts`. Whatever a plugin wants to tag or
+organise a pushed track with (a fixed label, for instance) is entirely the
+plugin's own business, expressed however it likes on its own side of
+`uploadTrack` — not something the manifest, or the host, needs to model. See
+[capabilities.md](capabilities.md#personal_library_push) for the provider
+interface this capability drives.
 
 ---
 
@@ -375,10 +388,11 @@ neither `webview` nor `external_auth` declared produces two.
 
 ### 1b. Capability expects network — INFO
 
-The other ten capabilities — `search`, `catalog`, `streaming`, `metadata`,
+The other eleven capabilities — `search`, `catalog`, `streaming`, `metadata`,
 `lyrics`, `scrobbling`, `artwork`, `playlist_read`, `artist_activity`,
-`personal_library` — *usually* reach an external service. When one is declared
-without the `network` permission, the validator says so and moves on:
+`personal_library`, `personal_library_push` — *usually* reach an external
+service. When one is declared without the `network` permission, the
+validator says so and moves on:
 
 ```
   INFO    capabilities: 'search' usually reaches an external service; declare the 'network' permission unless this plugin serves purely local data
@@ -400,21 +414,30 @@ prevent. Real enforcement lives at runtime and is exact; see
 `personal_library` is structurally unusable without `authentication`, for the
 same reason `webview` and `authentication` need their own permissions in 1a:
 the capability describes the signed-in user's *own* liked tracks, and there is
-no "own" without a session.
+no "own" without a session. `personal_library_push` follows the identical
+shape one level further: it describes *writing* to that same library, so it
+requires `personal_library` itself rather than reaching past it straight to
+`authentication`.
 
 | Capability | Requires capability |
 |---|---|
 | `personal_library` | `authentication` |
+| `personal_library_push` | `personal_library` |
 
 ```
   ERROR   capabilities: 'personal_library' requires capability 'authentication'   (plugin.json:15)
+  ERROR   capabilities: 'personal_library_push' requires capability 'personal_library'   (plugin.json:16)
 ```
 
 Code: `capability_requires_capability`. This is a distinct rule from 1a because
 what is missing is another declared capability, not a permission — a manifest
 holding `external_auth` without also declaring `authentication` is still an
 error here, because the permission grants the credential slot but says nothing
-about whether the plugin runs a sign-in flow at all.
+about whether the plugin runs a sign-in flow at all. The same logic applies one
+level up: a manifest holding `authentication` (and `personal_library`'s own
+requirement is satisfied) still needs `personal_library` declared *explicitly*
+before `personal_library_push` is legal — holding the capability underneath a
+capability is not the same as declaring the capability itself.
 
 ### 2. Unimplied permission — WARNING
 
@@ -426,7 +449,7 @@ A permission that nothing justifies is over-permissioning.
 
 Code: `permission_not_implied`. A permission counts as justified when any
 declared capability implies it — either structurally (rule 1a) or because it is
-one of the ten network-expecting capabilities. Two further exemptions:
+one of the eleven network-expecting capabilities. Two further exemptions:
 
 - `local_plugin_storage` and `clipboard` are **self-justifying**. They are host
   facilities rather than provider interfaces, so no capability could ever imply
