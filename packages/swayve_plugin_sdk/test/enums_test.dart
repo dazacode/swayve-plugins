@@ -31,6 +31,7 @@ void main() {
           'personal_library',
           'session_capture',
           'personal_library_push',
+          'metadata_search',
         ],
       );
     });
@@ -62,8 +63,7 @@ void main() {
       expect(SwayveCapability.fromWire('personalLibrary'), isNull);
     });
 
-    test(
-        'personalLibraryPush is snake_case on the wire, camelCase in Dart',
+    test('personalLibraryPush is snake_case on the wire, camelCase in Dart',
         () {
       expect(
         SwayveCapability.personalLibraryPush.wireName,
@@ -214,7 +214,7 @@ void main() {
 
   test('the API level constants', () {
     expect(kSwayvePluginApiVersion, 1);
-    expect(kSwayveManifestSchemaVersion, 5);
+    expect(kSwayveManifestSchemaVersion, 6);
     expect(kSwayveMediaIdScheme, 'swayve');
   });
 

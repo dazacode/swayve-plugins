@@ -82,7 +82,8 @@ final class _EchoLibraryProvider implements SwayveLibraryProvider {
 
 final class _EchoLibraryPushProvider implements SwayveLibraryPushProvider {
   @override
-  SwayveUploadHashAlgorithm? get dedupAlgorithm => SwayveUploadHashAlgorithm.md5;
+  SwayveUploadHashAlgorithm? get dedupAlgorithm =>
+      SwayveUploadHashAlgorithm.md5;
 
   @override
   Future<Set<String>> knownUploadHashes({
@@ -96,6 +97,23 @@ final class _EchoLibraryPushProvider implements SwayveLibraryPushProvider {
     SwayveCancellationToken? cancel,
   }) async =>
       const SwayveUploadResult(outcome: SwayveUploadOutcome.uploaded);
+}
+
+final class _EchoMetadataSearchProvider
+    implements SwayveMetadataSearchProvider {
+  @override
+  Future<List<SwayveMetadataCandidate>> searchTrack(
+    SwayveMetadataQuery query, {
+    SwayveCancellationToken? cancel,
+  }) async =>
+      const [];
+
+  @override
+  Future<SwayveMetadataCandidate?> resolveUrl(
+    Uri url, {
+    SwayveCancellationToken? cancel,
+  }) async =>
+      null;
 }
 
 final class _EchoSearchProvider implements SwayveSearchProvider {
@@ -320,6 +338,19 @@ void main() {
       expect(
         context.registeredCapabilities,
         contains(SwayveCapability.personalLibraryPush),
+      );
+    });
+
+    test('a metadata-search provider is recorded and mapped back', () {
+      final context = FakeSwayvePluginContext();
+      final provider = _EchoMetadataSearchProvider();
+
+      context.registerMetadataSearchProvider(provider);
+
+      expect(context.metadataSearchProviders, [provider]);
+      expect(
+        context.registeredCapabilities,
+        contains(SwayveCapability.metadataSearch),
       );
     });
 

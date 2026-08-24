@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://swayve.app/schema/swayve-plugin.schema.json",
   "title": "Swayve plugin manifest",
-  "description": "Structure of a Swayve plugin's plugin.json. schemaVersion 5 (a schemaVersion 1, 2, 3 or 4 manifest also validates). This file is the published contract; cross-field rules that a JSON Schema cannot express live in swayve_plugin_tools and are documented in schema/README.md.",
+  "description": "Structure of a Swayve plugin's plugin.json. schemaVersion 6 (a schemaVersion 1 through 5 manifest also validates). This file is the published contract; cross-field rules that a JSON Schema cannot express live in swayve_plugin_tools and are documented in schema/README.md.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -23,7 +23,7 @@
   ],
   "properties": {
     "schemaVersion": {
-      "description": "Manifest schema version this plugin.json is written in. Currently 5; a manifest declaring 1, 2, 3 or 4 is still valid.",
+      "description": "Manifest schema version this plugin.json is written in. Currently 6; a manifest declaring 1 through 5 is still valid.",
       "type": "integer",
       "minimum": 1
     },
@@ -243,7 +243,8 @@
         "artist_activity",
         "personal_library",
         "session_capture",
-        "personal_library_push"
+        "personal_library_push",
+        "metadata_search"
       ]
     },
     "permission": {
@@ -307,7 +308,15 @@
           "uniqueItems": true,
           "items": { "$ref": "#/$defs/contentType" }
         },
-        "availability": { "$ref": "#/$defs/sourceAvailability" }
+        "availability": { "$ref": "#/$defs/sourceAvailability" },
+        "supportedHosts": {
+          "description": "Website hostnames a pasted URL must match for the host to route it to this plugin's resolveUrl. Empty is ordinary for a plugin that does not implement metadata_search's resolveUrl.",
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 16,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/hostPattern" }
+        }
       }
     },
     "media": {

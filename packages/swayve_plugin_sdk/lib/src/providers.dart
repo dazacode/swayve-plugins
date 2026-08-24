@@ -26,6 +26,7 @@ import 'models/browse.dart';
 import 'models/image_ref.dart';
 import 'models/lyrics.dart';
 import 'models/media_id.dart';
+import 'models/metadata_search.dart';
 import 'models/playlist.dart';
 import 'models/scrobble.dart';
 import 'models/search.dart';
@@ -109,6 +110,43 @@ abstract interface class SwayveMetadataProvider {
   /// populated with a worse value. Enrichment is additive.
   Future<SwayveTrack?> enrichTrack(
     SwayveTrack track, {
+    SwayveCancellationToken? cancel,
+  });
+}
+
+/// Finding candidate metadata for a track the host has not identified, and
+/// resolving a pasted URL to one. Capability: `metadata_search`.
+///
+/// Not [SwayveMetadataProvider]: that capability enriches one track the host
+/// already believes it has identified, in place, additively. This one
+/// answers "what could this be" with several ranked candidates — the shape
+/// a plugin needs to help with an extended mix, a bootleg or an unreleased
+/// track that a structured database like MusicBrainz has nothing for. A
+/// plugin may implement either, both, or neither.
+abstract interface class SwayveMetadataSearchProvider {
+  /// Searches for candidates matching [query].
+  ///
+  /// An empty list is a real answer — "I looked and found nothing" — not a
+  /// failure. Throw only when this provider could not search at all (its
+  /// service is unreachable, the request failed, the response was
+  /// unreadable); the host treats that as this source being unavailable for
+  /// this lookup and tries every other source regardless.
+  Future<List<SwayveMetadataCandidate>> searchTrack(
+    SwayveMetadataQuery query, {
+    SwayveCancellationToken? cancel,
+  });
+
+  /// Resolves a URL a person pasted into the host's "paste a link" fallback
+  /// to a single candidate, or `null` when this provider recognises the URL
+  /// but has nothing for it.
+  ///
+  /// The host only calls this when the URL's host matches one this plugin
+  /// declared in its manifest's `source.supportedHosts` — a plugin need not
+  /// re-check that itself, though it may still throw
+  /// `SwayvePluginUnsupportedException` for a path shape it does not
+  /// recognise within a host it otherwise serves.
+  Future<SwayveMetadataCandidate?> resolveUrl(
+    Uri url, {
     SwayveCancellationToken? cancel,
   });
 }

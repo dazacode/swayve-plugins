@@ -361,7 +361,7 @@ void main() {
 
     test('a future schemaVersion is rejected the same way', () {
       final Map<String, Object?> manifest = cleanManifest()
-        ..['schemaVersion'] = 6;
+        ..['schemaVersion'] = 7;
       final Diagnostic d = diagnosticFor(
         validate(manifest),
         DiagnosticCodes.unsupportedSchemaVersion,
