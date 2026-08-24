@@ -61,7 +61,7 @@ dependencies:
   ibroadcast:
     git:
       url: https://github.com/dazacode/ibroadcast-swayve-plugin.git
-      ref: 49750b36a4941c1e3e3c1f2f00ddb2de26c412d9
+      ref: 01a0ec4a5cd65a566188d34bb47f76575049c491
 
 dev_dependencies:
   lints: ^5.0.0
