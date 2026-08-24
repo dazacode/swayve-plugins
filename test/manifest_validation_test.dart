@@ -387,8 +387,7 @@ void main() {
       expect(report.diagnostics, isEmpty, reason: codesOf(report).toString());
     });
 
-    test(
-        'schemaVersion 3 with the personal_library capability validates', () {
+    test('schemaVersion 3 with the personal_library capability validates', () {
       final Map<String, Object?> manifest = cleanManifest()
         ..['schemaVersion'] = 3
         ..['capabilities'] = <String>[
@@ -426,8 +425,7 @@ void main() {
       expect(report.diagnostics, isEmpty, reason: codesOf(report).toString());
     });
 
-    test(
-        'schemaVersion 5 with the personal_library_push capability validates',
+    test('schemaVersion 5 with the personal_library_push capability validates',
         () {
       final Map<String, Object?> manifest = cleanManifest()
         ..['schemaVersion'] = 5
@@ -559,8 +557,7 @@ void main() {
 
     test(
         'personal_library_push without the network permission is an info '
-        'note only, the same as every other network-expecting capability',
-        () {
+        'note only, the same as every other network-expecting capability', () {
       final Map<String, Object?> manifest = cleanManifest()
         ..['capabilities'] = <String>[
           'search',
@@ -649,7 +646,8 @@ void main() {
           ]
           ..['session_capture'] = block;
 
-    test('a fully declared session_capture block passes with nothing to '
+    test(
+        'a fully declared session_capture block passes with nothing to '
         'report', () {
       final Report report = validate(
         withSessionCapture(<String, Object?>{
@@ -745,8 +743,7 @@ void main() {
       expect(d.pointer, '/session_capture/capture/0/from');
     });
 
-    test('an as_secret not matching a declared secret setting is an error',
-        () {
+    test('an as_secret not matching a declared secret setting is an error', () {
       final Diagnostic d = diagnosticFor(
         validate(
           withSessionCapture(<String, Object?>{

@@ -73,7 +73,9 @@ final class SwayveSessionCaptureResult {
 
   /// A dismissal: the user backed out before completion.
   static const SwayveSessionCaptureResult dismissed =
-      SwayveSessionCaptureResult(outcome: SwayveSessionCaptureOutcome.dismissed);
+      SwayveSessionCaptureResult(
+    outcome: SwayveSessionCaptureOutcome.dismissed,
+  );
 
   /// How the call concluded.
   final SwayveSessionCaptureOutcome outcome;

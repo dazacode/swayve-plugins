@@ -19,8 +19,7 @@ void main() {
     expect(
       kManifestSchemaVersion,
       kSwayveManifestSchemaVersion,
-      reason:
-          'lib/src/vocabulary.dart\'s kManifestSchemaVersion and '
+      reason: 'lib/src/vocabulary.dart\'s kManifestSchemaVersion and '
           'packages/swayve_plugin_sdk/lib/src/constants.dart\'s '
           'kSwayveManifestSchemaVersion must be bumped together — see this '
           'file\'s doc comment for what happens when they drift.',

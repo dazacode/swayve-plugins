@@ -135,8 +135,7 @@ abstract final class DiagnosticCodes {
       'session_capture_object_without_capability';
 
   /// Rule 12. `session_capture.hosts` is empty or missing.
-  static const String sessionCaptureHostsEmpty =
-      'session_capture_hosts_empty';
+  static const String sessionCaptureHostsEmpty = 'session_capture_hosts_empty';
 
   /// Rule 12. A `session_capture.capture[].from` outside
   /// [kSessionCaptureSources].
