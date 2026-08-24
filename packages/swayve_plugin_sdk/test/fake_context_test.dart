@@ -82,7 +82,8 @@ final class _EchoLibraryProvider implements SwayveLibraryProvider {
 
 final class _EchoLibraryPushProvider implements SwayveLibraryPushProvider {
   @override
-  SwayveUploadHashAlgorithm? get dedupAlgorithm => SwayveUploadHashAlgorithm.md5;
+  SwayveUploadHashAlgorithm? get dedupAlgorithm =>
+      SwayveUploadHashAlgorithm.md5;
 
   @override
   Future<Set<String>> knownUploadHashes({

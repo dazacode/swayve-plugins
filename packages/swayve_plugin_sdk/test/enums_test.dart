@@ -62,8 +62,7 @@ void main() {
       expect(SwayveCapability.fromWire('personalLibrary'), isNull);
     });
 
-    test(
-        'personalLibraryPush is snake_case on the wire, camelCase in Dart',
+    test('personalLibraryPush is snake_case on the wire, camelCase in Dart',
         () {
       expect(
         SwayveCapability.personalLibraryPush.wireName,
