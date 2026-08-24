@@ -4,11 +4,11 @@
 /// cannot know what it means. A manifest declaring an older one stays valid:
 /// the format only ever widens (a new capability, a new optional field), so
 /// this build reads a `schemaVersion: 1` manifest exactly as a v1 build would.
-/// `5` as of the `personal_library_push` capability (`4` as of
-/// `session_capture`, `3` as of `personal_library`, `2` as of
-/// `artist_activity` before it); `1` through `4` manifests still validate
-/// unchanged.
-const int kManifestSchemaVersion = 5;
+/// `6` as of the `metadata_search` capability (`5` as of
+/// `personal_library_push`, `4` as of `session_capture`, `3` as of
+/// `personal_library`, `2` as of `artist_activity` before it); `1` through
+/// `5` manifests still validate unchanged.
+const int kManifestSchemaVersion = 6;
 
 /// The SDK major API level this build of the tools implements.
 const int kSwayvePluginApiVersion = 1;
@@ -38,6 +38,7 @@ const List<String> kCapabilities = <String>[
   'personal_library',
   'session_capture',
   'personal_library_push',
+  'metadata_search',
 ];
 
 /// The closed vocabulary of content a source declares it can be asked for, in
@@ -153,6 +154,7 @@ const Set<String> kNetworkExpectingCapabilities = <String>{
   'artist_activity',
   'personal_library',
   'personal_library_push',
+  'metadata_search',
 };
 
 /// The permissions that [capabilities] justify holding.

@@ -176,6 +176,63 @@ void main() {
       }
     });
 
+    test('SwayveMetadataQuery, fully populated', () {
+      final query = SwayveMetadataQuery(
+        title: 'Bloom (Extended Intro Mix)',
+        artists: ['Sultan + Shepard'],
+        album: 'Bloom',
+        year: 2019,
+        duration: Duration(minutes: 7, seconds: 3),
+        trackNumber: 1,
+        discNumber: 1,
+        isrc: 'US1234567890',
+        sourceUrl: Uri.parse('https://youtube.com/watch?v=abc'),
+        providerId: 'yt123',
+      );
+      expect(
+        SwayveMetadataQuery.fromJson(roundTripJson(query.toJson())),
+        query,
+      );
+    });
+
+    test('SwayveMetadataQuery, minimally populated', () {
+      const minimal = SwayveMetadataQuery(title: 'Bloom');
+      final parsed =
+          SwayveMetadataQuery.fromJson(roundTripJson(minimal.toJson()));
+      expect(parsed, minimal);
+      expect(parsed.artists, isEmpty);
+    });
+
+    test('SwayveMetadataCandidate, fully populated', () {
+      final candidate = SwayveMetadataCandidate(
+        providerItemId: 'yt123',
+        title: 'Bloom (Extended Intro Mix)',
+        artists: const ['Sultan + Shepard'],
+        album: 'Bloom',
+        year: 2019,
+        duration: const Duration(minutes: 7, seconds: 3),
+        artwork: Uri.parse('https://example.com/art.jpg'),
+        isrc: 'US1234567890',
+        sourceUrl: Uri.parse('https://youtube.com/watch?v=abc'),
+        extra: const {'videoId': 'abc'},
+      );
+      final parsed = SwayveMetadataCandidate.fromJson(
+        roundTripJson(candidate.toJson()),
+      );
+      expect(parsed, candidate);
+      expect(parsed.hashCode, candidate.hashCode);
+    });
+
+    test('SwayveMetadataCandidate, minimally populated', () {
+      const minimal = SwayveMetadataCandidate(title: 'Bloom');
+      final parsed = SwayveMetadataCandidate.fromJson(
+        roundTripJson(minimal.toJson()),
+      );
+      expect(parsed, minimal);
+      expect(parsed.artists, isEmpty);
+      expect(parsed.extra, isEmpty);
+    });
+
     test('SwayveAlbum', () {
       expect(
         SwayveAlbum.fromJson(roundTripJson(fullAlbum.toJson())),

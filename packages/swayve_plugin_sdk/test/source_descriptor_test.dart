@@ -9,6 +9,7 @@ void main() {
       iconName: 'demo_source',
       contentTypes: {SwayveContentType.songs, SwayveContentType.albums},
       capabilities: {SwayveCapability.search, SwayveCapability.catalog},
+      supportedHosts: {'demo.example.com'},
     );
 
     test('survives a wire round trip', () {
@@ -56,6 +57,21 @@ void main() {
       expect(descriptor.availability, SwayveSourceAvailability.ready);
       expect(descriptor.availability.canAnswer, isTrue);
     });
+
+    test('serializes supportedHosts sorted, for a stable wire form', () {
+      final unsorted = descriptor.copyWith(
+        supportedHosts: {'z.example.com', 'a.example.com'},
+      );
+      expect(unsorted.toJson()['supportedHosts'], [
+        'a.example.com',
+        'z.example.com',
+      ]);
+    });
+
+    test('defaults supportedHosts to empty, for a plugin with no resolveUrl',
+        () {
+      expect(descriptor.copyWith(supportedHosts: {}).supportedHosts, isEmpty);
+    });
   });
 
   group('SwayveSourceDescriptor.fromManifest', () {
@@ -67,6 +83,7 @@ void main() {
           'iconName': 'demo_source',
           'contentTypes': <String>['songs', 'videos'],
           'availability': 'signed_out',
+          'supportedHosts': <String>['youtube.com', 'youtu.be'],
         },
         capabilities: <String>['search', 'streaming'],
       );
@@ -80,6 +97,14 @@ void main() {
       );
       expect(read.availability, SwayveSourceAvailability.signedOut);
       expect(read.canSearch, isTrue);
+      expect(read.supportedHosts, <String>{'youtube.com', 'youtu.be'});
+    });
+
+    test('reads a source block naming no hosts as supporting none', () {
+      final read = SwayveSourceDescriptor.fromManifest(
+        <String, Object?>{'sourceId': 'demo_source'},
+      );
+      expect(read!.supportedHosts, isEmpty);
     });
 
     test('drops an unrecognised content type rather than losing the source',

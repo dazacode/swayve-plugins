@@ -74,6 +74,9 @@ abstract interface class SwayvePluginContext {
   /// Registers the plugin's `metadata` implementation.
   void registerMetadataProvider(SwayveMetadataProvider provider);
 
+  /// Registers the plugin's `metadata_search` implementation.
+  void registerMetadataSearchProvider(SwayveMetadataSearchProvider provider);
+
   /// Registers the plugin's `lyrics` implementation.
   void registerLyricsProvider(SwayveLyricsProvider provider);
 

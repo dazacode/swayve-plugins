@@ -94,7 +94,23 @@ enum SwayveCapability {
   /// existing permission plus the manifest's own `network.hosts` allowlist.
   ///
   /// Its wire name is `personal_library_push`.
-  personalLibraryPush;
+  personalLibraryPush,
+
+  /// Searching for candidate metadata for a track the host has *not*
+  /// identified yet, and resolving a pasted URL to one. Requires a
+  /// `SwayveMetadataSearchProvider`.
+  ///
+  /// Not the same job as [metadata]: that capability enriches a track the
+  /// host already believes it has identified, additively and one-shot.
+  /// This one is asked "what could this be" and answers with several ranked
+  /// candidates, which is the shape the host's metadata resolver needs to
+  /// find music `metadata` alone cannot — an extended mix, a bootleg, an
+  /// unreleased track — by asking every capable source instead of trusting
+  /// one. A plugin may declare both, neither, or just one; declaring this
+  /// does not require [metadata] and vice versa.
+  ///
+  /// Its wire name is `metadata_search`.
+  metadataSearch;
 
   /// The manifest spelling of this capability.
   ///
@@ -116,6 +132,7 @@ enum SwayveCapability {
         SwayveCapability.personalLibrary => 'personal_library',
         SwayveCapability.sessionCapture => 'session_capture',
         SwayveCapability.personalLibraryPush => 'personal_library_push',
+        SwayveCapability.metadataSearch => 'metadata_search',
       };
 
   /// The capability named [wire], or `null` if the name is not in the v1

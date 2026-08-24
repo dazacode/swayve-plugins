@@ -292,6 +292,12 @@ final ObjectSpec sourceSpec = ObjectSpec(
       uniqueItems: true,
     ),
     'availability': sourceAvailabilitySpec,
+    'supportedHosts': ArraySpec(
+      hostPatternSpec,
+      minItems: 0,
+      maxItems: 16,
+      uniqueItems: true,
+    ),
   },
 );
 

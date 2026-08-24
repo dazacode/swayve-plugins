@@ -27,10 +27,10 @@ import '../internal/json.dart';
 ///
 /// ## What is declared once and what changes
 ///
-/// [sourceId], [displayName], [iconName] and [contentTypes] are facts about the
-/// service and are declared in `plugin.json`, so the host can draw the row
-/// before the plugin has been started at all — which is exactly the moment the
-/// import screen needs them.
+/// [sourceId], [displayName], [iconName], [contentTypes] and [supportedHosts]
+/// are facts about the service and are declared in `plugin.json`, so the host
+/// can draw the row before the plugin has been started at all — which is
+/// exactly the moment the import screen needs them.
 ///
 /// [availability] is not that kind of fact. Whether a service can answer *right
 /// now* is knowable only to the running plugin, and putting it in a manifest
@@ -50,6 +50,7 @@ final class SwayveSourceDescriptor {
     this.contentTypes = const {},
     this.capabilities = const {},
     this.availability = SwayveSourceAvailability.ready,
+    this.supportedHosts = const {},
   });
 
   /// This source's stable identity, distinct from the plugin id.
@@ -104,6 +105,17 @@ final class SwayveSourceDescriptor {
   /// this one field is not a manifest fact.
   final SwayveSourceAvailability availability;
 
+  /// The website hostnames a pasted URL must match for the host to route it
+  /// to this plugin's `resolveUrl` — `youtube.com`, `music.youtube.com`.
+  ///
+  /// Exists so the host's "paste a link" metadata fallback can find the
+  /// right plugin without core containing a single line of per-provider URL
+  /// knowledge: the plugin names the hosts it understands, once, in its own
+  /// manifest, the same way [contentTypes] names what it can be searched
+  /// for. Empty is the ordinary answer for a plugin that does not implement
+  /// `metadata_search`'s `resolveUrl` at all.
+  final Set<String> supportedHosts;
+
   /// Whether a text query means anything to this source.
   ///
   /// Read off [capabilities] rather than stored, so it cannot contradict them.
@@ -126,6 +138,7 @@ final class SwayveSourceDescriptor {
     Set<SwayveContentType>? contentTypes,
     Set<SwayveCapability>? capabilities,
     SwayveSourceAvailability? availability,
+    Set<String>? supportedHosts,
   }) =>
       SwayveSourceDescriptor(
         sourceId: sourceId ?? this.sourceId,
@@ -134,6 +147,7 @@ final class SwayveSourceDescriptor {
         contentTypes: contentTypes ?? this.contentTypes,
         capabilities: capabilities ?? this.capabilities,
         availability: availability ?? this.availability,
+        supportedHosts: supportedHosts ?? this.supportedHosts,
       );
 
   /// The wire form. Null fields are omitted.
@@ -156,6 +170,8 @@ final class SwayveSourceDescriptor {
             if (capabilities.contains(capability)) capability.wireName,
         ],
         'availability': availability.wireName,
+        'supportedHosts':
+            supportedHosts.isEmpty ? null : (supportedHosts.toList()..sort()),
       });
 
   /// Parses the wire form produced by [toJson], strictly.
@@ -176,6 +192,7 @@ final class SwayveSourceDescriptor {
       availability: reader.has('availability')
           ? reader.enumValue('availability', SwayveSourceAvailability.fromWire)
           : SwayveSourceAvailability.ready,
+      supportedHosts: reader.stringList('supportedHosts').toSet(),
     );
   }
 
@@ -230,6 +247,14 @@ final class SwayveSourceDescriptor {
       if (capability != null) declared.add(capability);
     }
 
+    final rawHosts = source['supportedHosts'];
+    final hosts = <String>{};
+    if (rawHosts is List) {
+      for (final raw in rawHosts) {
+        if (raw is String && raw.trim().isNotEmpty) hosts.add(raw.trim());
+      }
+    }
+
     return SwayveSourceDescriptor(
       sourceId: id,
       // A source that named itself but not its display name is named after
@@ -239,6 +264,7 @@ final class SwayveSourceDescriptor {
       iconName: text('iconName'),
       contentTypes: types,
       capabilities: declared,
+      supportedHosts: hosts,
       // Absent, unreadable and unknown all read as `ready`, because a manifest
       // states a default rather than an observation — see the class comment.
       // A plugin that starts up unable to answer says so at runtime, which is
@@ -264,7 +290,8 @@ final class SwayveSourceDescriptor {
       iconName == other.iconName &&
       deepEquals(contentTypes, other.contentTypes) &&
       deepEquals(capabilities, other.capabilities) &&
-      availability == other.availability;
+      availability == other.availability &&
+      deepEquals(supportedHosts, other.supportedHosts);
 
   @override
   int get hashCode => Object.hash(
@@ -274,5 +301,6 @@ final class SwayveSourceDescriptor {
         deepHash(contentTypes),
         deepHash(capabilities),
         availability,
+        deepHash(supportedHosts),
       );
 }

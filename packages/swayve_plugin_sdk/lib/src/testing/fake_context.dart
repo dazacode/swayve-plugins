@@ -141,6 +141,8 @@ final class FakeSwayvePluginContext
   final List<SwayveStreamProvider> _streamProviders = <SwayveStreamProvider>[];
   final List<SwayveMetadataProvider> _metadataProviders =
       <SwayveMetadataProvider>[];
+  final List<SwayveMetadataSearchProvider> _metadataSearchProviders =
+      <SwayveMetadataSearchProvider>[];
   final List<SwayveLyricsProvider> _lyricsProviders = <SwayveLyricsProvider>[];
   final List<SwayveScrobbleProvider> _scrobbleProviders =
       <SwayveScrobbleProvider>[];
@@ -171,6 +173,10 @@ final class FakeSwayvePluginContext
   /// The metadata providers registered so far.
   List<SwayveMetadataProvider> get metadataProviders =>
       List.unmodifiable(_metadataProviders);
+
+  /// The metadata-search providers registered so far.
+  List<SwayveMetadataSearchProvider> get metadataSearchProviders =>
+      List.unmodifiable(_metadataSearchProviders);
 
   /// The lyrics providers registered so far.
   List<SwayveLyricsProvider> get lyricsProviders =>
@@ -213,6 +219,8 @@ final class FakeSwayvePluginContext
         if (_catalogProviders.isNotEmpty) SwayveCapability.catalog,
         if (_streamProviders.isNotEmpty) SwayveCapability.streaming,
         if (_metadataProviders.isNotEmpty) SwayveCapability.metadata,
+        if (_metadataSearchProviders.isNotEmpty)
+          SwayveCapability.metadataSearch,
         if (_lyricsProviders.isNotEmpty) SwayveCapability.lyrics,
         if (_scrobbleProviders.isNotEmpty) SwayveCapability.scrobbling,
         if (_artworkProviders.isNotEmpty) SwayveCapability.artwork,
@@ -276,6 +284,10 @@ final class FakeSwayvePluginContext
   @override
   void registerMetadataProvider(SwayveMetadataProvider provider) =>
       _metadataProviders.add(provider);
+
+  @override
+  void registerMetadataSearchProvider(SwayveMetadataSearchProvider provider) =>
+      _metadataSearchProviders.add(provider);
 
   @override
   void registerLyricsProvider(SwayveLyricsProvider provider) =>

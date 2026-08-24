@@ -50,6 +50,7 @@ export 'src/models/browse.dart';
 export 'src/models/image_ref.dart';
 export 'src/models/lyrics.dart';
 export 'src/models/media_id.dart';
+export 'src/models/metadata_search.dart';
 export 'src/models/playlist.dart';
 export 'src/models/refs.dart';
 export 'src/models/scrobble.dart';
