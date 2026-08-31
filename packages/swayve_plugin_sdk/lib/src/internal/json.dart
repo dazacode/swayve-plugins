@@ -99,6 +99,18 @@ final class JsonReader {
     return null;
   }
 
+  /// Reads an optional fractional number.
+  ///
+  /// Accepts an `int`, because a JSON number that happens to be whole decodes
+  /// as one — the mirror of [integer] accepting a whole-valued double.
+  double? numberOrNull(String key) {
+    final value = json[key];
+    if (value == null) return null;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    _bad(key, value, 'a number or null');
+  }
+
   /// Reads a boolean, falling back to [orElse] when absent or null.
   bool boolean(String key, {bool orElse = false}) {
     final value = json[key];
@@ -176,6 +188,31 @@ final class JsonReader {
       result.add(fromJson(asJsonObject(element, '$owner.$key[]')));
     }
     return List<T>.unmodifiable(result);
+  }
+
+  /// Reads a list of lists of nested objects, defaulting to empty when
+  /// absent.
+  ///
+  /// The one doubly-nested array shape the models need: word-level lyric
+  /// timing is words grouped into lines, and flattening it to one list would
+  /// throw away the grouping a host draws with.
+  List<List<T>> objectListList<T>(
+    String key,
+    T Function(Map<String, Object?>) fromJson,
+  ) {
+    final value = json[key];
+    if (value == null) return const [];
+    if (value is! List) _bad(key, value, 'a JSON array of arrays');
+    final result = <List<T>>[];
+    for (final element in value) {
+      if (element is! List) _bad(key, element, 'a JSON array of arrays');
+      final inner = <T>[];
+      for (final item in element) {
+        inner.add(fromJson(asJsonObject(item, '$owner.$key[][]')));
+      }
+      result.add(List<T>.unmodifiable(inner));
+    }
+    return List<List<T>>.unmodifiable(result);
   }
 
   /// Reads a list of strings, defaulting to empty when absent.

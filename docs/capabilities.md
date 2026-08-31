@@ -22,9 +22,9 @@ defect: the host will report the plugin as unavailable rather than silently
 treating the capability as absent.
 
 Adding a capability to the vocabulary is a schema change and requires the docs,
-the SDK and the validator to move together. There are fourteen in v1.
+the SDK and the validator to move together. There are seventeen in v1.
 
-## The fourteen at a glance
+## The seventeen at a glance
 
 | Capability | Provider interface | Registration | Implies |
 |---|---|---|---|
@@ -42,6 +42,9 @@ the SDK and the validator to move together. There are fourteen in v1.
 | `webview` | *(none — host facility)* | — | `webview` |
 | `session_capture` | *(none — host facility)* | — | `webview`, `external_auth` |
 | `personal_library_push` | `SwayveLibraryPushProvider` | `registerLibraryPushProvider` | `network`, `personal_library` |
+| `metadata_search` | `SwayveMetadataSearchProvider` | `registerMetadataSearchProvider` | `network` |
+| `radio` | `SwayveRadioProvider` | `registerRadioProvider` | `network` |
+| `visuals` | `SwayveVisualsProvider` | `registerVisualsProvider` | `network` |
 
 `webview` and `session_capture` are the two capabilities with no provider
 interface. `webview` does not answer a question; it declares that this
@@ -228,21 +231,33 @@ incoming `id` — enrichment does not re-identify the track.
 
 ```dart
 abstract interface class SwayveLyricsProvider {
-  Future<SwayveLyrics?> lyrics(SwayveMediaId id, {SwayveCancellationToken? cancel});
+  Future<SwayveLyrics?> lyrics(SwayveTrack track, {SwayveCancellationToken? cancel});
 }
 
 final class SwayveLyrics {
   String? plain;
-  List<SwayveLyricLine>? synced;   // SwayveLyricLine { Duration at; String text; }
+  List<SwayveLyricLine>? synced;         // SwayveLyricLine { Duration at; String text; }
+  List<List<SwayveLyricWord>>? words;    // lines of words: { Duration at, until; String text; }
   String? source;
   bool explicitContent;
+  bool get isSynced;
+  bool get hasWordTiming;
 }
 ```
 
 **What the host does with it.** It renders lyrics on the now-playing surface,
-scrolling in time when `synced` is present and as a static block when only
-`plain` is. Populate both when you have both — a host without a synced view
-still needs text, and a host with one still needs a fallback for a failed sync.
+scrolling in time when `synced` is present, lighting a word at a time when
+`words` is, and as a static block when only `plain` is. Populate all three
+when you have all three — they are independent facts about one lyric, not
+three rungs of a ladder, and a host without a karaoke view still needs lines,
+while a host with one still needs text when the sync fails.
+
+`lyrics` takes a whole `SwayveTrack` rather than a `SwayveMediaId` because a
+lyrics provider is usually not the plugin that published the track: a
+dedicated lyrics service holds no music at all, and another plugin's
+`SwayveMediaId.value` is opaque by design. The track gives it a title, a
+credit and a running time to match against its own catalogue — the same shape
+`enrichTrack` and `SwayveVisualsProvider.visual` take, for the same reason.
 
 `source` is attribution and should name the upstream. `explicitContent` lets the
 host respect a content filter it may apply.

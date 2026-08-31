@@ -15,7 +15,13 @@ const int kSwayvePluginApiVersion = 1;
 /// older `schemaVersion` stays valid — the format only ever widens (a new
 /// capability, a new optional field), so a build that understands version 2
 /// still reads a version 1 manifest correctly.
-const int kSwayveManifestSchemaVersion = 6;
+///
+/// `7` as of the `radio` and `visuals` capabilities (`6` as of
+/// `metadata_search`, `5` as of `personal_library_push`, `4` as of
+/// `session_capture`, `3` as of `personal_library`, `2` as of
+/// `artist_activity` before it); `1` through `6` manifests still validate
+/// unchanged.
+const int kSwayveManifestSchemaVersion = 7;
 
 /// The URI scheme used by [SwayveMediaId.uri].
 ///

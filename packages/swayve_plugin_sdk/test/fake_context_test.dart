@@ -116,6 +116,40 @@ final class _EchoMetadataSearchProvider
       null;
 }
 
+final class _EchoRadioProvider implements SwayveRadioProvider {
+  @override
+  Future<SwayveRadio?> startRadio(
+    SwayveMediaId seed, {
+    SwayveMediaId? context,
+    SwayveCancellationToken? cancel,
+  }) async =>
+      null;
+
+  @override
+  Future<SwayvePage<SwayveTrack>> radioTracks(
+    SwayveRadio radio,
+    SwayveBrowseRequest request, {
+    SwayveCancellationToken? cancel,
+  }) async =>
+      const SwayvePage(items: []);
+
+  @override
+  Future<List<SwayveTrack>> related(
+    SwayveMediaId id, {
+    SwayveCancellationToken? cancel,
+  }) async =>
+      const [];
+}
+
+final class _EchoVisualsProvider implements SwayveVisualsProvider {
+  @override
+  Future<SwayveVisual?> visual(
+    SwayveTrack track, {
+    SwayveCancellationToken? cancel,
+  }) async =>
+      null;
+}
+
 final class _EchoSearchProvider implements SwayveSearchProvider {
   _EchoSearchProvider(this._http);
 
@@ -351,6 +385,32 @@ void main() {
       expect(
         context.registeredCapabilities,
         contains(SwayveCapability.metadataSearch),
+      );
+    });
+
+    test('a radio provider is recorded and mapped back', () {
+      final context = FakeSwayvePluginContext();
+      final provider = _EchoRadioProvider();
+
+      context.registerRadioProvider(provider);
+
+      expect(context.radioProviders, [provider]);
+      expect(
+        context.registeredCapabilities,
+        contains(SwayveCapability.radio),
+      );
+    });
+
+    test('a visuals provider is recorded and mapped back', () {
+      final context = FakeSwayvePluginContext();
+      final provider = _EchoVisualsProvider();
+
+      context.registerVisualsProvider(provider);
+
+      expect(context.visualsProviders, [provider]);
+      expect(
+        context.registeredCapabilities,
+        contains(SwayveCapability.visuals),
       );
     });
 

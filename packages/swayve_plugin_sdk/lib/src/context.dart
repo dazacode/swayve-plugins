@@ -80,6 +80,9 @@ abstract interface class SwayvePluginContext {
   /// Registers the plugin's `lyrics` implementation.
   void registerLyricsProvider(SwayveLyricsProvider provider);
 
+  /// Registers the plugin's `visuals` implementation.
+  void registerVisualsProvider(SwayveVisualsProvider provider);
+
   /// Registers the plugin's `scrobbling` implementation.
   void registerScrobbleProvider(SwayveScrobbleProvider provider);
 
@@ -88,6 +91,9 @@ abstract interface class SwayvePluginContext {
 
   /// Registers the plugin's `playlist_read` implementation.
   void registerPlaylistProvider(SwayvePlaylistProvider provider);
+
+  /// Registers the plugin's `radio` implementation.
+  void registerRadioProvider(SwayveRadioProvider provider);
 
   /// Registers the plugin's `artist_activity` implementation.
   void registerArtistActivityProvider(SwayveArtistActivityProvider provider);

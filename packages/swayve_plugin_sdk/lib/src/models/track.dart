@@ -39,6 +39,7 @@ final class SwayveTrack {
     this.extra = const {},
     this.externalUrl,
     this.alternateNames = SwayveAlternateNames.none,
+    this.canSeedRadio = false,
   });
 
   /// The identifier the host will hand back to ask for playback or details.
@@ -113,6 +114,26 @@ final class SwayveTrack {
   /// majority of tracks and every provider that predates the field carry.
   final SwayveAlternateNames alternateNames;
 
+  /// Whether a radio can be started from *this* track.
+  ///
+  /// Distinct from the plugin's `radio` capability, which says only that the
+  /// provider can start a radio at all. This says whether this particular row
+  /// can seed one, and providers routinely have both kinds of track in the
+  /// same list: a service that generates a station out of its own licensed
+  /// catalogue has nothing to generate one from for a track somebody
+  /// uploaded, and a service may simply not have enough neighbours for an
+  /// obscure recording.
+  ///
+  /// The alternative was for the host to offer the affordance on every row
+  /// and find out by calling `SwayveRadioProvider.startRadio` and getting
+  /// `null` back, which is a menu item that fails when tapped. With the fact
+  /// on the item the host disables it per row instead.
+  ///
+  /// Defaults to `false`: a provider that has not thought about radio and one
+  /// built against an earlier SDK both mean "do not offer it", which is the
+  /// answer that cannot mislead anybody.
+  final bool canSeedRadio;
+
   /// The artists' names joined for display, in credit order.
   ///
   /// Provided because the host's own model is single-artist; using this
@@ -139,6 +160,7 @@ final class SwayveTrack {
     Map<String, Object?>? extra,
     Uri? externalUrl,
     SwayveAlternateNames? alternateNames,
+    bool? canSeedRadio,
   }) =>
       SwayveTrack(
         id: id ?? this.id,
@@ -156,6 +178,7 @@ final class SwayveTrack {
         extra: extra ?? this.extra,
         externalUrl: externalUrl ?? this.externalUrl,
         alternateNames: alternateNames ?? this.alternateNames,
+        canSeedRadio: canSeedRadio ?? this.canSeedRadio,
       );
 
   /// The wire form. Null fields are omitted; [duration] is milliseconds.
@@ -176,6 +199,7 @@ final class SwayveTrack {
         'externalUrl': externalUrl?.toString(),
         'alternateNames':
             alternateNames.isEmpty ? null : alternateNames.toJson(),
+        'canSeedRadio': canSeedRadio,
       });
 
   /// Parses the wire form produced by [toJson].
@@ -209,6 +233,7 @@ final class SwayveTrack {
             SwayveAlternateNames.fromJson,
           ) ??
           SwayveAlternateNames.none,
+      canSeedRadio: reader.boolean('canSeedRadio'),
     );
   }
 
@@ -232,7 +257,8 @@ final class SwayveTrack {
       kind == other.kind &&
       deepEquals(extra, other.extra) &&
       externalUrl == other.externalUrl &&
-      alternateNames == other.alternateNames;
+      alternateNames == other.alternateNames &&
+      canSeedRadio == other.canSeedRadio;
 
   @override
   int get hashCode => Object.hash(
@@ -251,5 +277,6 @@ final class SwayveTrack {
         deepHash(extra),
         externalUrl,
         alternateNames,
+        canSeedRadio,
       );
 }

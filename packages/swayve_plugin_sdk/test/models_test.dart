@@ -46,6 +46,7 @@ final SwayveTrack fullTrack = SwayveTrack(
     'nested': {'a': 1, 'b': null},
     'list': [1, 2, 3],
   },
+  canSeedRadio: true,
 );
 
 final SwayveAlbum fullAlbum = SwayveAlbum(
@@ -233,6 +234,57 @@ void main() {
       expect(parsed.extra, isEmpty);
     });
 
+    test('SwayveRadio, fully populated', () {
+      final radio = SwayveRadio(
+        id: const SwayveMediaId('app.swayve.plugins.example', 'radio/1'),
+        title: 'Radio based on A Song / With Punctuation',
+        seed: trackId,
+        artwork: artwork,
+        extra: const {'continuation': 'abc'},
+      );
+      final parsed = SwayveRadio.fromJson(roundTripJson(radio.toJson()));
+      expect(parsed, radio);
+      expect(parsed.hashCode, radio.hashCode);
+    });
+
+    test('SwayveRadio, minimally populated', () {
+      const minimal = SwayveRadio(
+        id: SwayveMediaId('app.swayve.plugins.example', 'radio/1'),
+      );
+      final parsed = SwayveRadio.fromJson(roundTripJson(minimal.toJson()));
+      expect(parsed, minimal);
+      expect(parsed.title, isNull);
+      expect(parsed.seed, isNull);
+      expect(parsed.extra, isEmpty);
+    });
+
+    test('SwayveVisual, fully populated', () {
+      final visual = SwayveVisual(
+        uri: Uri.parse('https://example.com/video.m3u8'),
+        kind: SwayveVisualKind.video,
+        aspectRatio: 16 / 9,
+        loops: false,
+        source: 'Example Visuals',
+        duration: const Duration(minutes: 3, seconds: 44),
+      );
+      final parsed = SwayveVisual.fromJson(roundTripJson(visual.toJson()));
+      expect(parsed, visual);
+      expect(parsed.hashCode, visual.hashCode);
+      expect(parsed.aspectRatio, 16 / 9);
+    });
+
+    test('SwayveVisual, minimally populated, loops by default', () {
+      final minimal = SwayveVisual(
+        uri: Uri.parse('https://example.com/cover.mp4'),
+        kind: SwayveVisualKind.motionArtwork,
+      );
+      final parsed = SwayveVisual.fromJson(roundTripJson(minimal.toJson()));
+      expect(parsed, minimal);
+      expect(parsed.loops, isTrue);
+      expect(parsed.aspectRatio, isNull);
+      expect(parsed.duration, isNull);
+    });
+
     test('SwayveAlbum', () {
       expect(
         SwayveAlbum.fromJson(roundTripJson(fullAlbum.toJson())),
@@ -337,6 +389,84 @@ void main() {
       final parsed = SwayveLyrics.fromJson(roundTripJson(lyrics.toJson()));
       expect(parsed, lyrics);
       expect(parsed.isSynced, isTrue);
+      expect(parsed.words, isNull);
+      expect(parsed.hasWordTiming, isFalse);
+    });
+
+    test('SwayveLyrics carrying word timing', () {
+      const lyrics = SwayveLyrics(
+        plain: 'line one\nline two',
+        synced: [
+          SwayveLyricLine(at: Duration.zero, text: 'line one'),
+          SwayveLyricLine(at: Duration(seconds: 12), text: 'line two'),
+        ],
+        words: [
+          [
+            SwayveLyricWord(
+              at: Duration.zero,
+              until: Duration(milliseconds: 400),
+              text: 'line',
+            ),
+            SwayveLyricWord(
+              at: Duration(milliseconds: 400),
+              until: Duration(milliseconds: 900),
+              text: 'one',
+            ),
+          ],
+          [
+            SwayveLyricWord(
+              at: Duration(seconds: 12),
+              until: Duration(milliseconds: 12400),
+              text: 'line',
+            ),
+            SwayveLyricWord(
+              at: Duration(milliseconds: 12400),
+              until: Duration(milliseconds: 12900),
+              text: 'two',
+            ),
+          ],
+        ],
+        source: 'Example Lyrics',
+      );
+      final parsed = SwayveLyrics.fromJson(roundTripJson(lyrics.toJson()));
+      expect(parsed, lyrics);
+      expect(parsed.hashCode, lyrics.hashCode);
+      expect(parsed.hasWordTiming, isTrue);
+      // The grouping is the point of the nested list: two lines with two words
+      // each, not one flat run of four.
+      expect(parsed.words, hasLength(2));
+      expect(parsed.words!.first.map((word) => word.text), ['line', 'one']);
+    });
+
+    test('SwayveLyrics with only word timing keeps synced null', () {
+      const lyrics = SwayveLyrics(
+        words: [
+          [
+            SwayveLyricWord(
+              at: Duration.zero,
+              until: Duration(milliseconds: 500),
+              text: 'alone',
+            ),
+          ],
+        ],
+      );
+      final parsed = SwayveLyrics.fromJson(roundTripJson(lyrics.toJson()));
+      expect(parsed, lyrics);
+      expect(parsed.synced, isNull);
+      expect(parsed.isSynced, isFalse);
+      expect(parsed.hasWordTiming, isTrue);
+    });
+
+    test('SwayveLyricWord', () {
+      const word = SwayveLyricWord(
+        at: Duration(milliseconds: 1234),
+        until: Duration(milliseconds: 1600),
+        text: 'a',
+      );
+      expect(
+        SwayveLyricWord.fromJson(roundTripJson(word.toJson())),
+        word,
+      );
     });
 
     test('SwayveLyricLine', () {
@@ -544,6 +674,7 @@ void main() {
       expect(fullAlbum.copyWith(year: 1999).year, 1999);
       expect(fullArtist.copyWith(name: 'Other').name, 'Other');
       expect(fullPlaylist.copyWith(trackCount: 1).trackCount, 1);
+      expect(fullTrack.copyWith(canSeedRadio: false).canSeedRadio, isFalse);
       expect(artwork.copyWith(width: 1).width, 1);
       expect(albumRef.copyWith(title: 'X').title, 'X');
       expect(
@@ -556,6 +687,51 @@ void main() {
   test('artistsLabel joins credited artists in order', () {
     expect(fullTrack.artistsLabel, 'Ärtist One, Guest');
     expect(fullAlbum.artistsLabel, 'Ärtist One');
+  });
+
+  test('copyWith reaches the radio, visuals and word-timing models', () {
+    const radio = SwayveRadio(
+      id: SwayveMediaId('app.swayve.plugins.example', 'radio/1'),
+    );
+    expect(radio.copyWith(title: 'Named').title, 'Named');
+    expect(radio.copyWith(seed: trackId).seed, trackId);
+    expect(radio.copyWith(), radio);
+
+    final visual = SwayveVisual(
+      uri: Uri.parse('https://example.com/cover.mp4'),
+      kind: SwayveVisualKind.motionArtwork,
+    );
+    expect(visual.copyWith(loops: false).loops, isFalse);
+    expect(
+      visual.copyWith(kind: SwayveVisualKind.video).kind,
+      SwayveVisualKind.video,
+    );
+    expect(visual.copyWith(), visual);
+
+    const word = SwayveLyricWord(
+      at: Duration.zero,
+      until: Duration(milliseconds: 100),
+      text: 'a',
+    );
+    expect(word.copyWith(text: 'b').text, 'b');
+    expect(word.copyWith(), word);
+
+    const lyrics = SwayveLyrics(plain: 'a lyric');
+    expect(lyrics.hasWordTiming, isFalse);
+    expect(
+      lyrics.copyWith(
+        words: const [
+          [SwayveLyricWord(at: Duration.zero, until: Duration.zero, text: 'a')],
+        ],
+      ).hasWordTiming,
+      isTrue,
+    );
+    expect(lyrics.copyWith(), lyrics);
+  });
+
+  test('a track that cannot seed a radio differs from one that can', () {
+    expect(fullTrack.canSeedRadio, isTrue);
+    expect(fullTrack.copyWith(canSeedRadio: false), isNot(fullTrack));
   });
 
   test('value equality distinguishes deep differences in extra', () {

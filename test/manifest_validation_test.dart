@@ -361,7 +361,7 @@ void main() {
 
     test('a future schemaVersion is rejected the same way', () {
       final Map<String, Object?> manifest = cleanManifest()
-        ..['schemaVersion'] = 7;
+        ..['schemaVersion'] = 8;
       final Diagnostic d = diagnosticFor(
         validate(manifest),
         DiagnosticCodes.unsupportedSchemaVersion,
@@ -436,6 +436,15 @@ void main() {
           'personal_library_push',
         ]
         ..['permissions'] = <String>['network', 'external_auth'];
+      final Report report = validate(manifest);
+      expect(report.diagnostics, isEmpty, reason: codesOf(report).toString());
+    });
+
+    test('schemaVersion 7 with the radio and visuals capabilities validates',
+        () {
+      final Map<String, Object?> manifest = cleanManifest()
+        ..['schemaVersion'] = 7
+        ..['capabilities'] = <String>['search', 'radio', 'visuals'];
       final Report report = validate(manifest);
       expect(report.diagnostics, isEmpty, reason: codesOf(report).toString());
     });

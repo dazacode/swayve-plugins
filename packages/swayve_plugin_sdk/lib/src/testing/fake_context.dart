@@ -144,12 +144,15 @@ final class FakeSwayvePluginContext
   final List<SwayveMetadataSearchProvider> _metadataSearchProviders =
       <SwayveMetadataSearchProvider>[];
   final List<SwayveLyricsProvider> _lyricsProviders = <SwayveLyricsProvider>[];
+  final List<SwayveVisualsProvider> _visualsProviders =
+      <SwayveVisualsProvider>[];
   final List<SwayveScrobbleProvider> _scrobbleProviders =
       <SwayveScrobbleProvider>[];
   final List<SwayveArtworkProvider> _artworkProviders =
       <SwayveArtworkProvider>[];
   final List<SwayvePlaylistProvider> _playlistProviders =
       <SwayvePlaylistProvider>[];
+  final List<SwayveRadioProvider> _radioProviders = <SwayveRadioProvider>[];
   final List<SwayveArtistActivityProvider> _artistActivityProviders =
       <SwayveArtistActivityProvider>[];
   final List<SwayveAuthProvider> _authProviders = <SwayveAuthProvider>[];
@@ -182,6 +185,10 @@ final class FakeSwayvePluginContext
   List<SwayveLyricsProvider> get lyricsProviders =>
       List.unmodifiable(_lyricsProviders);
 
+  /// The visuals providers registered so far.
+  List<SwayveVisualsProvider> get visualsProviders =>
+      List.unmodifiable(_visualsProviders);
+
   /// The scrobble providers registered so far.
   List<SwayveScrobbleProvider> get scrobbleProviders =>
       List.unmodifiable(_scrobbleProviders);
@@ -193,6 +200,10 @@ final class FakeSwayvePluginContext
   /// The playlist providers registered so far.
   List<SwayvePlaylistProvider> get playlistProviders =>
       List.unmodifiable(_playlistProviders);
+
+  /// The radio providers registered so far.
+  List<SwayveRadioProvider> get radioProviders =>
+      List.unmodifiable(_radioProviders);
 
   /// The artist-activity providers registered so far.
   List<SwayveArtistActivityProvider> get artistActivityProviders =>
@@ -222,9 +233,11 @@ final class FakeSwayvePluginContext
         if (_metadataSearchProviders.isNotEmpty)
           SwayveCapability.metadataSearch,
         if (_lyricsProviders.isNotEmpty) SwayveCapability.lyrics,
+        if (_visualsProviders.isNotEmpty) SwayveCapability.visuals,
         if (_scrobbleProviders.isNotEmpty) SwayveCapability.scrobbling,
         if (_artworkProviders.isNotEmpty) SwayveCapability.artwork,
         if (_playlistProviders.isNotEmpty) SwayveCapability.playlistRead,
+        if (_radioProviders.isNotEmpty) SwayveCapability.radio,
         if (_artistActivityProviders.isNotEmpty)
           SwayveCapability.artistActivity,
         if (_authProviders.isNotEmpty) SwayveCapability.authentication,
@@ -294,6 +307,10 @@ final class FakeSwayvePluginContext
       _lyricsProviders.add(provider);
 
   @override
+  void registerVisualsProvider(SwayveVisualsProvider provider) =>
+      _visualsProviders.add(provider);
+
+  @override
   void registerScrobbleProvider(SwayveScrobbleProvider provider) =>
       _scrobbleProviders.add(provider);
 
@@ -304,6 +321,10 @@ final class FakeSwayvePluginContext
   @override
   void registerPlaylistProvider(SwayvePlaylistProvider provider) =>
       _playlistProviders.add(provider);
+
+  @override
+  void registerRadioProvider(SwayveRadioProvider provider) =>
+      _radioProviders.add(provider);
 
   @override
   void registerArtistActivityProvider(

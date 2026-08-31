@@ -28,10 +28,12 @@ import 'models/lyrics.dart';
 import 'models/media_id.dart';
 import 'models/metadata_search.dart';
 import 'models/playlist.dart';
+import 'models/radio.dart';
 import 'models/scrobble.dart';
 import 'models/search.dart';
 import 'models/track.dart';
 import 'models/upload.dart';
+import 'models/visual.dart';
 import 'playback.dart';
 
 /// Free-text search. Capability: `search`.
@@ -152,10 +154,51 @@ abstract interface class SwayveMetadataSearchProvider {
 }
 
 /// Lyrics for a track. Capability: `lyrics`.
+///
+/// [lyrics] takes a whole [SwayveTrack] rather than a [SwayveMediaId] because
+/// a lyrics provider is very often not the plugin that published the track. A
+/// dedicated lyrics service holds no music at all, and a
+/// [SwayveMediaId.value] minted by some other plugin is opaque by design —
+/// there is nothing in it for a second plugin to look anything up by. Handing
+/// over the recording instead gives it the title, the credit and the running
+/// time it needs to match against its own catalogue, which is the same shape,
+/// and the same reason, as [SwayveMetadataProvider.enrichTrack] and
+/// [SwayveVisualsProvider.visual].
 abstract interface class SwayveLyricsProvider {
-  /// Returns lyrics for [id], or `null` when none were found.
+  /// Returns lyrics for [track], or `null` when none were found.
+  ///
+  /// A provider that *is* the track's own source may of course read
+  /// `track.id` and ignore the rest of it.
   Future<SwayveLyrics?> lyrics(
-    SwayveMediaId id, {
+    SwayveTrack track, {
+    SwayveCancellationToken? cancel,
+  });
+}
+
+/// Moving visuals to play behind a track. Capability: `visuals`.
+///
+/// [visual] takes a whole [SwayveTrack] and not a [SwayveMediaId], and that
+/// is the design of the capability rather than a convenience at the call
+/// site. A visuals plugin is *expected* to serve tracks from other plugins:
+/// the service holding the music video is very often not the service the
+/// audio is playing from, and an id another plugin minted means nothing here
+/// — [SwayveMediaId.value] is deliberately opaque, and a second plugin
+/// parsing it would be exactly the provider-specific knowledge this SDK
+/// keeps out of everything. What a visuals provider can work from is the
+/// recording itself: title, credit and running time, enough to find it in its
+/// own catalogue and enough to decide the match is not good enough.
+abstract interface class SwayveVisualsProvider {
+  /// Returns a visual for [track], or `null` when this provider has none for
+  /// it.
+  ///
+  /// `null` covers both "I do not carry this recording" and "I could not
+  /// match it confidently enough", and the second is the one worth being
+  /// strict about: the wrong video behind a song is worse than no video, and
+  /// the host's own artwork is a better fallback than a near miss. Throw only
+  /// for the two cases the conventions at the top of this file reserve
+  /// throwing for.
+  Future<SwayveVisual?> visual(
+    SwayveTrack track, {
     SwayveCancellationToken? cancel,
   });
 }
@@ -204,6 +247,70 @@ abstract interface class SwayvePlaylistProvider {
   Future<SwayvePage<SwayveTrack>> playlistTracks(
     SwayveMediaId id,
     SwayveBrowseRequest request, {
+    SwayveCancellationToken? cancel,
+  });
+}
+
+/// An endless station generated from a seed. Capability: `radio`.
+///
+/// Not [SwayvePlaylistProvider] with different words. A playlist is something
+/// the service already holds, with the same contents for everybody who opens
+/// it; a radio does not exist until [startRadio] mints one, has no length to
+/// report, and goes on producing tracks for as long as the host keeps asking.
+/// The [SwayveRadio] handed back is that station's handle rather than a
+/// catalogue entry, and a provider is free to let it live only as long as the
+/// session that asked for it.
+abstract interface class SwayveRadioProvider {
+  /// Starts a radio seeded by [seed], or returns `null` when this seed cannot
+  /// start one.
+  ///
+  /// `null` is the ordinary "not found" answer this SDK uses everywhere else,
+  /// and it covers both an id this provider never minted and a recording its
+  /// recommender genuinely has nothing to build a station around. It is not a
+  /// failure. Throw `SwayvePluginUnsupportedException` only when this
+  /// provider cannot start a radio *at all*, and
+  /// `SwayvePluginUnavailableException` when it could not right now.
+  ///
+  /// [context] is what the person was listening *in* when they asked — the
+  /// album, playlist or artist the seed was a row of. A provider may use it
+  /// to steer the station and must work correctly without it, because the
+  /// host has nothing to pass when a track was played from a search result or
+  /// from nowhere in particular.
+  Future<SwayveRadio?> startRadio(
+    SwayveMediaId seed, {
+    SwayveMediaId? context,
+    SwayveCancellationToken? cancel,
+  });
+
+  /// Returns the next page of tracks for [radio].
+  ///
+  /// Paginates by exactly the cursor convention
+  /// [SwayvePlaylistProvider.playlistTracks] uses: hand back
+  /// `SwayvePage(items: [...], cursor: next)`, and a `null` cursor only once
+  /// there is genuinely no more.
+  ///
+  /// A radio is conceptually endless, so that last clause is the only way a
+  /// provider ever says otherwise: an empty page with a null cursor is how it
+  /// signals the end — the station ran dry, or the upstream will not extend
+  /// it further — and the host stops asking. An empty page *with* a cursor
+  /// remains what it is everywhere else in this SDK, "my upstream pages
+  /// oddly, ask again", and is not the end.
+  Future<SwayvePage<SwayveTrack>> radioTracks(
+    SwayveRadio radio,
+    SwayveBrowseRequest request, {
+    SwayveCancellationToken? cancel,
+  });
+
+  /// Returns tracks related to [id], most related first, or an empty list
+  /// when this provider has nothing to relate it to.
+  ///
+  /// Not a station, and deliberately not paginated: this is the "more like
+  /// this" shelf a host draws beside a track, a finite answer given in one
+  /// call, where [startRadio] begins something that goes on. An empty list is
+  /// a real answer — "I looked and there is nothing near it" — and never an
+  /// exception.
+  Future<List<SwayveTrack>> related(
+    SwayveMediaId id, {
     SwayveCancellationToken? cancel,
   });
 }

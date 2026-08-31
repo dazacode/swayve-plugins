@@ -110,7 +110,41 @@ enum SwayveCapability {
   /// does not require [metadata] and vice versa.
   ///
   /// Its wire name is `metadata_search`.
-  metadataSearch;
+  metadataSearch,
+
+  /// An endless station the provider generates from a seed — the track,
+  /// artist or album somebody is already listening to. Requires a
+  /// `SwayveRadioProvider`.
+  ///
+  /// Not [catalog] reached through a different door. Everything a catalogue
+  /// answers for already exists on the service and had an id before anybody
+  /// asked; a radio does not exist until the host asks for one, is minted on
+  /// the spot, and then goes on producing tracks for as long as anyone keeps
+  /// asking. That is why starting one is its own call rather than another
+  /// browse, and why the seed is the interesting half of it.
+  ///
+  /// A provider declares this only when its service genuinely has a
+  /// recommender behind it. A catalogue that would have to answer "what
+  /// comes after this" by picking at random should say nothing here — an
+  /// endless station of unrelated music is worse than no station at all.
+  ///
+  /// Its wire name is `radio`.
+  radio,
+
+  /// Moving visuals to play behind a track — a music video, a looping motion
+  /// cover. Requires a `SwayveVisualsProvider`.
+  ///
+  /// The one capability in this vocabulary whose provider is *expected* to
+  /// answer for tracks it did not publish. `SwayveVisualsProvider.visual`
+  /// takes a whole `SwayveTrack` rather than a `SwayveMediaId` for exactly
+  /// that reason: the service holding the video is very often not the
+  /// service the audio is playing from, so the provider is handed the
+  /// recording — title, credit, running time — and matches it against its
+  /// own catalogue, the same way a [metadata] provider enriches a track it
+  /// never minted.
+  ///
+  /// Its wire name is `visuals`.
+  visuals;
 
   /// The manifest spelling of this capability.
   ///
@@ -133,6 +167,8 @@ enum SwayveCapability {
         SwayveCapability.sessionCapture => 'session_capture',
         SwayveCapability.personalLibraryPush => 'personal_library_push',
         SwayveCapability.metadataSearch => 'metadata_search',
+        SwayveCapability.radio => 'radio',
+        SwayveCapability.visuals => 'visuals',
       };
 
   /// The capability named [wire], or `null` if the name is not in the v1

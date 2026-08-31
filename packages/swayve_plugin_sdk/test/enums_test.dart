@@ -32,6 +32,8 @@ void main() {
           'session_capture',
           'personal_library_push',
           'metadata_search',
+          'radio',
+          'visuals',
         ],
       );
     });
@@ -202,6 +204,16 @@ void main() {
       expect(SwayveUploadHashAlgorithm.fromWire('sha256'), isNull);
     });
 
+    test('SwayveVisualKind round-trips and is snake_case', () {
+      for (final value in SwayveVisualKind.values) {
+        expect(SwayveVisualKind.fromWire(value.wireName), value);
+      }
+      expect(SwayveVisualKind.video.wireName, 'video');
+      expect(SwayveVisualKind.motionArtwork.wireName, 'motion_artwork');
+      expect(SwayveVisualKind.fromWire('motionArtwork'), isNull);
+      expect(SwayveVisualKind.fromWire('gif'), isNull);
+    });
+
     test('SwayveUploadOutcome round-trips and is snake_case', () {
       for (final value in SwayveUploadOutcome.values) {
         expect(SwayveUploadOutcome.fromWire(value.wireName), value);
@@ -214,7 +226,7 @@ void main() {
 
   test('the API level constants', () {
     expect(kSwayvePluginApiVersion, 1);
-    expect(kSwayveManifestSchemaVersion, 6);
+    expect(kSwayveManifestSchemaVersion, 7);
     expect(kSwayveMediaIdScheme, 'swayve');
   });
 

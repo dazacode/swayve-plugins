@@ -120,9 +120,9 @@ capability* rather than a permission, checked by the separate
 
 The remaining ten — `search` `catalog` `streaming` `metadata` `lyrics`
 `scrobbling` `artwork` `playlist_read` `artist_activity` `personal_library`
-— *usually* reach an external service (`personal_library_push` and
-`metadata_search` are the eleventh and twelfth), but not always. A `search`
-provider can perfectly well serve a
+— *usually* reach an external service (`personal_library_push`,
+`metadata_search`, `radio` and `visuals` are the eleventh through
+fourteenth), but not always. A `search` provider can perfectly well serve a
 catalogue that ships inside the plugin. Whether a plugin opens a connection
 is not decidable from its manifest, so their absence of `network` is an
 **info note** (`capability_expects_network`) and never a failure. A plugin
@@ -183,14 +183,15 @@ entry. Change one and the test will tell you to change the other.
 
 ## Changing the schema
 
-`schemaVersion` is `6`, having moved from `5` to `6` when the
-`metadata_search` capability was added (from `4` to `5` when
-`personal_library_push` was added, from `3` to `4` when `session_capture`
-was added, from `2` to `3` when `personal_library` was added, and from `1`
-to `2` when `artist_activity` was added before that). The
-check in `checkCompatibility()` only rejects a `schemaVersion` *newer* than
-the build understands — a `schemaVersion: 1` manifest keeps validating on a
-build that implements `5`, because the format has so far only ever widened.
+`schemaVersion` is `7`, having moved from `6` to `7` when the `radio` and
+`visuals` capabilities were added (from `5` to `6` when `metadata_search`
+was added, from `4` to `5` when `personal_library_push` was added, from `3`
+to `4` when `session_capture` was added, from `2` to `3` when
+`personal_library` was added, and from `1` to `2` when `artist_activity` was
+added before that). The check in `checkCompatibility()` only rejects a
+`schemaVersion` *newer* than the build understands — a `schemaVersion: 1`
+manifest keeps validating on a build that implements `7`, because the format
+has so far only ever widened.
 
 * Adding an **optional** field is a minor change: add it to the schema, to
   `lib/src/schema_spec.dart`, and to `docs/plugin-manifest.md`.

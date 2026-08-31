@@ -175,7 +175,7 @@ void main() {
       'authentication': <String>['external_auth'],
       'session_capture': <String>['webview', 'external_auth'],
     });
-    expect(kNetworkExpectingCapabilities, hasLength(12));
+    expect(kNetworkExpectingCapabilities, hasLength(14));
   });
 
   test(
