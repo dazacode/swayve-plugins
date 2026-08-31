@@ -63,7 +63,7 @@ dependencies:
     git:
       url: https://github.com/dazacode/Daza-Swayve-plugins.git
       path: visuals
-      ref: 97c989e148f644de60b8141a287902aa79e66d2f
+      ref: 614e69144b3540ad8ea5710c74f22e929faf99c9
   # Unlike soundcloud/youtube_music, this one lives in its own repository
   # rather than in Daza-Swayve-plugins — see that plugin's own README for
   # why. Pinned to the same swayve_plugin_sdk commit as everything else
