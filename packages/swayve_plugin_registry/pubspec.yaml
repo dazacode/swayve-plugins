@@ -34,7 +34,7 @@ dependencies:
     git:
       url: https://github.com/dazacode/swayve-plugins.git
       path: packages/swayve_plugin_sdk
-      ref: 9fe79eeafa01bce59138ea1098eab72037865820
+      ref: e0c105d2d917bccf8c5cd2a7f3241f5c050e6213
   # The first-party plugin catalogue now lives in its own repository — see
   # https://github.com/dazacode/Daza-Swayve-plugins — so these are pinned git
   # dependencies too. Pinned by commit, same reasoning as swayve-client's own
@@ -53,7 +53,12 @@ dependencies:
     git:
       url: https://github.com/dazacode/Daza-Swayve-plugins.git
       path: youtube_music
-      ref: ebc982a6164b2f94b96e1b40dd396776d9262805
+      ref: 26a849b356b38564a8d204cde2e975e395e1f5a2
+  lyrics:
+    git:
+      url: https://github.com/dazacode/Daza-Swayve-plugins.git
+      path: lyrics
+      ref: 655acbdd028bf9017281c3957d14694293bb77bc
   # Unlike soundcloud/youtube_music, this one lives in its own repository
   # rather than in Daza-Swayve-plugins — see that plugin's own README for
   # why. Pinned to the same swayve_plugin_sdk commit as everything else
