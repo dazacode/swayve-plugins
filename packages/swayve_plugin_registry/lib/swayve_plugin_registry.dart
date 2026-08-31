@@ -32,6 +32,8 @@ import 'package:ibroadcast/ibroadcast.dart'
     show createIBroadcastPlugin, kIBroadcastPluginId;
 import 'package:lyrics/lyrics.dart'
     show createLyricsPlugin, kLyricsPluginId;
+import 'package:visuals/visuals.dart'
+    show createVisualsPlugin, kVisualsPluginId;
 import 'package:soundcloud/soundcloud.dart'
     show createSoundCloudPlugin, kSoundCloudPluginId;
 import 'package:swayve_plugin_sdk/swayve_plugin_sdk.dart';
@@ -55,4 +57,5 @@ const Map<String, SwayvePluginFactory> firstPartyCompiledPlugins =
   kSoundCloudPluginId: createSoundCloudPlugin,
   kIBroadcastPluginId: createIBroadcastPlugin,
   kLyricsPluginId: createLyricsPlugin,
+  kVisualsPluginId: createVisualsPlugin,
 };
