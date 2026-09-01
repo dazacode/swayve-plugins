@@ -30,10 +30,9 @@ library;
 
 import 'package:ibroadcast/ibroadcast.dart'
     show createIBroadcastPlugin, kIBroadcastPluginId;
-import 'package:lyrics/lyrics.dart'
-    show createLyricsPlugin, kLyricsPluginId;
+import 'package:lyrics/lyrics.dart' show createLyricsPlugin, kLyricsPluginId;
 import 'package:visuals/visuals.dart'
-    show createVisualsPlugin, kVisualsPluginId;
+    show createVisualsPlugin, kVisualsPluginId, visualsPluginManifest;
 import 'package:soundcloud/soundcloud.dart'
     show createSoundCloudPlugin, kSoundCloudPluginId;
 import 'package:swayve_plugin_sdk/swayve_plugin_sdk.dart';
@@ -58,4 +57,38 @@ const Map<String, SwayvePluginFactory> firstPartyCompiledPlugins =
   kIBroadcastPluginId: createIBroadcastPlugin,
   kLyricsPluginId: createLyricsPlugin,
   kVisualsPluginId: createVisualsPlugin,
+};
+
+/// The `plugin.json` each first-party plugin was compiled from, keyed by the
+/// same id as [firstPartyCompiledPlugins].
+///
+/// ## The staleness this exists to fix
+///
+/// A compiled plugin reaches a host as two halves that age apart. The Dart
+/// code is linked into the binary and updates whenever the host is rebuilt.
+/// The manifest arrives once, inside a `.swayveplugin` bundle the host
+/// imported and snapshotted, and then never moves again — nothing in an app
+/// update refreshes it, because an app update is not an import.
+///
+/// So a plugin that grows a setting grows it in the code only. `initialize`
+/// reads the new setting, the host renders its fields from the manifest it
+/// stored a year ago, no field appears, the value is always empty, and the
+/// feature silently does nothing. No error is raised anywhere, because
+/// nothing went wrong — the two halves simply disagreed about what this
+/// plugin is.
+///
+/// A host holding this map can compare it against what it stored and refresh
+/// the difference, which makes an app update carry its plugins' manifest
+/// changes the way it already carries their code.
+///
+/// ## Why it is not yet complete
+///
+/// Only plugins that have been given a compiled manifest appear here, and an
+/// absent id is not an error: it means the host has nothing fresher to offer
+/// and should leave what it stored alone. Populating the rest is one const
+/// and one map entry per plugin, done as each is next touched, rather than a
+/// flag day across five packages for a problem only one of them has hit.
+const Map<String, Map<String, Object?> Function()> firstPartyCompiledManifests =
+    <String, Map<String, Object?> Function()>{
+  kVisualsPluginId: visualsPluginManifest,
 };

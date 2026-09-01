@@ -39,4 +39,48 @@ void main() {
       expect(factory, returnsNormally);
     }
   });
+
+  group('compiled manifests', () {
+    test('every manifest belongs to a plugin this registry can activate', () {
+      // A manifest for an id with no factory would be a manifest the host
+      // could refresh a row to and then have nothing to run.
+      for (final id in firstPartyCompiledManifests.keys) {
+        expect(
+          firstPartyCompiledPlugins,
+          contains(id),
+          reason: '$id has a compiled manifest but no compiled factory',
+        );
+      }
+    });
+
+    test('each manifest declares the id it is filed under', () {
+      firstPartyCompiledManifests.forEach((id, manifest) {
+        expect(manifest()['id'], id);
+      });
+    });
+
+    test('each manifest matches its running plugin identity', () {
+      // The check that makes a host's refresh safe: the manifest it would
+      // store has to describe the code it is about to run.
+      firstPartyCompiledManifests.forEach((id, manifest) {
+        final identity = firstPartyCompiledPlugins[id]!().identity;
+        final declared = manifest();
+        expect(declared['name'], identity.name);
+        expect(declared['version'], identity.version.toString());
+        expect(
+          (declared['capabilities']! as List<Object?>).toSet(),
+          identity.capabilities.map((c) => c.wireName).toSet(),
+        );
+      });
+    });
+
+    test('a plugin with no compiled manifest is absent, not empty', () {
+      // Absent means "nothing fresher to offer, leave the stored row alone".
+      // An empty map would mean "this plugin declares nothing", which would
+      // wipe a perfectly good stored manifest.
+      for (final manifest in firstPartyCompiledManifests.values) {
+        expect(manifest(), isNotEmpty);
+      }
+    });
+  });
 }
