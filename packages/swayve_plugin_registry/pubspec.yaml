@@ -68,7 +68,7 @@ dependencies:
       # Spotify canvases ahead of TIDAL animated covers), so only visuals
       # moves. All four still declare the same swayve_plugin_sdk commit,
       # which is the pin that genuinely has to agree across every package.
-      ref: 0fde5a282b34b9a4506d4355cee3ba989b64b2b8
+      ref: 980c758e00b4ecb5b695a92d4ceb0b1ee98c4d9f
   # Unlike soundcloud/youtube_music, this one lives in its own repository
   # rather than in Daza-Swayve-plugins — see that plugin's own README for
   # why. Pinned to the same swayve_plugin_sdk commit as everything else
