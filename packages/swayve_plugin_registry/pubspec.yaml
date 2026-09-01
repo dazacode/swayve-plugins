@@ -63,7 +63,12 @@ dependencies:
     git:
       url: https://github.com/dazacode/Daza-Swayve-plugins.git
       path: visuals
-      ref: 18a5c6973739a3abfc3f07881551a26a886d4c54
+      # Ahead of the other three Daza packages, which is the arrangement
+      # working rather than drifting: only visuals changed (it now finds
+      # Spotify canvases ahead of TIDAL animated covers), so only visuals
+      # moves. All four still declare the same swayve_plugin_sdk commit,
+      # which is the pin that genuinely has to agree across every package.
+      ref: b71586344420eb5399e8c547a711852d99cba1e2
   # Unlike soundcloud/youtube_music, this one lives in its own repository
   # rather than in Daza-Swayve-plugins — see that plugin's own README for
   # why. Pinned to the same swayve_plugin_sdk commit as everything else
