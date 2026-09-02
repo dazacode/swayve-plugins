@@ -58,6 +58,7 @@ void main() {
       expect(() => SwayveAlbum.fromJson(const {}), throwsMalformed);
       expect(() => SwayveArtist.fromJson(const {}), throwsMalformed);
       expect(() => SwayvePlaylist.fromJson(const {}), throwsMalformed);
+      expect(() => SwayveArtistSection.fromJson(const {}), throwsMalformed);
       expect(() => SwayveArtistRef.fromJson(const {}), throwsMalformed);
       expect(() => SwayveAlbumRef.fromJson(const {}), throwsMalformed);
       expect(() => SwayveMediaId.fromJson(const {}), throwsMalformed);
@@ -104,6 +105,17 @@ void main() {
           'name': 'n',
           'genres': ['rock', 7],
         }),
+        throwsMalformed,
+      );
+    });
+
+    test('an unknown artist section kind', () {
+      // Unlike a capability in a manifest, which is dropped, a section whose
+      // kind cannot be read is malformed: the kind is the whole of what a host
+      // lays the shelf out by, so a section without one is not a degraded
+      // section, it is an untitled box of items with no place on the page.
+      expect(
+        () => SwayveArtistSection.fromJson(const {'kind': 'compilations'}),
         throwsMalformed,
       );
     });

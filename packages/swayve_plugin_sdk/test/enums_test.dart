@@ -214,6 +214,21 @@ void main() {
       expect(SwayveVisualKind.fromWire('gif'), isNull);
     });
 
+    test('SwayveArtistSectionKind round-trips and is snake_case', () {
+      for (final value in SwayveArtistSectionKind.values) {
+        expect(SwayveArtistSectionKind.fromWire(value.wireName), value);
+      }
+      expect(SwayveArtistSectionKind.topSongs.wireName, 'top_songs');
+      expect(
+        SwayveArtistSectionKind.relatedArtists.wireName,
+        'related_artists',
+      );
+      expect(SwayveArtistSectionKind.fromWire('topSongs'), isNull);
+      // No catch-all member, on purpose: a shelf a provider cannot classify is
+      // omitted rather than filed under one. See the enum's documentation.
+      expect(SwayveArtistSectionKind.fromWire('other'), isNull);
+    });
+
     test('SwayveUploadOutcome round-trips and is snake_case', () {
       for (final value in SwayveUploadOutcome.values) {
         expect(SwayveUploadOutcome.fromWire(value.wireName), value);

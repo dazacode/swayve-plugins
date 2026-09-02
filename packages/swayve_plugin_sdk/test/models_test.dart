@@ -60,11 +60,49 @@ final SwayveAlbum fullAlbum = SwayveAlbum(
   extra: const {'browseId': 'MPRE123'},
 );
 
+final SwayveImageRef banner = SwayveImageRef(
+  uri: Uri.parse('https://example.com/banner.jpg'),
+  width: 2560,
+  height: 424,
+);
+
+/// An artist as a *listing* mints one: a tile's worth and nothing more.
+///
+/// Round-tripped alongside [fullArtist] because the thin form is the one a
+/// search result and a "fans might also like" shelf actually carry, and a
+/// model whose optional half is only ever exercised when it is populated is
+/// half untested.
+const SwayveArtist thinArtist = SwayveArtist(id: artistId, name: 'Ärtist Two');
+
 final SwayveArtist fullArtist = SwayveArtist(
   id: artistId,
   name: 'Ärtist One',
   image: artwork,
+  banner: banner,
+  description: 'Formed in a garage, 2011.',
+  subscriberLabel: '1.2M subscribers',
+  monthlyListenerLabel: '4,203,911 monthly listeners',
+  playAll: const SwayveMediaId('app.swayve.plugins.example', 'OLAK5uy_all'),
+  startRadio: const SwayveMediaId('app.swayve.plugins.example', 'RDAMVMabc'),
   genres: const ['shoegaze', 'dream pop'],
+  sections: [
+    SwayveArtistSection(
+      kind: SwayveArtistSectionKind.topSongs,
+      title: 'Top songs',
+      tracks: [fullTrack],
+      more: const SwayveMediaId('app.swayve.plugins.example', 'more/songs'),
+    ),
+    SwayveArtistSection(
+      kind: SwayveArtistSectionKind.singles,
+      title: 'Singles',
+      albums: [fullAlbum],
+    ),
+    const SwayveArtistSection(
+      kind: SwayveArtistSectionKind.relatedArtists,
+      title: 'Fans might also like',
+      artists: [thinArtist],
+    ),
+  ],
   extra: const {'channelId': 'UC123'},
 );
 
@@ -296,6 +334,44 @@ void main() {
       expect(
         SwayveArtist.fromJson(roundTripJson(fullArtist.toJson())),
         fullArtist,
+      );
+    });
+
+    test('SwayveArtist with only an id and a name', () {
+      expect(
+        SwayveArtist.fromJson(roundTripJson(thinArtist.toJson())),
+        thinArtist,
+      );
+    });
+
+    test('SwayveArtistSection, one per kind', () {
+      // Every kind, so that a member added to the enum without a wire name
+      // fails here rather than at whichever provider first emits it.
+      for (final kind in SwayveArtistSectionKind.values) {
+        final section = SwayveArtistSection(
+          kind: kind,
+          title: 'Shelf ${kind.wireName}',
+          tracks: [fullTrack],
+          albums: [fullAlbum],
+          artists: const [thinArtist],
+          playlists: [fullPlaylist],
+          more: const SwayveMediaId('app.swayve.plugins.example', 'more'),
+        );
+        expect(
+          SwayveArtistSection.fromJson(roundTripJson(section.toJson())),
+          section,
+          reason: kind.name,
+        );
+      }
+    });
+
+    test('an empty section keeps its kind and drops its empty lists', () {
+      const section = SwayveArtistSection(kind: SwayveArtistSectionKind.videos);
+      expect(section.isEmpty, isTrue);
+      expect(section.toJson(), {'kind': 'videos'});
+      expect(
+        SwayveArtistSection.fromJson(roundTripJson(section.toJson())),
+        section,
       );
     });
 

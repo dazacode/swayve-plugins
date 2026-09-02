@@ -373,6 +373,75 @@ enum SwayveSearchKind {
   }
 }
 
+/// What one shelf on an artist's page is a shelf *of*.
+///
+/// An artist page is a stack of titled shelves, and the titles are the one
+/// thing about them that cannot be read. "Top songs" is "Canciones
+/// principales" for a Spanish listener and "गाने" for a Hindi one, so a host
+/// keying its layout off the shelf title would draw the page correctly in
+/// English and as an undifferentiated pile everywhere else. The plugin
+/// classifies each shelf from what is actually in it and states the answer
+/// here; the title travels alongside as [SwayveArtistSection.title], for
+/// display only.
+///
+/// **Why not [SwayveSearchKind].** It is the obvious candidate — four members,
+/// one per entity type, already on the wire — and it cannot say two of the six
+/// things an artist page distinguishes. A single and an album are both albums,
+/// and a song and a music video are both tracks; collapsing either pair loses
+/// the split that makes the page readable, and both are splits the *provider*
+/// already knows and the host cannot recompute. A search asks "what type of
+/// thing do you want back"; a shelf says "what this row of the page is". They
+/// overlap without being the same vocabulary, and joining them would stop
+/// either growing a member without disturbing the other.
+///
+/// An unrecognised shelf has no member here on purpose. A provider that cannot
+/// classify a shelf omits it rather than filing it under a catch-all: a host
+/// given a titled box of unknown contents can only draw it wrongly, and a shelf
+/// that never arrives is at least honestly absent.
+enum SwayveArtistSectionKind {
+  /// The artist's most-played recordings, in the provider's own ranking.
+  ///
+  /// Its wire name is `top_songs`.
+  topSongs,
+
+  /// Full-length releases.
+  albums,
+
+  /// Short releases — singles and EPs, as the provider counts them.
+  singles,
+
+  /// Recordings the provider considers video rather than audio, matching
+  /// `SwayveTrackKind.video`.
+  videos,
+
+  /// Playlists the artist appears on, which a service usually titles some
+  /// variant of "Featured on".
+  playlists,
+
+  /// Other artists the provider associates with this one.
+  ///
+  /// Its wire name is `related_artists`.
+  relatedArtists;
+
+  /// The wire spelling of this kind.
+  String get wireName => switch (this) {
+        SwayveArtistSectionKind.topSongs => 'top_songs',
+        SwayveArtistSectionKind.albums => 'albums',
+        SwayveArtistSectionKind.singles => 'singles',
+        SwayveArtistSectionKind.videos => 'videos',
+        SwayveArtistSectionKind.playlists => 'playlists',
+        SwayveArtistSectionKind.relatedArtists => 'related_artists',
+      };
+
+  /// The kind named [wire], or `null` if unknown.
+  static SwayveArtistSectionKind? fromWire(String wire) {
+    for (final value in SwayveArtistSectionKind.values) {
+      if (value.wireName == wire) return value;
+    }
+    return null;
+  }
+}
+
 /// The ordering a browse request asks for.
 ///
 /// A provider that cannot honour the requested order must still return

@@ -33,7 +33,7 @@ jobs:
       packages: ${{ steps.find.outputs.packages }}
       needs_flutter: ${{ steps.find.outputs.needs_flutter }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Find Dart/Flutter packages
         id: find
@@ -90,9 +90,9 @@ jobs:
     name: validate plugin manifests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: dart-lang/setup-dart@v1
+      - uses: dart-lang/setup-dart@6afc89df92d6eb3834022f73cd65adc8cdfcb92d # v1.8.1
         with:
           sdk: ${{ env.DART_SDK_VERSION }}
 
@@ -116,7 +116,7 @@ jobs:
 
       - name: Upload validation report
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: validation-report
           path: validation-report.json
@@ -160,11 +160,11 @@ jobs:
       matrix:
         package: ${{ fromJson(needs.discover.outputs.packages) }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set up Dart
         if: matrix.package.runner == 'dart'
-        uses: dart-lang/setup-dart@v1
+        uses: dart-lang/setup-dart@6afc89df92d6eb3834022f73cd65adc8cdfcb92d # v1.8.1
         with:
           sdk: ${{ env.DART_SDK_VERSION }}
 
@@ -172,7 +172,7 @@ jobs:
       # binaries on PATH, so only one of these two steps ever runs.
       - name: Set up Flutter
         if: matrix.package.runner == 'flutter'
-        uses: subosito/flutter-action@v2
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
         with:
           channel: stable
           cache: true
