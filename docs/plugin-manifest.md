@@ -9,10 +9,9 @@ to be complete, honest and machine-checkable on its own.
 - Local copy: [`schema/swayve-plugin.schema.json`](../schema/swayve-plugin.schema.json),
   with a companion [`schema/README.md`](../schema/README.md)
 
-> Examples below reference `plugins/example` and `plugins/youtube_music` as
-> worked cases. Both now live in
-> [`Daza-Swayve-plugins`](https://github.com/dazacode/Daza-Swayve-plugins),
-> not in this repository — the reasoning still applies, only the path changed.
+> Examples below name plugin directories as worked cases. No plugin lives in
+> this repository — see [`swayve-plugin-example`](https://github.com/dazacode/swayve-plugin-example)
+> for one you can read and run. The reasoning applies whatever the path is.
 
 `additionalProperties: false` applies at the top level **and inside every nested
 object**. An unrecognised key is an error, not a comment. This is deliberate: a
@@ -24,7 +23,7 @@ point your editor at the schema file instead of having the file declare itself.
 Validate with:
 
 ```bash
-dart run tools/validate_plugin.dart ../Daza-Swayve-plugins/my_plugin
+dart run tools/validate_plugin.dart ../my_plugin
 ```
 
 ---

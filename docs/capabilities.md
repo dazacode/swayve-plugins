@@ -1,9 +1,8 @@
 # Capabilities
 
-> Examples below reference `plugins/youtube_music` as a worked case. It now
-> lives in
-> [`Daza-Swayve-plugins`](https://github.com/dazacode/Daza-Swayve-plugins),
-> not in this repository — the reasoning still applies, only the path changed.
+> Examples below name plugin directories as worked cases. No plugin lives in
+> this repository — see [`swayve-plugin-example`](https://github.com/dazacode/swayve-plugin-example)
+> for one you can read and run. The reasoning applies whatever the path is.
 
 A capability is a question the plugin can answer. The vocabulary is closed —
 arbitrary strings are rejected by the schema — and each capability corresponds

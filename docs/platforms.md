@@ -167,17 +167,18 @@ at build time. It does not by itself say *which* binaries link it in — that is
 a separate, deliberately manual step, and it is worth being precise about it so
 "my plugin is compiled" and "my plugin runs" are not confused.
 
-**First-party plugins** (this repository) are activated through
-`packages/swayve_plugin_registry` — a small pure-Dart package that depends on
-every first-party compiled plugin and re-exports one flat map,
+**First-party plugins** are activated through a `swayve_plugin_registry`
+package — a small pure-Dart package that depends on every first-party compiled
+plugin and re-exports one flat map,
 `firstPartyCompiledPlugins: Map<String, SwayvePluginFactory>`, keyed by
-manifest id. A host app depends on exactly two things from this platform,
-**permanently**, no matter how large the first-party catalogue grows:
-`swayve_plugin_sdk` (the interfaces) and `swayve_plugin_registry` (what's
-compiled in). Adding `youtube_music` to the registry did not, and a future
-`jiosaavn` will not, require touching any host app's `pubspec.yaml` or its
-plugin-loading code. See `packages/swayve_plugin_registry/README.md` for the
-two-line process of adding a first-party plugin to the map.
+manifest id. It lives with the plugins it catalogues, not in this repository:
+the platform has no business knowing which plugins exist. A host app depends on
+exactly two things **permanently**, no matter how large that catalogue grows:
+`swayve_plugin_sdk` (the interfaces, from here) and a `swayve_plugin_registry`
+(what's compiled in, from there). Adding a plugin to the registry does not
+require touching any host app's `pubspec.yaml` or its plugin-loading code. See
+that package's own `README.md` for the two-line process of adding a plugin to
+the map.
 
 A host resolves a verified bundle by looking its manifest id up in
 `firstPartyCompiledPlugins`. **An id with no entry is not a validation

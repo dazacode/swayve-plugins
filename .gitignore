@@ -38,10 +38,9 @@ dist/
 packages/**/pubspec.lock
 
 # Local-only dependency overrides — pub reads this alongside a package's own
-# pubspec.yaml but it must never be committed. See
-# packages/swayve_plugin_registry/pubspec.yaml's comment on its
-# swayve_plugin_sdk dependency for the case this exists for: testing an SDK
-# change against the registry in the same uncommitted session, without
+# pubspec.yaml but it must never be committed. It exists for the case where a
+# package outside this repository depends on the SDK by git and you want to
+# test an SDK change against it in the same uncommitted session, without
 # pushing first.
 **/pubspec_overrides.yaml
 

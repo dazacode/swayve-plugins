@@ -262,12 +262,12 @@ Follow [SECURITY.md](SECURITY.md).
 - A version starting at `0.1.0`. Pre-1.0 is the honest state for a new plugin,
   and the validator will note it.
 - Confirmation that you have run it on every platform listed in `platforms`.
-- If `runtime: compiled`: a dependency entry and one map entry in
-  `packages/swayve_plugin_registry` (see that package's `README.md`). This is
-  what actually makes the plugin activatable by a host app — nothing else in
-  the PR does. A `compiled` plugin merged without a registry entry validates,
-  tests, and packages cleanly, and still runs nowhere; reviewers should treat
-  a missing registry entry as incomplete, not optional.
+- If `runtime: compiled`: a dependency entry and one map entry in the plugin
+  registry your host builds against (that package lives with the plugins it
+  catalogues, not in this repository). This is what actually makes the plugin
+  activatable by a host app — nothing else does. A `compiled` plugin merged
+  without a registry entry validates, tests, and packages cleanly, and still
+  runs nowhere; treat a missing registry entry as incomplete, not optional.
 
 ---
 

@@ -25,16 +25,16 @@ updates:
 
   # ---------------------------------------------------------------------------
   # Dart packages. This repo is NOT a pub workspace: every pubspec.yaml resolves
-  # independently, so each package directory needs its own entry. Add a new
-  # directory here whenever a plugin is added under plugins/.
+  # independently, so each package directory needs its own entry.
+  #
+  # Two entries, and there should stay two: this repository is the platform and
+  # holds no plugins. The `/plugins/*` entries that used to be here outlived the
+  # directories they named.
   # ---------------------------------------------------------------------------
   - package-ecosystem: pub
     directories:
       - "/"                             # swayve_plugin_tools (root tool package)
       - "/packages/swayve_plugin_sdk"   # published SDK — keep dependency-free
-      - "/packages/swayve_plugin_registry"  # the first-party compiled catalogue
-      - "/plugins/example"
-      - "/plugins/youtube_music"
     schedule:
       interval: weekly
       day: monday
