@@ -39,7 +39,7 @@ would run — this repository has no PowerShell anywhere, on any platform, since
 `dart`/`git` behave identically wherever they run. There is nothing
 Linux-specific to translate.
 
-One real gotcha, discovered developing `youtube_music` under WSL and worth
+One real gotcha, discovered developing `nebula_music` under WSL and worth
 knowing before it costs you an afternoon: **`SwayveHostInfo.locale` is
 documented as a BCP-47 tag (`en-GB`) but is not guaranteed to actually be
 one.** A Linux dev machine — WSL especially, which ships with no system locale
@@ -109,7 +109,7 @@ points at the SDK: a **git dependency**.
 
 (There used to be a second form, a relative `path:` for a plugin living
 directly in this repository, back when `plugins/example` and
-`plugins/youtube_music` did. It's gone along with them — mentioned here only
+`plugins/nebula_music` did. It's gone along with them — mentioned here only
 so a reader of an old commit isn't confused by it.)
 
 ```yaml

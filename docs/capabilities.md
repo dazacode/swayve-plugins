@@ -194,7 +194,7 @@ Three obligations on the plugin:
   move on. `hints.allowWebEmbed == false` is the same case.
 - **Agree with the manifest.** A plugin declaring `"streamable": false` cannot
   return a streamable source. The host treats disagreement as a defect —
-  `plugins/youtube_music` asserts the manifest, its availability constant and
+  `plugins/nebula_music` asserts the manifest, its availability constant and
   every resolved source against each other in three separate tests.
 
 `SwayvePlaybackHints` carries `preferAudioOnly` (default `true` — Swayve is a
@@ -322,7 +322,7 @@ credentials the plugin does not have; the host turns that into the prompt.
 
 The corollary is worth stating, because it is easy to get backwards: **a plugin
 with no `authentication` capability must never throw
-`SwayvePluginAuthRequiredException`.** `plugins/youtube_music` deliberately maps
+`SwayvePluginAuthRequiredException`.** `plugins/nebula_music` deliberately maps
 HTTP 403 to `SwayvePluginUnavailableException`, because a 403 from an anonymous
 client is a regional or consent block rather than a lapsed session, and
 reporting auth-required would leave the host offering a sign-in button that

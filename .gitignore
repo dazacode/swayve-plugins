@@ -44,7 +44,7 @@ packages/**/pubspec.lock
 # pushing first.
 **/pubspec_overrides.yaml
 
-# Flutter (plugins/youtube_music may be a Flutter package)
+# Flutter (a plugin may be a Flutter package)
 .flutter-plugins
 .flutter-plugins-dependencies
 .metadata

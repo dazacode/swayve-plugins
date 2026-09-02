@@ -30,7 +30,7 @@ The trade is exactly what it looks like: `compiled` gives you real behaviour at
 the cost of shipping with the app; `bundled` gives you independent updates at
 the cost of not being able to run code.
 
-Both reference plugins in this repository — `example` and `youtube_music` — are
+Both reference plugins in this repository — `example` and `nebula_music` — are
 `runtime: compiled`. Their source lives here and is compiled into Swayve
 dev and test builds **through the SDK interfaces only**, never through a
 client-side special case for their ids.
@@ -46,11 +46,11 @@ client-side special case for their ids.
 | `linux` | ✅ | ✅ (declarative only) | |
 
 `platforms` must be non-empty and is a claim about where the plugin has actually
-been exercised, not a wish list. `youtube_music` and `soundcloud` both now list
+been exercised, not a wish list. `nebula_music` and `wavecast` both now list
 `["android", "ios", "windows", "linux"]` — but `linux` was added only once each
 plugin had actually been run against a Linux Swayve build, not the moment
 `flutter build linux` first succeeded. That caution paid off: doing so surfaced
-a real bug rather than a hypothetical one — `youtube_music`'s InnerTube
+a real bug rather than a hypothetical one — `nebula_music`'s upstream API
 requests were sent with an invalid language code on any host with no locale
 configured, WSL's default, because `SwayveHostInfo.locale` isn't guaranteed to
 actually be the well-formed BCP-47 tag its doc comment promises. See
@@ -63,7 +63,7 @@ prevent.
 At load time the host checks that `platforms` contains the running platform, and
 that the plugin's `runtime` is supported there. Failing either is a
 compatibility rejection with a user-readable reason —
-*"YouTube Music is not available on this device."* — not a crash. See
+*"Nebula Music is not available on this device."* — not a crash. See
 [versioning.md](versioning.md#the-compatibility-check-order).
 
 Note that no host loads `bundled` archives today, on any platform: the Swayve
@@ -104,7 +104,7 @@ So:
 - **The route to iOS is `compiled`.** If your plugin needs to run code on
   iPhone, its source belongs in this repository, reviewed, and compiled into the
   app. That is not a workaround — it is the supported path, and it is what
-  `youtube_music` does.
+  `nebula_music` does.
 
 ### Why the error and not a warning
 

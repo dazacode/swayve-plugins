@@ -83,7 +83,7 @@ void main() {
           'iconName': 'demo_source',
           'contentTypes': <String>['songs', 'videos'],
           'availability': 'signed_out',
-          'supportedHosts': <String>['youtube.com', 'youtu.be'],
+          'supportedHosts': <String>['nebula.example', 'nbla.example'],
         },
         capabilities: <String>['search', 'streaming'],
       );
@@ -97,7 +97,7 @@ void main() {
       );
       expect(read.availability, SwayveSourceAvailability.signedOut);
       expect(read.canSearch, isTrue);
-      expect(read.supportedHosts, <String>{'youtube.com', 'youtu.be'});
+      expect(read.supportedHosts, <String>{'nebula.example', 'nbla.example'});
     });
 
     test('reads a source block naming no hosts as supporting none', () {

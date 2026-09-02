@@ -38,7 +38,7 @@ So the format optimises for the two properties that *are* achievable:
 
 Neither hides anything, and neither is meant to. Confidentiality of plugin
 *source* is not a goal of this project — the reference plugins are Apache-2.0 in
-a public repository. What matters is that a user who installs "YouTube Music
+a public repository. What matters is that a user who installs "Nebula Music
 0.1.0" gets the artefact the author published, unmodified, and can be told when
 they have not.
 
@@ -50,7 +50,7 @@ gets the facilities its manifest declares, which the user can read.
 ## Archive layout
 
 ```
-youtube_music-0.1.0.swayveplugin
+nebula_music-0.1.0.swayveplugin
 ├── plugin.json          # byte-identical to the source manifest
 ├── integrity.json       # sha256 of every other file + canonical bundle digest
 ├── signature.json       # detached signature over the digest (may be unsigned)
@@ -203,19 +203,19 @@ explicit `--pubkey` to make a trust claim:
 
 ```bash
 # Checks hashes, digest and structure. An unsigned bundle is an INFO note.
-dart run tools/verify_package.dart dist/youtube_music-0.1.0.swayveplugin
+dart run tools/verify_package.dart dist/nebula_music-0.1.0.swayveplugin
 
 # Additionally checks the signature against a key you decided to trust.
 # --pubkey takes a file or a base64 literal, and must decode to 32 bytes.
-dart run tools/verify_package.dart dist/youtube_music-0.1.0.swayveplugin \
+dart run tools/verify_package.dart dist/nebula_music-0.1.0.swayveplugin \
   --pubkey keys/swayve.pub
 
 # Fail an unsigned bundle outright rather than noting it.
-dart run tools/verify_package.dart dist/youtube_music-0.1.0.swayveplugin \
+dart run tools/verify_package.dart dist/nebula_music-0.1.0.swayveplugin \
   --require-signature
 
 # Test path containment against the directory you will actually unpack into.
-dart run tools/verify_package.dart dist/youtube_music-0.1.0.swayveplugin \
+dart run tools/verify_package.dart dist/nebula_music-0.1.0.swayveplugin \
   --dest /var/swayve/plugins/pending
 ```
 
@@ -228,7 +228,7 @@ resolved against, and nothing is extracted.
 Sign with:
 
 ```bash
-dart run tools/package_plugin.dart plugins/youtube_music --key path/to/ed25519.key
+dart run tools/package_plugin.dart plugins/nebula_music --key path/to/ed25519.key
 ```
 
 **Key distribution is future work.** There is no key server, no trust store, no

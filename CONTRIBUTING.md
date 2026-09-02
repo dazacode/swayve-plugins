@@ -42,8 +42,9 @@ The manifest `id` is reverse-DNS, at least three segments, matching
 | `dev.<username>.swayve.*` | Community | Use your own GitHub username. `dev.alice.swayve.bandcamp`, not `com.bandcamp.plugin`. |
 
 Do not use a namespace belonging to a domain you do not control, and do not use
-a service's own reverse-DNS. `com.spotify.…` implies Spotify published it; that
-is a claim you cannot make, and it is the kind of thing that gets an entire
+a service's own reverse-DNS. `com.<theservice>.…` implies that service
+published it; that is a claim you cannot make, and it is the kind of thing that
+gets an entire
 plugin ecosystem into trouble rather than just one plugin.
 
 Other naming rules:
@@ -72,7 +73,7 @@ Review looks past "it validates" at whether the manifest is *honest*:
 - **`capabilities`** — declare what you implement and register. A declared
   capability with no registered provider is a defect; assert the two agree with
   `FakeSwayvePluginContext.registeredCapabilities`. Note that `webview` is a
-  capability as well as a permission — `plugins/youtube_music` declares it
+  capability as well as a permission — `plugins/nebula_music` declares it
   because its playback is a host-rendered web view, and omitting it would leave
   the `webview` permission unjustified.
 - **`permissions`** — declare the minimum, and be willing to declare **none**.
@@ -178,7 +179,7 @@ runner.
 Tests must not make real network calls. Use `FakeSwayveHttpClient`. A test that
 hits a live service is flaky by construction and will be asked to change. If
 your fixtures are modelled on an upstream's shape rather than captured from it,
-say so in your README the way `plugins/youtube_music` does — a green suite over
+say so in your README the way `plugins/nebula_music` does — a green suite over
 invented fixtures proves your parsers, not your request composition.
 
 See [docs/testing.md](docs/testing.md).
@@ -213,7 +214,7 @@ These are rejection criteria, not guidelines.
 | Downloading and executing code at runtime | The entire point of the `compiled`/`bundled` split. See [docs/platforms.md](docs/platforms.md). |
 | `eval`-like behaviour, or interpreting a remote payload as instructions | Same. A plugin's behaviour must be reviewable from its source. |
 | Reaching a host outside `network.hosts` | The declared list is the allow-list a user can read. Working around it defeats the mechanism. |
-| **A dependency that brings its own transport** | This is the one that catches people, because the package looks helpful. `dio`, `package:http`, a socket, a cookie jar — every request made through them bypasses `context.http`, and therefore bypasses the `network` permission *and* the host allow-list. The user would have approved a list of hostnames that no longer describes what the plugin can reach. That is a hole in the security model, not a trade-off. Check a candidate's transport before you check its API; `plugins/youtube_music` rejected four otherwise-reasonable packages on exactly this ground and wrote ~300 lines instead. |
+| **A dependency that brings its own transport** | This is the one that catches people, because the package looks helpful. `dio`, `package:http`, a socket, a cookie jar — every request made through them bypasses `context.http`, and therefore bypasses the `network` permission *and* the host allow-list. The user would have approved a list of hostnames that no longer describes what the plugin can reach. That is a hole in the security model, not a trade-off. Check a candidate's transport before you check its API; `plugins/nebula_music` rejected four otherwise-reasonable packages on exactly this ground and wrote ~300 lines instead. |
 | Sending user data to a host unrelated to the plugin's stated purpose | Analytics, telemetry, "anonymous usage stats" — none of it. A plugin talks to its own service and nothing else. |
 | Attempting to read another plugin's storage or credentials | Isolation is deliberate. Any attempt is a rejection, not a bug report. |
 | Logging tokens, headers or credential-bearing URLs | Logs are read by humans and attached to support tickets. |

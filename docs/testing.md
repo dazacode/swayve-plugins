@@ -146,7 +146,7 @@ http.enqueueHang();
 // Assert on what was actually sent.
 expect(http.requests, hasLength(1));
 expect(http.requests.single.method, 'POST');
-expect(http.requests.single.url.host, 'music.youtube.com');
+expect(http.requests.single.url.host, 'music.nebula.example');
 expect(http.lastRequest!.headers, isNot(contains('authorization')));
 expect(http.pending, 0);          // every queued result was consumed
 
@@ -282,7 +282,7 @@ test('the authorization header is never logged', () async {
 | Pagination: first page, middle page, last page (`cursor == null`, so `hasMore` is false) | Off-by-one cursor bugs are invisible until a user scrolls |
 | Empty result vs. error | `null`/empty means "not found"; a throw means "could not find out". The host renders them differently |
 | Malformed JSON | Must become `SwayvePluginMalformedResponseException`, not a crash |
-| HTTP 401 / 403 | Usually `SwayvePluginAuthRequiredException` — but only if your plugin *has* a sign-in flow. `plugins/youtube_music` maps 403 to unavailable precisely because it declares no `authentication` capability, and offering a sign-in button that leads nowhere is worse than a plain failure |
+| HTTP 401 / 403 | Usually `SwayvePluginAuthRequiredException` — but only if your plugin *has* a sign-in flow. `plugins/nebula_music` maps 403 to unavailable precisely because it declares no `authentication` capability, and offering a sign-in button that leads nowhere is worse than a plain failure |
 | HTTP 429 | `SwayvePluginRateLimitedException`, with `retryAfter` when the header is present |
 | Hang | Must not hang forever |
 | Cancellation | Must stop |
@@ -292,7 +292,7 @@ test('the authorization header is never logged', () async {
 | Availability mapping | `streamable`, `downloadable`, `onDevice` set independently and correctly |
 | Empty or malformed `host.locale` / `.region` | Not hypothetical — a real bug on Linux/WSL, whose default locale is frequently unset. See [development.md](development.md#platform-notes) and the `host:` override example above |
 
-The last two are worth copying from `plugins/youtube_music`, whose
+The last two are worth copying from `plugins/nebula_music`, whose
 `network_allowlist_test.dart` and `manifest_agreement_test.dart` read the real
 manifest at test time rather than trusting the plugin's own copy of its facts.
 
@@ -344,7 +344,7 @@ Search, browse and play.
 **Proves** principle 7 — every host→plugin call is timeout-bounded and
 error-isolated. The failing plugin goes to `degraded` and shows
 *"&lt;Plugin name&gt; — Temporarily unavailable"*; everything else keeps working.
-The plugin-side half runs today (`plugins/youtube_music`'s
+The plugin-side half runs today (`plugins/nebula_music`'s
 `failure_modes_test.dart` covers every exception mapping, the hang and
 cancellation on every provider); the host-side half is **pending host work**.
 

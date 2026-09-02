@@ -95,8 +95,8 @@ final class SwayveTrack {
   final Map<String, Object?> extra;
 
   /// Where a person, not the host, can view this track on the provider's own
-  /// service — its page on soundcloud.com, its watch page on
-  /// music.youtube.com. Not the [availability]/stream address a host plays
+  /// service — its page on wavecast.example, its watch page on
+  /// music.nebula.example. Not the [availability]/stream address a host plays
   /// from, and not stable in the way [id] must be: a host may show this to
   /// someone as "view on the service" or offer to copy it, and nothing else.
   final Uri? externalUrl;

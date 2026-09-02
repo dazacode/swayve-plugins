@@ -262,10 +262,10 @@ declared capability implies it, structurally or advisorily. Two exemptions:
 `network.hosts` is not paperwork. It is the list a user can read to know where a
 plugin's traffic goes, so what you leave out matters as much as what you put in.
 
-The reference plugin makes this concrete. `plugins/youtube_music` declares:
+The reference plugin makes this concrete. `plugins/nebula_music` declares:
 
 ```json
-"network": { "hosts": ["music.youtube.com", "www.youtube.com", "i.ytimg.com"] }
+"network": { "hosts": ["music.nebula.example", "www.nebula.example", "i.ytimg.com"] }
 ```
 
 Two decisions are visible in that line:
@@ -276,11 +276,11 @@ Two decisions are visible in that line:
   to the official embedded player instead. Declaring the CDN would advertise
   exactly the capability it does not have, and least privilege means not asking
   for reach you will not use.
-- **`www.youtube.com` is present** because that is where the embedded player
+- **`www.nebula.example` is present** because that is where the embedded player
   lives, and the plugin hands its URL to the host.
 
 The consequence is a real, visible functional gap, and it was left open rather
-than closed by widening the list: YouTube Music serves album and artist artwork
+than closed by widening the list: Nebula Music serves album and artist artwork
 from `lh3.googleusercontent.com`, which is not declared, so those references are
 **dropped and reported as `null`**. Closing that would be a one-line manifest
 change — and it is not made, because widening the hosts a plugin may reach is a
@@ -321,7 +321,7 @@ sees the key that identifies it.
 
 ```
 host storage
-├── app.swayve.plugins.youtube_music/
+├── app.swayve.plugins.nebula_music/
 │     region_cache      = "US"
 │     last_cursor       = "CAAQAA"
 ├── app.swayve.plugins.example/

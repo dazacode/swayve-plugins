@@ -23,7 +23,7 @@ not exist yet.
 
 | Example | Means |
 |---|---|
-| `youtube_music-v0.1.0` | version `0.1.0` of `plugins/youtube_music` |
+| `nebula_music-v0.1.0` | version `0.1.0` of `plugins/nebula_music` |
 | `example-v0.1.0` | version `0.1.0` of `plugins/example` |
 | `sdk-v0.1.0` | version `0.1.0` of `packages/swayve_plugin_sdk` |
 
@@ -50,11 +50,11 @@ dart run tools/validate_plugin.dart ../my_plugin --strict
 
 # 3. Build the artefacts you are about to publish, and verify them.
 dart run tools/package_plugin.dart ../my_plugin --out dist
-dart run tools/verify_package.dart dist/youtube_music-0.2.0.swayveplugin
+dart run tools/verify_package.dart dist/nebula_music-0.2.0.swayveplugin
 
 # 4. Merge to main, then tag the merge commit.
-git tag youtube_music-v0.2.0
-git push origin youtube_music-v0.2.0
+git tag nebula_music-v0.2.0
+git push origin nebula_music-v0.2.0
 ```
 
 Step 3 is not redundant with CI. Building locally first means a packaging
@@ -69,8 +69,8 @@ Every plugin release publishes exactly two files:
 | `<entrypoint>-<version>.swayveplugin` | The deterministic archive. See [packaging.md](packaging.md). |
 | `<entrypoint>-<version>.sha256` | The SHA-256 of the archive file, so the download can be checked before it is opened. |
 
-Note the asset names carry no `v` — the tag is `youtube_music-v0.2.0`, the
-artefact is `youtube_music-0.2.0.swayveplugin`. The artefact name is derived
+Note the asset names carry no `v` — the tag is `nebula_music-v0.2.0`, the
+artefact is `nebula_music-0.2.0.swayveplugin`. The artefact name is derived
 from the manifest by the packager, and the manifest holds a bare SemVer.
 
 Signed releases additionally carry a populated `signature.json` **inside** the

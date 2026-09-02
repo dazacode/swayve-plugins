@@ -1,7 +1,7 @@
 name: release
 
 # Publish a plugin bundle when a per-plugin tag is pushed, e.g.
-#   youtube_music-v0.1.0
+#   nebula_music-v0.1.0
 # The tag is the only trigger: nothing is ever published from a branch.
 on:
   push:
@@ -47,7 +47,7 @@ jobs:
           # entrypoint: ^[a-z][a-z0-9_]*$ (no hyphens), so the split is exact.
           pattern='^([a-z][a-z0-9_]*)-v([0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?)$'
           if [[ ! "$TAG" =~ $pattern ]]; then
-            echo "::error::Tag '$TAG' is not of the form <plugin>-v<semver>, e.g. youtube_music-v0.1.0"
+            echo "::error::Tag '$TAG' is not of the form <plugin>-v<semver>, e.g. nebula_music-v0.1.0"
             exit 1
           fi
           PLUGIN="${BASH_REMATCH[1]}"

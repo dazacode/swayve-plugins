@@ -52,8 +52,8 @@ appears anywhere outside the registry and the settings screen that lists
 installed plugins, the requirement has been violated.
 
 ```dart
-// WRONG — the client now contains YouTube Music's behaviour.
-if (plugin.id == 'app.swayve.plugins.youtube_music') { … }
+// WRONG — the client now contains Nebula Music's behaviour.
+if (plugin.id == 'app.swayve.plugins.nebula_music') { … }
 
 // RIGHT — the client contains "things that can search".
 for (final p in registry.providers<SwayveSearchProvider>()) { … }

@@ -127,8 +127,8 @@ Then rename the entrypoint function in `lib/` and update `examplePluginId`.
 `entrypoint` matching the directory name is rule 7 of the manifest validator and
 is an **error**, not a warning — it is the single most common first failure. Note
 that `entrypoint` names the directory and the Dart library, **not** the factory
-function: `youtube_music` declares `"entrypoint": "youtube_music"` and
-exports `createYouTubeMusicPlugin()`, because `youtube_music()` would violate
+function: `nebula_music` declares `"entrypoint": "nebula_music"` and
+exports `createNebulaMusicPlugin()`, because `nebula_music()` would violate
 `non_constant_identifier_names`.
 
 The full field reference is in [docs/plugin-manifest.md](docs/plugin-manifest.md);
@@ -254,13 +254,13 @@ dart run tools/package_plugin.dart ../my_plugin --out dist
 
 Validates first and refuses to package anything that fails. Emits a
 deterministic `dist/my_plugin-0.1.0.swayveplugin` alongside
-`dist/youtube_music-0.1.0.sha256`. Pass `--key path/to/ed25519.key` to produce a
+`dist/nebula_music-0.1.0.sha256`. Pass `--key path/to/ed25519.key` to produce a
 signed `signature.json` inside the archive.
 
 ### `verify_package`
 
 ```bash
-dart run tools/verify_package.dart dist/youtube_music-0.1.0.swayveplugin
+dart run tools/verify_package.dart dist/nebula_music-0.1.0.swayveplugin
 ```
 
 Checks the archive the way a host must before unpacking it: extraction safety
