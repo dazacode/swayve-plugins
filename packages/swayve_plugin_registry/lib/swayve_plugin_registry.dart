@@ -30,8 +30,7 @@ library;
 
 import 'package:ibroadcast/ibroadcast.dart'
     show createIBroadcastPlugin, kIBroadcastPluginId;
-import 'package:lyrics/lyrics.dart'
-    show createLyricsPlugin, kLyricsPluginId;
+import 'package:lyrics/lyrics.dart' show createLyricsPlugin, kLyricsPluginId;
 import 'package:visuals/visuals.dart'
     show createVisualsPlugin, kVisualsPluginId;
 import 'package:soundcloud/soundcloud.dart'
