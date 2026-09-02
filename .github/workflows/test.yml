@@ -47,7 +47,7 @@ jobs:
 
             # Flutter is needed only when the package depends on the Flutter SDK
             # ("sdk: flutter") or declares a top-level "flutter:" block.
-            # plugins/youtube_music may; the SDK and plugins/example must not.
+            # The SDK and the tooling package must not.
             runner="dart"
             if grep -Eq '^[[:space:]]+sdk:[[:space:]]*flutter[[:space:]]*$' "$pubspec" \
                || grep -Eq '^flutter:[[:space:]]*$' "$pubspec"; then

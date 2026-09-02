@@ -225,7 +225,7 @@ void main() {
         trackNumber: 1,
         discNumber: 1,
         isrc: 'US1234567890',
-        sourceUrl: Uri.parse('https://youtube.com/watch?v=abc'),
+        sourceUrl: Uri.parse('https://nebula.example/watch?v=abc'),
         providerId: 'yt123',
       );
       expect(
@@ -252,7 +252,7 @@ void main() {
         duration: const Duration(minutes: 7, seconds: 3),
         artwork: Uri.parse('https://example.com/art.jpg'),
         isrc: 'US1234567890',
-        sourceUrl: Uri.parse('https://youtube.com/watch?v=abc'),
+        sourceUrl: Uri.parse('https://nebula.example/watch?v=abc'),
         extra: const {'videoId': 'abc'},
       );
       final parsed = SwayveMetadataCandidate.fromJson(
@@ -650,8 +650,8 @@ void main() {
 
     test('SwayvePluginIdentity', () {
       final identity = SwayvePluginIdentity(
-        id: 'app.swayve.plugins.youtube_music',
-        name: 'YouTube Music',
+        id: 'app.swayve.plugins.nebula_music',
+        name: 'Nebula Music',
         version: Version.parse('0.1.0'),
         swayvePluginApi: 1,
         capabilities: const {

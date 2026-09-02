@@ -152,7 +152,7 @@ change.
   against an explicitly supplied `--pubkey`.
 - **`plugins/example`** — teaching-grade reference plugin. Implements search and
   catalog against an in-repo fixture with no network access.
-- **`plugins/youtube_music`** — reference integration at `0.1.0`, declaring
+- **`plugins/nebula_music`** — reference integration at `0.1.0`, declaring
   `search`, `catalog`, `streaming` and `artwork`; `runtime: compiled`.
 - **Documentation** — `docs/architecture.md`, `plugin-manifest.md`,
   `permissions.md`, `capabilities.md`, `packaging.md`, `platforms.md`,

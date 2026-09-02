@@ -1,4 +1,4 @@
-# Push local library to iBroadcast
+# Push local library to CloudLocker
 
 Status: **Phase 1 (SDK) implemented — see CHANGELOG.** The
 `personal_library_push` capability, `SwayveLibraryPushProvider`,
@@ -6,8 +6,8 @@ Status: **Phase 1 (SDK) implemented — see CHANGELOG.** The
 `swayve-plugins`; see this repository's `CHANGELOG.md` for the summary and
 [capabilities.md](../capabilities.md#personal_library_push) /
 [plugin-manifest.md](../plugin-manifest.md#personal_library_push-adds-no-manifest-block)
-for the shipped shape. The plugin work (a real `IBroadcastLibraryPushProvider`
-in `ibroadcast-swayve-plugin`) and the host work (a push screen in
+for the shipped shape. The plugin work (a real `CloudLockerLibraryPushProvider`
+in `cloudlocker-swayve-plugin`) and the host work (a push screen in
 `personalmusicsync`) are design only below — not yet built. This document is
 kept as the design record for all three; the two sketches were updated to
 match what actually shipped in the SDK, but the surrounding rationale is
@@ -15,11 +15,11 @@ unchanged from the original proposal.
 
 ## The problem this solves
 
-The `iBroadcast` plugin, just built, only pulls data **from** iBroadcast —
+The `CloudLocker` plugin, just built, only pulls data **from** CloudLocker —
 sign in, browse, stream, artwork, playlists. Every capability in this SDK, in
 fact, pulls from a plugin's service; nothing pushes local data **to** one.
 The user wants the reverse: push tracks from their local Swayve library up to
-their iBroadcast cloud storage, tagged so pushed content is identifiable,
+their CloudLocker cloud storage, tagged so pushed content is identifiable,
 with a choice about what to do with tracks that already exist remotely, and a
 real progress indication so a long multi-file operation never looks stuck.
 
@@ -87,7 +87,7 @@ abstract interface class SwayveLibraryPushProvider {
 }
 ```
 
-`dedupAlgorithm` and `knownUploadHashes` exist because iBroadcast's own
+`dedupAlgorithm` and `knownUploadHashes` exist because CloudLocker's own
 upload endpoint, hit with just credentials and no file, returns `{md5:
 [...]}` — hashes of everything already uploaded. That is genuinely a
 provider-specific fact, not something every push target will have, which is
@@ -101,7 +101,7 @@ There is no progress callback anywhere on this interface. See
 ```jsonc
 "capabilities": ["search", "catalog", "authentication", "personal_library", "personal_library_push"],
 "permissions": ["network", "external_auth"],
-"network": { "hosts": ["api.ibroadcast.com", "upload.ibroadcast.com"] }
+"network": { "hosts": ["api.cloudlocker.example", "upload.cloudlocker.example"] }
 ```
 
 No new manifest block. Unlike `session_capture`, which needed the host to
@@ -109,7 +109,7 @@ know in advance which hosts a capture flow would touch and which artifacts
 to extract, `personal_library_push` needs nothing from the manifest beyond
 the capability declaration itself and `network.hosts`, which already exists.
 Whatever a plugin wants to tag pushed content with — a fixed `"Swayve"`
-label, in iBroadcast's case — is the plugin's own business, expressed
+label, in CloudLocker's case — is the plugin's own business, expressed
 however it likes on its own side of `uploadTrack`, not something the host
 needs to model.
 
@@ -154,7 +154,7 @@ every other capability that touches `SwayveHttpClient`.
   of how many bytes it has sent so far — a host-side concern, not an SDK
   one, and not something this proposal's SDK surface reports at all.
 - **No second plugin gets this yet.** `personal_library_push` is being added
-  to the closed vocabulary because iBroadcast's plugin needs it, not because
+  to the closed vocabulary because CloudLocker's plugin needs it, not because
   a second consumer is queued up. The capability is generic — any plugin
   whose service accepts uploads can declare it — but nothing about this
   phase assumes or builds for a second one.
@@ -166,6 +166,6 @@ every other capability that touches `SwayveHttpClient`.
   I've pushed" facility is out of scope here.
 - **No implementation of the plugin or host pieces in this document's own
   scope.** Phase 1 (this repository's SDK) is what the interface above
-  actually is; the plugin (`ibroadcast-swayve-plugin`) and host
+  actually is; the plugin (`cloudlocker-swayve-plugin`) and host
   (`personalmusicsync`) pieces are separate, later phases, each with its own
   verification before it ships.

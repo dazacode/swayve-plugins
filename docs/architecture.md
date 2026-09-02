@@ -25,14 +25,14 @@ crosses it, in which direction, and why it was drawn where it was.
         │                                │
 ┌───────▼──────────────┐        ┌────────▼─────────────┐
 │  Plugin A            │        │  Plugin B            │
-│  youtube_music       │        │  example             │
+│  nebula_music       │        │  example             │
 │  implements          │        │  implements          │
 │  Search/Catalog/     │        │  Search/Catalog      │
 │  Stream/Artwork      │        │                      │
 └───────┬──────────────┘        └────────┬─────────────┘
         │ HTTPS from the user's device   │
 ┌───────▼──────────────┐        ┌────────▼─────────────┐
-│  music.youtube.com   │        │  (in-repo fixture,   │
+│  music.nebula.example   │        │  (in-repo fixture,   │
 │  *.googlevideo.com   │        │   no network)        │
 │  i.ytimg.com         │        │                      │
 └──────────────────────┘        └──────────────────────┘
@@ -157,12 +157,12 @@ an `if`, a feature flag, or a `Map<String, Widget>` in the client, the
 architecture has already failed and adding plugin number three will hurt.
 
 ```dart
-// WRONG — the host now knows what YouTube Music is.
+// WRONG — the host now knows what Nebula Music is.
 // Adding a second streaming plugin means editing this function.
 // Removing the plugin means editing this function.
 // The plugin's behaviour is defined in the host, not in the plugin.
-if (plugin.id == 'app.swayve.plugins.youtube_music') {
-  results.addAll(await youTubeSearch(query));
+if (plugin.id == 'app.swayve.plugins.nebula_music') {
+  results.addAll(await nebulaSearch(query));
 }
 ```
 
@@ -176,7 +176,7 @@ final results = await Future.wait([
 ```
 
 The same rule applies to playback (`providers<SwayveStreamProvider>()`, not
-"if it's a YouTube URL"), to artwork, and to how plugin-backed sources appear in
+"if it's a Nebula URL"), to artwork, and to how plugin-backed sources appear in
 Explore — which is why the client's existing `_groupBySource(...)` grouping is
 the right insertion point: it already buckets by library id rather than by
 provider identity. See [host-integration.md](host-integration.md).
@@ -202,7 +202,7 @@ reason. Never a stack trace, never a crash, never a silent disappearance.
 | 2 | `readManifest` | Read and JSON-parse `plugin.json`. | *"This plugin could not be read."* Almost always a corrupt download or a hand-edited manifest. |
 | 3 | `validateSchema` | Check the manifest against the JSON Schema and the ten cross-field rules. | *"This plugin's configuration is not valid."* The developer sees the specific rule; the user sees one sentence. |
 | 4 | `verifyIntegrity` | Recompute file hashes and the bundle digest; check the signature if present. | *"This plugin failed its integrity check and was not loaded."* This is a security stop, not a warning — the host must not offer "load anyway". |
-| 5 | `checkCompatibility` | In order: `schemaVersion` → `swayvePluginApi` vs host → `minimumSwayveVersion` vs host version → `platforms` contains host platform → `runtime` supported on host platform. | The most specific reachable message wins, e.g. *"YouTube Music requires a newer version of Swayve."* or *"YouTube Music is not available on this device."* See [versioning.md](versioning.md). |
+| 5 | `checkCompatibility` | In order: `schemaVersion` → `swayvePluginApi` vs host → `minimumSwayveVersion` vs host version → `platforms` contains host platform → `runtime` supported on host platform. | The most specific reachable message wins, e.g. *"Nebula Music requires a newer version of Swayve."* or *"Nebula Music is not available on this device."* See [versioning.md](versioning.md). |
 | 6 | `resolvePermissions` | Turn declared permissions into the concrete facilities the context will expose. Undeclared facilities throw `SwayvePermissionDeniedException` on access. | Nothing user-visible on success. On refusal, the plugin is disabled with the reason naming the permission. |
 | 7 | `load` | Materialise the plugin object via its `SwayvePluginFactory`. | *"&lt;Plugin name&gt; — Temporarily unavailable."* A throwing factory is a defect, not a configuration problem. |
 | 8 | `initialize` | Call `SwayvePlugin.initialize(context)`, bounded by `SwayveTimeouts.initialize` (8s). | Same message. A slow `initialize` is treated as a failed `initialize`; the host does not wait for a plugin that will not answer. |

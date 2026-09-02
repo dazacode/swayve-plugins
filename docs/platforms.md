@@ -30,7 +30,7 @@ The trade is exactly what it looks like: `compiled` gives you real behaviour at
 the cost of shipping with the app; `bundled` gives you independent updates at
 the cost of not being able to run code.
 
-Both reference plugins in this repository — `example` and `youtube_music` — are
+Both reference plugins in this repository — `example` and `nebula_music` — are
 `runtime: compiled`. Their source lives here and is compiled into Swayve
 dev and test builds **through the SDK interfaces only**, never through a
 client-side special case for their ids.
@@ -46,11 +46,11 @@ client-side special case for their ids.
 | `linux` | ✅ | ✅ (declarative only) | |
 
 `platforms` must be non-empty and is a claim about where the plugin has actually
-been exercised, not a wish list. `youtube_music` and `soundcloud` both now list
+been exercised, not a wish list. `nebula_music` and `wavecast` both now list
 `["android", "ios", "windows", "linux"]` — but `linux` was added only once each
 plugin had actually been run against a Linux Swayve build, not the moment
 `flutter build linux` first succeeded. That caution paid off: doing so surfaced
-a real bug rather than a hypothetical one — `youtube_music`'s InnerTube
+a real bug rather than a hypothetical one — `nebula_music`'s upstream API
 requests were sent with an invalid language code on any host with no locale
 configured, WSL's default, because `SwayveHostInfo.locale` isn't guaranteed to
 actually be the well-formed BCP-47 tag its doc comment promises. See
@@ -63,7 +63,7 @@ prevent.
 At load time the host checks that `platforms` contains the running platform, and
 that the plugin's `runtime` is supported there. Failing either is a
 compatibility rejection with a user-readable reason —
-*"YouTube Music is not available on this device."* — not a crash. See
+*"Nebula Music is not available on this device."* — not a crash. See
 [versioning.md](versioning.md#the-compatibility-check-order).
 
 Note that no host loads `bundled` archives today, on any platform: the Swayve
@@ -104,7 +104,7 @@ So:
 - **The route to iOS is `compiled`.** If your plugin needs to run code on
   iPhone, its source belongs in this repository, reviewed, and compiled into the
   app. That is not a workaround — it is the supported path, and it is what
-  `youtube_music` does.
+  `nebula_music` does.
 
 ### Why the error and not a warning
 
@@ -167,17 +167,18 @@ at build time. It does not by itself say *which* binaries link it in — that is
 a separate, deliberately manual step, and it is worth being precise about it so
 "my plugin is compiled" and "my plugin runs" are not confused.
 
-**First-party plugins** (this repository) are activated through
-`packages/swayve_plugin_registry` — a small pure-Dart package that depends on
-every first-party compiled plugin and re-exports one flat map,
+**First-party plugins** are activated through a `swayve_plugin_registry`
+package — a small pure-Dart package that depends on every first-party compiled
+plugin and re-exports one flat map,
 `firstPartyCompiledPlugins: Map<String, SwayvePluginFactory>`, keyed by
-manifest id. A host app depends on exactly two things from this platform,
-**permanently**, no matter how large the first-party catalogue grows:
-`swayve_plugin_sdk` (the interfaces) and `swayve_plugin_registry` (what's
-compiled in). Adding `youtube_music` to the registry did not, and a future
-`jiosaavn` will not, require touching any host app's `pubspec.yaml` or its
-plugin-loading code. See `packages/swayve_plugin_registry/README.md` for the
-two-line process of adding a first-party plugin to the map.
+manifest id. It lives with the plugins it catalogues, not in this repository:
+the platform has no business knowing which plugins exist. A host app depends on
+exactly two things **permanently**, no matter how large that catalogue grows:
+`swayve_plugin_sdk` (the interfaces, from here) and a `swayve_plugin_registry`
+(what's compiled in, from there). Adding a plugin to the registry does not
+require touching any host app's `pubspec.yaml` or its plugin-loading code. See
+that package's own `README.md` for the two-line process of adding a plugin to
+the map.
 
 A host resolves a verified bundle by looking its manifest id up in
 `firstPartyCompiledPlugins`. **An id with no entry is not a validation

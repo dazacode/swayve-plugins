@@ -9,7 +9,7 @@ import 'models/availability.dart';
 /// itself.
 ///
 /// Principle 2 in its sharpest form: the host knows "render this embed", not
-/// "this is YouTube". A plugin must check `SwayveHostInfo.supportedEmbeds`
+/// "this is Nebula". A plugin must check `SwayveHostInfo.supportedEmbeds`
 /// before returning one — an embed kind the host cannot render is an
 /// unplayable track, and the plugin should say so rather than hand over
 /// something that will fail at playback time.

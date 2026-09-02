@@ -27,8 +27,8 @@ On Linux, install the Dart SDK however your distro prefers — the
 [archive tarball](https://dart.dev/get-dart), or `sudo apt install dart` on
 Debian/Ubuntu once Dart's own apt repository is added, per
 [dart.dev/get-dart](https://dart.dev/get-dart). No `PATH` quirks or Flutter
-dependency to work around: this repository and `Daza-Swayve-plugins` are pure
-Dart packages, not Flutter apps, so nothing here needs the Flutter SDK, a
+dependency to work around: this repository and the plugins built against it
+are pure Dart packages, not Flutter apps, so nothing here needs the Flutter SDK, a
 Linux desktop toolchain, or GTK/GStreamer — that list is `swayve-client`'s, for
 building the host app itself, not for writing a plugin against it.
 
@@ -39,16 +39,14 @@ would run — this repository has no PowerShell anywhere, on any platform, since
 `dart`/`git` behave identically wherever they run. There is nothing
 Linux-specific to translate.
 
-One real gotcha, discovered developing `youtube_music` under WSL and worth
+One real gotcha, discovered developing `nebula_music` under WSL and worth
 knowing before it costs you an afternoon: **`SwayveHostInfo.locale` is
 documented as a BCP-47 tag (`en-GB`) but is not guaranteed to actually be
 one.** A Linux dev machine — WSL especially, which ships with no system locale
 configured by default — can have a host pass through an empty string rather
-than a well-formed tag. `youtube_music`'s `language` getter
-(`youtube_music/lib/src/innertube_client.dart` in `Daza-Swayve-plugins`) is
-the fix to copy: trim it, fall back to `'en'` on empty, and take only the
-primary subtag before `-`/`_` rather than trusting the whole string is
-present and well-shaped. Any provider that builds a request from `host.locale`
+than a well-formed tag. The fix is to defend at the boundary: trim it, fall
+back to `'en'` on empty, and take only the primary subtag before `-`/`_`
+rather than trusting the whole string is present and well-shaped. Any provider that builds a request from `host.locale`
 or `host.region` should do the same defensive parsing rather than assume the
 doc comment's example format always holds — see
 [testing.md](testing.md#what-to-test) for how to reproduce this in a test
@@ -88,9 +86,9 @@ cd packages/swayve_plugin_sdk && dart pub get && cd ../..
 ```
 
 This repository has no plugins of its own to `pub get` into — if you're
-working on one, clone
-[`Daza-Swayve-plugins`](https://github.com/dazacode/Daza-Swayve-plugins)
-beside it and `dart pub get` there instead.
+working on one, clone it beside this one and `dart pub get` there instead.
+[`swayve-plugin-example`](https://github.com/dazacode/swayve-plugin-example) is a
+plugin you can clone and run straight away.
 
 Verify the checkout is healthy before changing anything:
 
@@ -99,19 +97,19 @@ dart test
 ```
 
 `tools/validate_plugin.dart --all` has nothing to validate here without a
-`--plugins-root` pointing at a `Daza-Swayve-plugins` checkout — see below.
+`--plugins-root` pointing at a directory of plugins — see below.
 
 ---
 
 ## How the SDK is consumed
 
 A plugin's only dependency is `swayve_plugin_sdk`. This repository holds no
-plugins of its own any more — `Daza-Swayve-plugins` does — so there is only
-one supported way a plugin points at the SDK: a **git dependency**.
+plugins of its own any more, so there is only one supported way a plugin
+points at the SDK: a **git dependency**.
 
 (There used to be a second form, a relative `path:` for a plugin living
 directly in this repository, back when `plugins/example` and
-`plugins/youtube_music` did. It's gone along with them — mentioned here only
+`plugins/nebula_music` did. It's gone along with them — mentioned here only
 so a reader of an old commit isn't confused by it.)
 
 ```yaml
@@ -203,9 +201,9 @@ final class MyCatalogProvider implements SwayveCatalogProvider {
 ### 2 · Validate — works today
 
 ```bash
-dart run tools/validate_plugin.dart ../Daza-Swayve-plugins/my_plugin
-dart run tools/validate_plugin.dart ../Daza-Swayve-plugins/my_plugin --strict --json
-(cd ../Daza-Swayve-plugins/my_plugin && dart format . && dart analyze)
+dart run tools/validate_plugin.dart ../my_plugin
+dart run tools/validate_plugin.dart ../my_plugin --strict --json
+(cd ../my_plugin && dart format . && dart analyze)
 ```
 
 `--strict` turns warnings into errors and is what CI runs, so run it before you
@@ -246,7 +244,7 @@ faster than any of the above and it is the only step that will still be here
 after every refactor:
 
 ```bash
-cd ../Daza-Swayve-plugins/my_plugin && dart test
+cd ../my_plugin && dart test
 ```
 
 ```dart
@@ -307,10 +305,10 @@ repository.
 | `dart format .` | Format. 80 columns, the Dart default. |
 | `dart analyze` | Must report **zero** issues, not "no errors". |
 | `dart test` | Tool tests, from the repository root. |
-| `cd ../Daza-Swayve-plugins/my_plugin && dart test` | One plugin's tests. Each package resolves its own pubspec, so tests run from inside it — `dart test` has no `--directory` flag. |
-| `dart run tools/validate_plugin.dart ../Daza-Swayve-plugins/my_plugin` | Validate one plugin. Takes several directories at once. |
-| `dart run tools/validate_plugin.dart --all --plugins-root ../Daza-Swayve-plugins` | Validate every plugin in a `Daza-Swayve-plugins` checkout. `--plugins-root <dir>` changes what `--all` scans; there is no `plugins/` in *this* repo to default to any more. |
-| `dart run tools/package_plugin.dart ../Daza-Swayve-plugins/my_plugin --out dist` | Validate, then build a deterministic `.swayveplugin` + `.sha256`. `--key <file>` signs it. |
+| `cd ../my_plugin && dart test` | One plugin's tests. Each package resolves its own pubspec, so tests run from inside it — `dart test` has no `--directory` flag. |
+| `dart run tools/validate_plugin.dart ../my_plugin` | Validate one plugin. Takes several directories at once. |
+| `dart run tools/validate_plugin.dart --all --plugins-root ../plugins` | Validate every plugin in a directory of them. `--plugins-root <dir>` changes what `--all` scans; there is no `plugins/` in *this* repo to default to any more. |
+| `dart run tools/package_plugin.dart ../my_plugin --out dist` | Validate, then build a deterministic `.swayveplugin` + `.sha256`. `--key <file>` signs it. |
 | `dart run tools/verify_package.dart dist/my_plugin-0.1.0.swayveplugin` | Verify hashes, digest and archive structure. `--pubkey`, `--require-signature` and `--dest` refine it. |
 
 All three tools accept `--json`, `--quiet`, `--strict` and `--help`.
@@ -323,9 +321,9 @@ Exit codes: `0` OK · `1` failed · `2` bad usage · `3` internal error.
 ```bash
 dart format .
 dart analyze
-dart run tools/validate_plugin.dart --all --strict --plugins-root ../Daza-Swayve-plugins
+dart run tools/validate_plugin.dart --all --strict --plugins-root ../plugins
 dart test                              # from the repo root: swayve_plugin_tools
-(cd ../Daza-Swayve-plugins/my_plugin && dart test)
+(cd ../my_plugin && dart test)
 ```
 
 CI runs `dart analyze --fatal-infos`, so treat an info as a failure locally too.

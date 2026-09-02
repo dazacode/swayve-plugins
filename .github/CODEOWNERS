@@ -8,7 +8,6 @@
 # Public contract surfaces — changes here are API changes for third parties.
 /schema/                            @dazacode
 /packages/swayve_plugin_sdk/        @dazacode
-/packages/swayve_plugin_registry/   @dazacode
 /docs/                              @dazacode
 
 # Tooling that produces published artifacts (determinism, integrity, signing).

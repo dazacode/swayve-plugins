@@ -71,7 +71,7 @@ everything it supplies leaves through a provider. There is no other seam.
    to build or run.
 2. **The host has no hardcoded knowledge of any plugin.** It resolves behaviour
    through the provider interfaces and nothing else — there is no place for
-   `if (plugin.id == 'youtube_music')`.
+   `if (plugin.id == 'nebula_music')`.
 3. **Plugins talk to their own services from the user's device.** Swayve hosts
    no per-plugin proxy.
 4. **Permissions, not encryption, are the security model.** A facility a plugin

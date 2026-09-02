@@ -32,8 +32,8 @@ releases: a plugin build, a client build.
 ### `version`
 
 The plugin's own release number, strict SemVer 2.0.0. It is the version in the
-release tag (`youtube_music-v0.1.0`) and in the artefact name
-(`youtube_music-0.1.0.swayveplugin`).
+release tag (`nebula_music-v0.1.0`) and in the artefact name
+(`nebula_music-0.1.0.swayveplugin`).
 
 A `0.x` version emits an advisory diagnostic at validation:
 
@@ -144,10 +144,10 @@ is wrong — and the first failure is always the most fundamental one.
 | # | Check | Rejection reason shown |
 |---|---|---|
 | 1 | `schemaVersion` is understood by this host | *"This plugin was made for a newer version of Swayve."* |
-| 2 | `swayvePluginApi` ≤ the host's API level | *"YouTube Music requires a newer version of Swayve."* |
-| 3 | `minimumSwayveVersion` ≤ the host's version | *"YouTube Music requires Swayve 1.2 or newer."* |
-| 4 | `platforms` contains the host platform | *"YouTube Music is not available on this device."* |
-| 5 | `runtime` is supported on this host platform | *"YouTube Music is not supported on this device."* |
+| 2 | `swayvePluginApi` ≤ the host's API level | *"Nebula Music requires a newer version of Swayve."* |
+| 3 | `minimumSwayveVersion` ≤ the host's version | *"Nebula Music requires Swayve 1.2 or newer."* |
+| 4 | `platforms` contains the host platform | *"Nebula Music is not available on this device."* |
+| 5 | `runtime` is supported on this host platform | *"Nebula Music is not supported on this device."* |
 
 Why this order and not another:
 
@@ -176,7 +176,7 @@ An incompatible plugin produces one sentence the user can act on. Never a stack
 trace, never an error code, never a crash, and never silence.
 
 ```
-YouTube Music requires a newer version of Swayve.
+Nebula Music requires a newer version of Swayve.
 ```
 
 The rules the host follows:
@@ -196,7 +196,7 @@ The rules the host follows:
 
 Contrast with a *runtime* failure, which is a different state and a different
 message: a plugin that loaded and then threw shows
-*"YouTube Music — Temporarily unavailable"* and stays loaded in `degraded`. The
+*"Nebula Music — Temporarily unavailable"* and stays loaded in `degraded`. The
 distinction is real — "will never work here" versus "did not work just now" —
 and the host should not blur it.
 

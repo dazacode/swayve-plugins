@@ -4,14 +4,13 @@ A `.swayveplugin` is a deterministic ZIP archive carrying a plugin, its assets,
 its licences, a hash manifest and an optional signature.
 
 ```bash
-dart run tools/package_plugin.dart ../Daza-Swayve-plugins/youtube_music --out dist
-dart run tools/verify_package.dart dist/youtube_music-0.1.0.swayveplugin
+dart run tools/package_plugin.dart ../my_plugin --out dist
+dart run tools/verify_package.dart dist/my_plugin-0.1.0.swayveplugin
 ```
 
-(`youtube_music` here — like every plugin path in this document — lives in
-[`Daza-Swayve-plugins`](https://github.com/dazacode/Daza-Swayve-plugins),
-not in this repository; the examples assume a checkout of it beside this
-one.)
+(Every plugin path in this document refers to a plugin checkout beside this
+one, not to anything inside this repository — no plugin lives here. Try the
+commands against [`swayve-plugin-example`](https://github.com/dazacode/swayve-plugin-example).)
 
 `package_plugin` validates before it packages and refuses to produce an archive
 from a manifest that fails. There is no `--force`.
@@ -39,7 +38,7 @@ So the format optimises for the two properties that *are* achievable:
 
 Neither hides anything, and neither is meant to. Confidentiality of plugin
 *source* is not a goal of this project — the reference plugins are Apache-2.0 in
-a public repository. What matters is that a user who installs "YouTube Music
+a public repository. What matters is that a user who installs "Nebula Music
 0.1.0" gets the artefact the author published, unmodified, and can be told when
 they have not.
 
@@ -51,7 +50,7 @@ gets the facilities its manifest declares, which the user can read.
 ## Archive layout
 
 ```
-youtube_music-0.1.0.swayveplugin
+nebula_music-0.1.0.swayveplugin
 ├── plugin.json          # byte-identical to the source manifest
 ├── integrity.json       # sha256 of every other file + canonical bundle digest
 ├── signature.json       # detached signature over the digest (may be unsigned)
@@ -204,19 +203,19 @@ explicit `--pubkey` to make a trust claim:
 
 ```bash
 # Checks hashes, digest and structure. An unsigned bundle is an INFO note.
-dart run tools/verify_package.dart dist/youtube_music-0.1.0.swayveplugin
+dart run tools/verify_package.dart dist/nebula_music-0.1.0.swayveplugin
 
 # Additionally checks the signature against a key you decided to trust.
 # --pubkey takes a file or a base64 literal, and must decode to 32 bytes.
-dart run tools/verify_package.dart dist/youtube_music-0.1.0.swayveplugin \
+dart run tools/verify_package.dart dist/nebula_music-0.1.0.swayveplugin \
   --pubkey keys/swayve.pub
 
 # Fail an unsigned bundle outright rather than noting it.
-dart run tools/verify_package.dart dist/youtube_music-0.1.0.swayveplugin \
+dart run tools/verify_package.dart dist/nebula_music-0.1.0.swayveplugin \
   --require-signature
 
 # Test path containment against the directory you will actually unpack into.
-dart run tools/verify_package.dart dist/youtube_music-0.1.0.swayveplugin \
+dart run tools/verify_package.dart dist/nebula_music-0.1.0.swayveplugin \
   --dest /var/swayve/plugins/pending
 ```
 
@@ -229,7 +228,7 @@ resolved against, and nothing is extracted.
 Sign with:
 
 ```bash
-dart run tools/package_plugin.dart plugins/youtube_music --key path/to/ed25519.key
+dart run tools/package_plugin.dart plugins/nebula_music --key path/to/ed25519.key
 ```
 
 **Key distribution is future work.** There is no key server, no trust store, no

@@ -18,7 +18,7 @@ body:
     attributes:
       label: Plugin id
       description: The `id` field from the plugin's `plugin.json`.
-      placeholder: app.swayve.plugins.youtube_music
+      placeholder: app.swayve.plugins.nebula_music
     validations:
       required: true
 

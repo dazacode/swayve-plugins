@@ -9,10 +9,9 @@ to be complete, honest and machine-checkable on its own.
 - Local copy: [`schema/swayve-plugin.schema.json`](../schema/swayve-plugin.schema.json),
   with a companion [`schema/README.md`](../schema/README.md)
 
-> Examples below reference `plugins/example` and `plugins/youtube_music` as
-> worked cases. Both now live in
-> [`Daza-Swayve-plugins`](https://github.com/dazacode/Daza-Swayve-plugins),
-> not in this repository — the reasoning still applies, only the path changed.
+> Examples below name plugin directories as worked cases. No plugin lives in
+> this repository — see [`swayve-plugin-example`](https://github.com/dazacode/swayve-plugin-example)
+> for one you can read and run. The reasoning applies whatever the path is.
 
 `additionalProperties: false` applies at the top level **and inside every nested
 object**. An unrecognised key is an error, not a comment. This is deliberate: a
@@ -24,7 +23,7 @@ point your editor at the schema file instead of having the file declare itself.
 Validate with:
 
 ```bash
-dart run tools/validate_plugin.dart ../Daza-Swayve-plugins/my_plugin
+dart run tools/validate_plugin.dart ../my_plugin
 ```
 
 ---
@@ -59,15 +58,15 @@ exactly that: `"permissions": []`, and it passes `--strict` clean.
 
 1. the plugin's **directory** under `plugins/` — enforced as an error by the
    validator (`directory_name_mismatch`);
-2. the plugin's **Dart library**, e.g. `"youtube_music"` ⇒
-   `package:youtube_music/youtube_music.dart`.
+2. the plugin's **Dart library**, e.g. `"nebula_music"` ⇒
+   `package:nebula_music/nebula_music.dart`.
 
 The registration symbol — the `SwayvePluginFactory` the host calls — is a
 separate, ordinary Dart identifier. `plugins/example` happens to name its
 factory `example()`, matching the entrypoint, because that is a legal
-lowerCamelCase identifier. `plugins/youtube_music` cannot: `youtube_music()`
+lowerCamelCase identifier. `plugins/nebula_music` cannot: `nebula_music()`
 would violate `non_constant_identifier_names` and fail this repository's
-analysis baseline, so its factory is **`createYouTubeMusicPlugin()`**.
+analysis baseline, so its factory is **`createNebulaMusicPlugin()`**.
 
 Do not assume the factory name from the manifest. The manifest names the library;
 the library exports whatever it exports.
@@ -91,9 +90,9 @@ the library exports whatever it exports.
 
 ```jsonc
 "source": {
-  "sourceId": "soundcloud",          // required; ^[a-z][a-z0-9_]*$, max 64
-  "displayName": "SoundCloud",       // optional; falls back to sourceId
-  "iconName": "soundcloud",          // optional; a glyph name, NOT a path
+  "sourceId": "wavecast",          // required; ^[a-z][a-z0-9_]*$, max 64
+  "displayName": "Wavecast",       // optional; falls back to sourceId
+  "iconName": "wavecast",          // optional; a glyph name, NOT a path
   "contentTypes": ["songs", "artists"],   // optional; songs|albums|artists|videos
   "availability": "ready"            // optional; a declared default, see below
 }
@@ -160,7 +159,7 @@ The reference plugin takes this seriously in both directions — see
 
 ```jsonc
 "session_capture": {
-  "hosts": ["music.youtube.com"],           // required; scopes the capture flow
+  "hosts": ["music.nebula.example"],           // required; scopes the capture flow
   "capture": [
     { "from": "cookie_header", "as_secret": "session_cookie" },
     { "from": "page_script:youtube_page_id", "as_secret": "page_id" }
@@ -207,7 +206,7 @@ interface this capability drives.
 
 ## Complete annotated example
 
-This is `plugins/youtube_music/plugin.json`, with comments added. JSON does not
+This is `plugins/nebula_music/plugin.json`, with comments added. JSON does not
 support comments — the real file has none.
 
 ```jsonc
@@ -218,10 +217,10 @@ support comments — the real file has none.
   // Reverse-DNS id. `app.swayve.plugins.*` is reserved for first-party plugins;
   // community plugins use `dev.<username>.swayve.*`. The last segment matches
   // `entrypoint` by convention (rule 6).
-  "id": "app.swayve.plugins.youtube_music",
+  "id": "app.swayve.plugins.nebula_music",
 
-  "name": "YouTube Music",
-  "description": "Adds YouTube Music search, browsing and playback to Swayve.",
+  "name": "Nebula Music",
+  "description": "Adds Nebula Music search, browsing and playback to Swayve.",
 
   // The plugin's own version. Independent of every other version in this file.
   "version": "0.1.0",
@@ -234,7 +233,7 @@ support comments — the real file has none.
   },
 
   "license": "Apache-2.0",
-  "homepage": "https://github.com/dazacode/swayve-plugins/tree/main/plugins/youtube_music",
+  "homepage": "https://github.com/dazacode/swayve-plugins/tree/main/plugins/nebula_music",
   "repository": "https://github.com/dazacode/swayve-plugins",
 
   // SDK major API level this plugin was written against.
@@ -265,9 +264,9 @@ support comments — the real file has none.
   // `network` for the API calls, `webview` for the embedded player.
   "permissions": ["network", "webview"],
 
-  // Names the directory (plugins/youtube_music/, rule 7) and the Dart library.
-  // NOT the factory function, which is createYouTubeMusicPlugin().
-  "entrypoint": "youtube_music",
+  // Names the directory (plugins/nebula_music/, rule 7) and the Dart library.
+  // NOT the factory function, which is createNebulaMusicPlugin().
+  "entrypoint": "nebula_music",
 
   // Ceiling for what this plugin can offer. Downloads are off: playback is a
   // web embed, which is a page to render, not bytes to keep.
@@ -275,10 +274,10 @@ support comments — the real file has none.
 
   // The complete outbound allow-list. `*.googlevideo.com` is deliberately
   // absent — it is the media CDN reached only by stream extraction, which this
-  // plugin refuses to do. `www.youtube.com` is present because that is where
+  // plugin refuses to do. `www.nebula.example` is present because that is where
   // the official embedded player lives.
   "network": {
-    "hosts": ["music.youtube.com", "www.youtube.com", "i.ytimg.com"]
+    "hosts": ["music.nebula.example", "www.nebula.example", "i.ytimg.com"]
   },
 
   // Advisory bounds for a single request and a whole operation.
@@ -291,7 +290,7 @@ support comments — the real file has none.
       "id": "region",
       "type": "select",
       "label": "Region",
-      "description": "Catalogue region sent to YouTube Music. Availability is regional.",
+      "description": "Catalogue region sent to Nebula Music. Availability is regional.",
       "default": "US",
       "options": [
         { "value": "US", "label": "United States" },
@@ -301,7 +300,7 @@ support comments — the real file has none.
     }
   ],
 
-  "keywords": ["youtube", "music", "streaming", "search", "catalog"],
+  "keywords": ["nebula", "music", "streaming", "search", "catalog"],
 
   // Relative, under assets/, .png or .svg. Rule 10 rejects anything else.
   "icon": "assets/icon.svg"
@@ -493,7 +492,7 @@ guarantees a plugin that silently does nothing.
 ### 6. `entrypoint` should equal the `id`'s last segment — WARNING
 
 ```
-  WARNING entrypoint: 'ytmusic' does not match the last segment of id ('youtube_music'); they should be the same name
+  WARNING entrypoint: 'ytmusic' does not match the last segment of id ('nebula_music'); they should be the same name
 ```
 
 Code: `entrypoint_id_mismatch`. Not fatal, because an id is forever and an
@@ -502,7 +501,7 @@ entrypoint is a name, but a mismatch makes every log line harder to read.
 ### 7. Directory name must equal `entrypoint` — ERROR
 
 ```
-  ERROR   entrypoint: the plugin directory is named 'ytmusic' but entrypoint is 'youtube_music'; they must be identical
+  ERROR   entrypoint: the plugin directory is named 'ytmusic' but entrypoint is 'nebula_music'; they must be identical
 ```
 
 Code: `directory_name_mismatch`. The most common first failure when copying
@@ -590,7 +589,7 @@ adds.
 ### Reading the output
 
 ```
-plugins/youtube_music
+plugins/nebula_music
   ERROR   capabilities: 'webview' requires permission 'webview'   (plugin.json:15)
   WARNING network: permission declared but no network.hosts listed
   INFO    version 0.1.0 is pre-1.0; the plugin API surface is unstable

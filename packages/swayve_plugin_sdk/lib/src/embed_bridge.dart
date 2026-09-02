@@ -69,8 +69,8 @@ abstract final class SwayveEmbedBridge {
   /// Seeks to a position, in **seconds** as a number.
   ///
   /// Seconds rather than milliseconds because every web media API in existence
-  /// — `HTMLMediaElement.currentTime`, the YouTube and Vimeo player APIs, the
-  /// Spotify embed — measures in seconds, and a bridge that converted at the
+  /// — `HTMLMediaElement.currentTime`, and every major embedded player API
+  /// built over it — measures in seconds, and a bridge that converted at the
   /// boundary would make every adapter convert it back.
   static const String seek = 'seek';
 

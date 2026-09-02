@@ -62,13 +62,13 @@ final class SwayveSourceDescriptor {
   /// it must survive the plugin being updated, disabled and switched back on.
   final String sourceId;
 
-  /// What a person calls this service — *YouTube Music*, *SoundCloud*. Never a
+  /// What a person calls this service — *Nebula Music*, *Wavecast*. Never a
   /// package name, never an id.
   ///
   /// Kept separate from the manifest's `name`, which names the plugin. They are
   /// the same string today for every first-party plugin and they are not the
-  /// same thing: "SoundCloud" is the service, and a plugin free to call itself
-  /// "SoundCloud (unofficial)" should not have that appear in a filter row as
+  /// same thing: "Wavecast" is the service, and a plugin free to call itself
+  /// "Wavecast (unofficial)" should not have that appear in a filter row as
   /// the name of the service.
   final String displayName;
 
@@ -106,7 +106,7 @@ final class SwayveSourceDescriptor {
   final SwayveSourceAvailability availability;
 
   /// The website hostnames a pasted URL must match for the host to route it
-  /// to this plugin's `resolveUrl` — `youtube.com`, `music.youtube.com`.
+  /// to this plugin's `resolveUrl` — `nebula.example`, `music.nebula.example`.
   ///
   /// Exists so the host's "paste a link" metadata fallback can find the
   /// right plugin without core containing a single line of per-provider URL

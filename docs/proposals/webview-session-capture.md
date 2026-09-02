@@ -8,22 +8,22 @@ for the shipped shape. This document is kept as the design record — the two
 sketches below were updated to match what was actually built (see the
 `page_script:youtube_page_id` note in particular), but the surrounding
 rationale is unchanged from the original proposal. It exists to record the
-shape of the next step after `youtube_music`'s beta ships with manual
+shape of the next step after `nebula_music`'s beta ships with manual
 credential entry (paste a session cookie, optionally paste a `page_id`) — see
 that plugin's `plugin.json` (`session_cookie` and `page_id` settings) and
 `lib/src/providers/library_provider.dart` for how they're used today. The
-problem generalises past YouTube Music — any plugin whose only sign-in path is
-"paste something from DevTools" is a candidate for this — but YouTube Music is
+problem generalises past Nebula Music — any plugin whose only sign-in path is
+"paste something from DevTools" is a candidate for this — but Nebula Music is
 the motivating, worked case below.
 
 ## The problem this solves
 
-Today, connecting YouTube Music means: open DevTools on music.youtube.com,
+Today, connecting Nebula Music means: open DevTools on music.nebula.example,
 find a `/browse` request, copy the `cookie` header, paste it into Settings.
 Multi-channel accounts also need `x-goog-pageid` off the same request — a
 second DevTools trip most users won't know to make, and won't know *why*
 they'd need to until their liked-songs sync comes back empty for a reason
-that looks identical to "not signed in" (see `youtube_music`'s
+that looks identical to "not signed in" (see `nebula_music`'s
 `looksSignedOut` doc comment in `feed_parser.dart`).
 
 Phase 2's goal: after the user completes an ordinary-looking sign-in inside
@@ -76,7 +76,7 @@ What it grants is deliberately narrower than "read this web view's cookies":
 - **Scoped to the same host(s) the sign-in flow itself navigated to** — not
   "any cookie on the device," not "any header from any response."
 
-This keeps the plugin's actual code surface identical to today: `youtube_music`
+This keeps the plugin's actual code surface identical to today: `nebula_music`
 would still just call `credentials.readSecret(kSessionCookieSettingId)` and
 `credentials.readSecret(kPageIdSettingId)`. What changes is *how those keys
 get populated* — a captured value instead of a pasted one — which is exactly
@@ -108,7 +108,7 @@ abstract interface class SwayveSessionCaptureController {
 ```json
 "permissions": ["webview", "external_auth", "session_capture"],
 "session_capture": {
-  "hosts": ["music.youtube.com"],
+  "hosts": ["music.nebula.example"],
   "capture": [
     { "from": "cookie_header", "as_secret": "session_cookie" },
     { "from": "page_script:youtube_page_id", "as_secret": "page_id" }
@@ -163,7 +163,7 @@ integration and security review — work this proposal explicitly does not
 scope.
 
 **Phase 2, when built, targets iOS and Android only.** Windows and Linux
-keep the manual-paste flow shipped in the beta (`youtube_music`'s
+keep the manual-paste flow shipped in the beta (`nebula_music`'s
 `session_cookie` / `page_id` settings) until desktop web view embedding is
 scoped as its own piece of work. This also means the app's current desktop
 `presentForResult` stub (`_UnsupportedWebViewController` in

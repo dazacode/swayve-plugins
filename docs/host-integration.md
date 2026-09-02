@@ -52,8 +52,8 @@ appears anywhere outside the registry and the settings screen that lists
 installed plugins, the requirement has been violated.
 
 ```dart
-// WRONG — the client now contains YouTube Music's behaviour.
-if (plugin.id == 'app.swayve.plugins.youtube_music') { … }
+// WRONG — the client now contains Nebula Music's behaviour.
+if (plugin.id == 'app.swayve.plugins.nebula_music') { … }
 
 // RIGHT — the client contains "things that can search".
 for (final p in registry.providers<SwayveSearchProvider>()) { … }
@@ -74,9 +74,10 @@ The host must additionally:
 Registration for `runtime: compiled` plugins happens at app build time via
 each plugin's `SwayvePluginFactory`. The host must not special-case which
 factories exist, and it must not depend on individual first-party plugin
-packages directly — that does not scale past one plugin. Depend on
-`package:swayve_plugin_registry` instead, and resolve a verified bundle's
-manifest id against `firstPartyCompiledPlugins` from it. See
+packages directly — that does not scale past one plugin. Depend on a
+`swayve_plugin_registry` package instead — it lives with the plugins it
+catalogues, not in this repository — and resolve a verified bundle's manifest
+id against `firstPartyCompiledPlugins` from it. See
 [platforms.md § How a `compiled` plugin actually gets activated](platforms.md#how-a-compiled-plugin-actually-gets-activated)
 for the full mechanism, including how a private fork adds a plugin the
 first-party registry does not carry.
