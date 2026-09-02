@@ -2,8 +2,10 @@ version: 2
 
 updates:
   # ---------------------------------------------------------------------------
-  # GitHub Actions. Actions are pinned by major tag in the workflows, so this
-  # mostly catches majors that need a deliberate migration.
+  # GitHub Actions. Every `uses:` is pinned to a full commit SHA with the version
+  # in a trailing comment, so this is what keeps them current: Dependabot bumps
+  # the SHA and the comment together. A mutable tag would need no bumping and
+  # give no notice — which is exactly why they are not used here.
   # ---------------------------------------------------------------------------
   - package-ecosystem: github-actions
     directory: "/"
