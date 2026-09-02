@@ -35,8 +35,11 @@ final class ForgedEntry {
 /// packager applies.
 ///
 /// `ArchiveFile`'s constructor rewrites backslashes, so the name is assigned
-/// afterwards; that is the only way to produce the archive a Windows-targeting
-/// attacker would actually send.
+/// afterwards. Since archive 4.1.0 `ZipEncoder` rewrites them a second time on
+/// the way out, so a name that must reach the verifier with backslashes intact
+/// is encoded in its forward-slash form and patched back byte-for-byte
+/// afterwards by [_restoreBackslashes] — that is the only way left to produce
+/// the archive a Windows-targeting attacker would actually send.
 Uint8List forgeArchive(List<ForgedEntry> entries) {
   final Archive archive = Archive();
   for (final ForgedEntry entry in entries) {
@@ -46,18 +49,49 @@ Uint8List forgeArchive(List<ForgedEntry> entries) {
       entry.declaredSize ?? bytes.length,
       bytes,
     )
-      ..name = entry.name
+      ..name = entry.name.replaceAll(r'\', '/')
       ..mode = entry.mode
       ..isFile = true
       ..compression =
           entry.compress ? CompressionType.deflate : CompressionType.none;
     archive.addFile(file);
   }
-  return Uint8List.fromList(
+  final Uint8List encoded = Uint8List.fromList(
     ZipEncoder().encode(
       archive,
       level: 0,
       modified: DateTime.utc(1980),
     ),
   );
+  return _restoreBackslashes(encoded, entries);
+}
+
+/// Puts back the backslashes `ZipEncoder` rewrote to `/`.
+///
+/// A ZIP stores each entry's name as raw bytes, once in the local header and
+/// once in the central directory, with no checksum over the name. `\` and `/`
+/// are both one byte, so overwriting them in place leaves every offset, length
+/// and CRC in the file still correct — the result is a well-formed archive that
+/// simply names its entries the way a Windows packer would.
+Uint8List _restoreBackslashes(Uint8List encoded, List<ForgedEntry> entries) {
+  for (final ForgedEntry entry in entries) {
+    if (!entry.name.contains(r'\')) {
+      continue;
+    }
+    final List<int> written = utf8.encode(entry.name.replaceAll(r'\', '/'));
+    final List<int> wanted = utf8.encode(entry.name);
+    for (int i = 0; i + written.length <= encoded.length; i++) {
+      bool matches = true;
+      for (int j = 0; j < written.length; j++) {
+        if (encoded[i + j] != written[j]) {
+          matches = false;
+          break;
+        }
+      }
+      if (matches) {
+        encoded.setRange(i, i + wanted.length, wanted);
+      }
+    }
+  }
+  return encoded;
 }
